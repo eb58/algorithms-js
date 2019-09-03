@@ -1,6 +1,4 @@
-const _ = require("underscore");
-
-Array.prototype.without = function (n){
+Array.prototype.without = function (n) {
   return this.filter((x, i) => i !== n);
 };
 
