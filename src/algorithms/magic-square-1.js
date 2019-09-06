@@ -102,14 +102,17 @@ const magicSquare = n => {
         const checkX = (square, availableNumbers, countNumbersInRow, rowSum) => {
             const cntNumbersInRow = countNumbersInRow(square);
             const rSum = rowSum(square);
-            if (cntNumbersInRow === n - 1 && !availableNumbers.includes(MN - rSum)) {
-                return false;
-            }
-            else if (cntNumbersInRow > 1) {
-                const minSum = availableNumbers.slice(0, n - cntNumbersInRow).sum();
-                const maxSum = availableNumbers.slice(-cntNumbersInRow).sum();
-                if (rSum + minSum > MN || rSum + maxSum < MN) {
-                    return false;
+
+            if (cntNumbersInRow > 1){
+                if (cntNumbersInRow === n - 1 ) {
+                    if(  !availableNumbers.includes(MN - rSum))  return false;
+                }
+                else {
+                    const minSum = availableNumbers.slice(0, n - cntNumbersInRow).sum();
+                    const maxSum = availableNumbers.slice(-cntNumbersInRow).sum();
+                    if (rSum + minSum > MN || rSum + maxSum < MN) {
+                        return false;
+                    }
                 }
             }
             return true
