@@ -105,7 +105,7 @@ const magicSquare = n => {
             if (cntNumbersInRow === n - 1 && !availableNumbers.includes(MN - rSum)) {
                 return false;
             }
-            if (cntNumbersInRow > 1) {
+            else if (cntNumbersInRow > 1) {
                 const minSum = availableNumbers.slice(0, n - cntNumbersInRow).sum();
                 const maxSum = availableNumbers.slice(-cntNumbersInRow).sum();
                 if (rSum + minSum > MN || rSum + maxSum < MN) {
@@ -116,6 +116,7 @@ const magicSquare = n => {
         };
 
         const cntNumbersInCol = (col) => (square) => utilFcts.countNumbersInCol(square, col);
+        const colSum = (col) => (square) => utilFcts.colSum(square, col);
 
         const magicIsPossible = (square, availableNumbers) => {
             if (square.length > nSqr / 2 && !numberIsInFirstQuad(square, 1)) return false; // Symmetrien ausfiltern
@@ -123,7 +124,7 @@ const magicSquare = n => {
             if (!checkX(square, availableNumbers, utilFcts.countNumbersInDiag1, utilFcts.diag1Sum)) return false;
             if (!checkX(square, availableNumbers, utilFcts.countNumbersInDiag2, utilFcts.diag2Sum)) return false;
             for (let c = 0; c < n; c++) {
-                if (!checkX(square, availableNumbers, cntNumbersInCol(c), utilFcts.diag2Sum)) return false;
+                if (!checkX(square, availableNumbers, cntNumbersInCol(c), colSum(c) )) return false;
             }
 
             return true;
