@@ -2,11 +2,10 @@
    "name": "algorithms-js",
    "version": "1.0.0",
    "keywords": [
-      "util",
-      "functional",
-      "server",
-      "client",
-      "browser"
+      "permutations",
+      "magic square",
+      "combinations",
+      "sorting"
    ],
    "jest": {
     "//": "Comment goes here",
@@ -15,7 +14,9 @@
    "author": "A403163",
    "contributors": [],
    "scripts": {
-      "test": "jest"
+      "test": "jest",
+      "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
+      "debug-3x3": "node --inspect-brk ./src/algorithms/magic-square-1"
    },
    "dependencies": {
       "underscore": "^1.9.1"
