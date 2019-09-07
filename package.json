@@ -16,7 +16,10 @@
    "scripts": {
       "test": "jest",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
-      "debug-3x3": "node --inspect-brk ./src/algorithms/magic-square-1"
+      "debug-3x3-1": "node --inspect-brk ./src/algorithms/magic-square-1",
+      "3x3-1": "node ./src/algorithms/magic-square-1",
+      "debug-3x3-3": "node --inspect-brk ./src/algorithms/magic-square-3",
+      "3x3-3": "node ./src/algorithms/magic-square-3"
    },
    "dependencies": {
       "underscore": "^1.9.1"
