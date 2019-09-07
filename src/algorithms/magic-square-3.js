@@ -17,9 +17,9 @@ const magicSquare = n => {
     }
 
     const intersect = (a, b) => {
-        const len = a.length;
-        for (let i = 0; i < len; i++) {
-            for (let j = 0; j < len; j++) {
+        const alen = a.length, blen = b.length;
+        for (let i = 0; i < alen; i++) {
+            for (let j = 0; j < blen; j++) {
                 if (a[i] === b[j]) return true;
             }
         }
@@ -47,7 +47,7 @@ const magicSquare = n => {
             },
             colSum: (square, col) => {
                 let sum = 0;
-                for (let r = 0; r < n; r++) sum += (square[col + r * n] || 0);
+                for (let r = 0; r < n; r++) sum += square[col + r * n];
                 return sum;
             }
         };

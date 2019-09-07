@@ -1,9 +1,9 @@
 const combinations = require('./combinations');
 const perm = require('./perm')[2];
 
-Array.prototype.sum = function (s, e) {
+Array.prototype.sum = function () {
     let sum = 0;
-    for (let i = s || 0, len = e || this.length; i < len; i++) sum += this[i];
+    for (let i = 0, len = this.length; i < len; i++) sum += this[i];
     return sum;
 };
 
@@ -12,7 +12,7 @@ const magicSquare = n => {
         let res = ""
         for (let r = 0; r < n; r++) {
             for (let c = 0; c < n; c++) {
-                res += " " + (valAt(square, r, c) || '#');
+                res += ("  " + valAt(square, r, c)).substr(-3);
             }
             res += "\n";
         }
@@ -39,107 +39,103 @@ const magicSquare = n => {
         const nSqr = n * n;
 
         const utilFcts = {
-            diag1Sum: square => {
+            sumOverRow: (square, row) => {
                 let sum = 0;
-                for (let i = 0; i < n; i++) sum += (square[i + i * n] || 0);
+                for (let i = 0; i < n; i++) sum += (square[row[i]] || 0);
                 return sum;
             },
-            diag2Sum: square => {
+            cntOverRow: (square, row) => {
                 let sum = 0;
-                for (let i = 0; i < n; i++) sum += (square[i + (n - i - 1) * n] || 0);
+                for (let i = 0; i < n; i++) sum += square[row[i]] ? 1 : 0;
                 return sum;
             },
-            rowSum: (square, row) => {
-                let sum = 0;
-                for (let c = 0; c < n; c++) sum += (square[c + row * n] || 0);
-                return sum;
-            },
+            diag1Sum: (() => {
+                const row = [];
+                for (let i = 0; i < n; i++) row.push(i + i * n);
+                return square => utilFcts.sumOverRow(square, row);
+            })(),
+            diag2Sum: (() => {
+                const row = [];
+                for (let i = 0; i < n; i++) row.push(i + (n - i - 1) * n);
+                return square => utilFcts.sumOverRow(square, row);
+            })(),
             colSum: (square, col) => {
-                let sum = 0;
-                for (let r = 0; r < n; r++) sum += (square[col + r * n] || 0);
-                return sum;
+                const row = [];
+                for (let r = 0; r < n; r++) row.push(col + r * n);
+                return () => utilFcts.sumOverRow(square, row);
             },
-            countNumbersInCol: (square, col) => {
-                let cnt = 0;
-                for (let r = 0; r < n; r++) cnt += square[col + r * n] ? 1 : 0
-                return cnt;
-            },
-            countNumbersInDiag1: square => {
-                let cnt = 0;
-                for (let i = 0; i < n; i++) cnt += square[i + i * n] ? 1 : 0
-                return cnt;
-            },
-            countNumbersInDiag2: square => {
-                let cnt = 0;
-                for (let i = 0; i < n; i++) cnt += square[i + (n - i - 1) * n];
-                return cnt;
-            }
+            countNumbersInDiag1: (() => {
+                const row = [];
+                for (let i = 0; i < n; i++) row.push(i + i * n);
+                return square => utilFcts.cntOverRow(square, row);
+            })()
         };
 
         const diag1SumOK = square => utilFcts.diag1Sum(square) === MN;
         const diag2SumOK = square => utilFcts.diag2Sum(square) === MN;
-        const colSumOK = (square) => {
-            for (let c = 0; c < n && res; c++) if (utilFcts.colSum(square, c) !== MN) return false;
+        const colSumOK = square => {
+            for (let c = 0; c < n && res; c++) if (utilFcts.colSum(square, c)() !== MN) return false;
             return true;
         };
-        const rowSumOK = (square) => {
-            for (let c = 0; c < n && res; c++)  if (utilFcts.rowSum(square, c) !== MN) return false;
-            return true;
-        };
+        const numberOneIsNotInFirstQuad = (() => {
 
-        const numberOneIsNotInFirstQuad = (square) => {
-            if (square.length < nSqr / 2)
-                return false;
-
+            const pos = []
             const N = Math.ceil(n / 2);
+
             for (let r = 0; r < N; r++) {
-                const rn = r * n;
                 for (let c = 0; c < N; c++) {
-                    if (square[c + rn] === 1) return false;
+                    pos.push(c + r * n)
                 }
             }
-            return true;
-        };
 
-        const checkX1 = (square, availableNumbers, rowSum) => availableNumbers.includes(MN - rowSum(square));
+            return square => {
+                if (square.length < nSqr / 2)
+                    return false;
 
-        const checkX2 = (square, availableNumbers, cntNumbersInRows, rowSum) => {
+                for (let i = 0, len = pos.length; i < len; i++) if (square[pos[i]] === 1) return false;
+                return true;
+            }
+        })();
 
-            const rSum = rowSum(square);
+        const checkX1 = (square, availableNumbers, rowSumFct) => availableNumbers.includes(MN - rowSumFct(square));
+
+        const checkX2 = (square, availableNumbers, cntNumbersInRows, rowSumFct) => {
+
+            const rowSum = rowSumFct(square);
             const minSum = availableNumbers.slice(0, n - cntNumbersInRows).sum();
-            if (rSum + minSum > MN) return false;
+            if (rowSum + minSum > MN) return false;
 
             const maxSum = availableNumbers.slice(-cntNumbersInRows).sum();
-            if (rSum + maxSum < MN) return false;
+            if (rowSum + maxSum < MN) return false;
 
             return true
         };
 
-        const colSum = (col) => (square) => utilFcts.colSum(square, col);
 
         const magicSquareIsPossible = (square, availableNumbers) => {
-            const cntNumbersInRows = utilFcts.countNumbersInDiag1(square);
+            if (square.length > n) {
+                const cntNumbersInRows = utilFcts.countNumbersInDiag1(square);
 
-            if (cntNumbersInRows === n - 1) {
-                if (!checkX1(square, availableNumbers, utilFcts.diag1Sum)) return false;
-                if (!checkX1(square, availableNumbers, utilFcts.diag2Sum)) return false;
-                for (let c = 0; c < n; c++) {
-                    if (!checkX1(square, availableNumbers, colSum(c))) return false;
+                if (cntNumbersInRows === n - 1) {
+                    if (!checkX1(square, availableNumbers, utilFcts.diag1Sum)) return false;
+                    if (!checkX1(square, availableNumbers, utilFcts.diag2Sum)) return false;
+                    for (let c = 0; c < n; c++) {
+                        if (!checkX1(square, availableNumbers, utilFcts.colSum(square, c))) return false;
+                    }
+                }
+
+                if (cntNumbersInRows > 1) {
+                    if (!checkX2(square, availableNumbers, cntNumbersInRows, utilFcts.diag1Sum)) return false;
+                    if (!checkX2(square, availableNumbers, cntNumbersInRows, utilFcts.diag2Sum)) return false;
+                    for (let c = 0; c < n; c++) {
+                        if (!checkX2(square, availableNumbers, cntNumbersInRows, utilFcts.colSum(square, c))) return false;
+                    }
                 }
             }
-            
-            if (cntNumbersInRows > 1) {
-                if (!checkX2(square, availableNumbers, cntNumbersInRows, utilFcts.diag1Sum)) return false;
-                if (!checkX2(square, availableNumbers, cntNumbersInRows, utilFcts.diag2Sum)) return false;
-                for (let c = 0; c < n; c++) {
-                    if (!checkX2(square, availableNumbers, cntNumbersInRows, colSum(c))) return false;
-                }
-            }
-
             return true;
         };
 
-        const isMagic = square => diag1SumOK(square) && diag2SumOK(square) && colSumOK(square) && rowSumOK(square);
+        const isMagic = square => square.length === nSqr && diag1SumOK(square) && diag2SumOK(square) && colSumOK(square);
 
         return {
             magicSquareIsPossible: magicSquareIsPossible,
@@ -154,11 +150,14 @@ const magicSquare = n => {
             .map(xs => ({ numbersArray: xs, perms: perm(xs) }))
             .filter(perm => perm);
 
+
+    // const x = combis.map(c => c.numbersArray);    console.log("Combis", x.length, x);
+
     const combineToMagicSquare = (square, combis, availableNumbers, res) => {
 
-        if (availableNumbers.length === 0 && magicFcts.isMagic(square)) {
+        if (magicFcts.isMagic(square)) {
             res.push(square);
-            // dump(res.length, square);
+            // if (res.length % 100 === 0) dump(res.length, square);
             return;
         }
 
@@ -166,7 +165,7 @@ const magicSquare = n => {
             return;
         }
 
-        if (square.length > n && !magicFcts.magicSquareIsPossible(square, availableNumbers)) {
+        if (!magicFcts.magicSquareIsPossible(square, availableNumbers)) {
             return;
         }
         // console.log("combis", combis.map(c =>c.numbersArray), 'Available Numbers:', availableNumbers, 'SQUARE', square);
