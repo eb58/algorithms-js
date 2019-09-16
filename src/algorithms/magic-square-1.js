@@ -147,8 +147,7 @@ const magicSquare = n => {
     const combis =
         combinations(range(n * n).map(x => x + 1), n)
             .filter(xs => xs.sum() === MN)
-            .map(xs => ({ numbersArray: xs, perms: perm(xs) }))
-            .filter(perm => perm);
+            .map(xs => ({ numbersArray: xs, perms: perm(xs) }));
 
 
     // const x = combis.map(c => c.numbersArray);    console.log("Combis", x.length, x);
