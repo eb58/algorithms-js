@@ -29,10 +29,10 @@ test('testset magic-square-1 5x5', () => {
 
 
 ///// 
-test('testset magic-square-3 3x3', () => {
+test('testset magic-square-3 4x4', () => {
     const magicSquare = require('../src/algorithms/magic-square-3');
     debugger;
-    const res = magicSquare(3);
+    const res = magicSquare(4);
     expect(res.length).toEqual(4);
 });
 

@@ -1,9 +1,10 @@
 const combinations = require('./combinations');
 const perm = require('./perm')[2];
 
-Array.prototype.sum = function () {
+Array.prototype.sum = function (s, e) {
+    s = s < 0 ? 0 : s;
     let sum = 0;
-    for (let i = 0, len = this.length; i < len; i++) sum += this[i];
+    for (let i = s || 0, len = e || this.length; i < len; i++) sum += this[i];
     return sum;
 };
 
@@ -59,6 +60,11 @@ const magicSquare = n => {
                 for (let i = 0; i < n; i++) row.push(i + (n - i - 1) * n);
                 return square => utilFcts.sumOverRow(square, row);
             })(),
+            rowSum: (square, r) => {
+                const row = [];
+                for (let c = 0; c < n; c++) row.push(c + r * n);
+                return () => utilFcts.sumOverRow(square, row);
+            },
             colSum: (square, col) => {
                 const row = [];
                 for (let r = 0; r < n; r++) row.push(col + r * n);
@@ -73,8 +79,9 @@ const magicSquare = n => {
 
         const diag1SumOK = square => utilFcts.diag1Sum(square) === MN;
         const diag2SumOK = square => utilFcts.diag2Sum(square) === MN;
+        const rowSumOK = (square, r) => utilFcts.rowSum(square, r)() === MN;
         const colSumOK = square => {
-            for (let c = 0; c < n && res; c++) if (utilFcts.colSum(square, c)() !== MN) return false;
+            for (let c = 0; c < n; c++) if (utilFcts.colSum(square, c)() !== MN) return false;
             return true;
         };
         const numberOneIsNotInFirstQuad = (() => {
@@ -102,14 +109,16 @@ const magicSquare = n => {
         const checkX2 = (square, availableNumbers, cntNumbersInRows, rowSumFct) => {
 
             const rowSum = rowSumFct(square);
-            const minSum = availableNumbers.slice(0, n - cntNumbersInRows).sum();
+            const minSum = availableNumbers.sum(0, n - cntNumbersInRows);
             if (rowSum + minSum > MN) return false;
 
-            const maxSum = availableNumbers.slice(-cntNumbersInRows).sum();
+            const maxSum = availableNumbers.sum(availableNumbers.length - cntNumbersInRows);
             if (rowSum + maxSum < MN) return false;
-
-            return true
+            
+            return true;
         };
+
+        const checkX3 = (square, rowSumFct, availableSums) => availableSums.includes(MN - rowSumFct(square));
 
 
         const magicSquareIsPossible = (square, availableNumbers) => {
@@ -131,6 +140,18 @@ const magicSquare = n => {
                         if (!checkX2(square, availableNumbers, cntNumbersInRows, utilFcts.colSum(square, c))) return false;
                     }
                 }
+
+                if (cntNumbersInRows === n - 2) {
+                    const availableSums = combinations(availableNumbers, 2).map(pair => pair[0] + pair[1]);
+
+                    if (!checkX3(square, utilFcts.diag1Sum, availableSums)) return false;
+                    if (!checkX3(square, utilFcts.diag2Sum, availableSums)) return false;
+                    for (let c = 0; c < n; c++) {
+                        if (!checkX3(square, utilFcts.colSum(square, c), availableSums)) return false;
+                    }
+                }
+
+
             }
             return true;
         };
@@ -138,7 +159,7 @@ const magicSquare = n => {
         const isMagic = square => square.length === nSqr && diag1SumOK(square) && diag2SumOK(square) && colSumOK(square);
 
         return {
-            magicSquareIsPossible: magicSquareIsPossible,
+            magicSquareIsPossible,
             isMagic,
             numberOneIsNotInFirstQuad
         }
@@ -149,9 +170,7 @@ const magicSquare = n => {
             .filter(xs => xs.sum() === MN)
             .map(xs => ({ numbersArray: xs, perms: perm(xs) }));
 
-
-    // const x = combis.map(c => c.numbersArray);    console.log("Combis", x.length, x);
-
+        // const x = combis.map(c => c.numbersArray);    console.log("Combis", x.length, x);
     const combineToMagicSquare = (square, combis, availableNumbers, res) => {
 
         if (magicFcts.isMagic(square)) {
@@ -160,7 +179,7 @@ const magicSquare = n => {
             return;
         }
 
-        if (magicFcts.numberOneIsNotInFirstQuad(square)) { // Symmetrien ausfiltern
+        if (magicFcts.numberOneIsNotInFirstQuad(square)) { // filter out symmetries
             return;
         }
 
@@ -170,9 +189,9 @@ const magicSquare = n => {
         // console.log("combis", combis.map(c =>c.numbersArray), 'Available Numbers:', availableNumbers, 'SQUARE', square);
         combis.forEach(combi => {
             const newCombis = combis.filter(c => !intersect(c.numbersArray, combi.numbersArray));
-            const newNumbers = availableNumbers.filter(n => !combi.numbersArray.includes(n));
+            const newAvailableNumbers = availableNumbers.filter(n => !combi.numbersArray.includes(n));
             combi.perms.forEach(perm => {
-                combineToMagicSquare(square.concat(perm), newCombis, newNumbers, res)
+                combineToMagicSquare(square.concat(perm), newCombis, newAvailableNumbers, res)
             })
         });
     }

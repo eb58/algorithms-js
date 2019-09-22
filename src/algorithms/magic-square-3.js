@@ -5,15 +5,18 @@ Array.prototype.sum = function () { return this.reduce((sum, n) => sum + n, 0); 
 Array.prototype.isSubsetOf = function (xs) { return this.every(x => xs.includes(x)); }
 
 const magicSquare = n => {
-    const dump = (prefix, square) => {
-        let res = ""
+    const dumpStr = square => {
+        let res = "\n"
         for (let r = 0; r < n; r++) {
             for (let c = 0; c < n; c++) {
                 res += ("  " + valAt(square, r, c)).substr(-3);
             }
             res += "\n";
         }
-        console.log("DUMP " + prefix + "\n" + res);
+        return res;
+    }
+    const dump = (prefix, square) => {
+        console.log("DUMP " + prefix + dumpStr(square));
     }
 
     const intersect = (a, b) => {
@@ -29,12 +32,13 @@ const magicSquare = n => {
     const range = n => [...Array(n).keys()];
     const magicNumber = n => range(n * n).map(x => x + 1).reduce((acc, x) => acc + x, 0) / n;
     const valAt = (square, r, c) => square[c + r * n];
+    const setRow = (square, row, perm) => {
+        row.forEach((x, idx) => { square[x] = perm[idx] });
+        return row.map((x, idx) => x < 0 ? x : perm[idx]);
+    };
+    // const checkOK = (square, row, perm, availableNumbers) => row.reduce((acc, val, idx) => acc && (square[val] === 0 && availableNumbers.includes(perm[idx]) || square[val] === perm[idx]), true);
 
     const MN = magicNumber(n);
-
-    const setRow = (square, row, perm) => row.forEach((val, idx) => square[val] = perm[idx]);
-    const checkOK = (square, row, perm, availableNumbers) => row.reduce((acc, val, idx) =>
-        acc && (square[val] === 0 && availableNumbers.includes(perm[idx]) || square[val] === perm[idx]), true);
 
     const magicFcts = (() => {
         const nSqr = n * n;
@@ -70,59 +74,130 @@ const magicSquare = n => {
         }
     })();
 
-    const generateRows = n => {
-        const rows = [];
+    const rows = [
+        /*   0  1  2  3
+             4  5  6  7
+             8  9 10 11
+            12 13 14 15
+        */
 
-        { // diag1
-            const row = [];
-            for (let i = 0; i < n; i++) row.push(i + i * n);
-            rows.push(row);
-        }
-        { // diag2
-            const row = [];
-            for (let i = 0; i < n; i++) row.push(i + (n - i - 1) * n);
-            rows.push(row);
-        }
-        for (let r = 0; r < n; r++) { // rows
-            const row = [];
-            for (let c = 0; c < n; c++) row.push(c + r * n);
-            rows.push(row);
-        }
-        for (let c = 0; c < n; c++) { // cols
-            const row = [];
-            for (let r = 0; r < n; r++) row.push(c + r * n);
-            rows.push(row);
-        }
-        return rows;
-    }
+        { row: [0, 5, 10, 15] }, // diag1
+        { row: [12, 9, 6, 3] },  // diag2
 
-    const rows = generateRows(n);
+        {
+            row: [1, 2], restriction: (square, perm, availableNumbers) => {
 
-    const combis =
-        combinations(range(n * n).map(x => x + 1), n)
-            .filter(xs => xs.sum() === MN)
-            .map(xs => ({ numbersArray: xs, perms: perm(xs) }))
-            .filter(perm => perm);
+                if (square[0] + perm[0] + perm[1] + square[3] !== MN)
+                    return false;
+
+                if (!availableNumbers.includes(MN - (perm[0] + square[5] + square[9])))
+                    return false;
+                if (!availableNumbers.includes(MN - (perm[1] + square[6] + square[10])))
+                    return false;
+
+                return true;
+            }
+        },
+        {
+            row: [13],
+            restriction: (square, perm, availableNumbers) => {
+                if (!availableNumbers.includes(MN - (square[1] + square[5] + square[9])))
+                    return false;
+                return true;
+            },
+            setValue: square => {
+                square[13] = MN - (square[1] + square[5] + square[9]);
+                return square[13];
+            }
+        },
+        {
+            row: [14],
+            restriction: (square, perm, availableNumbers) => {
+                if (!availableNumbers.includes(MN - (square[2] + square[6] + square[10])))
+                    return false;
+                return true;
+            },
+            setValue: square => {
+                square[14] = MN - (square[2] + square[6] + square[10]);
+                return square[14];
+            }
+        },
+        {
+            row: [4, 8], restriction: (square, perm, availableNumbers) => {
+
+                if (square[0] + perm[0] + perm[1] + square[12] !== MN)
+                    return false;
+
+                if (!availableNumbers.includes(MN - (perm[0] + square[5] + square[6])))
+                    return false;
+                if (!availableNumbers.includes(MN - (perm[1] + square[9] + square[10])))
+                    return false;
+
+                if (!availableNumbers.includes(MN - (square[1] + square[5] + square[9])))
+                    return false;
+                if (!availableNumbers.includes(MN - (square[2] + square[6] + square[10])))
+                    return false;
+
+                return true;
+            }
+        },
+        {
+            row: [7], setValue: square => {
+                square[7] = MN - (square[4] + square[5] + square[6]);
+                return square[7];
+            }
+        },
+        {
+            row: [11], setValue: square => {
+                square[11] = MN - (square[8] + square[9] + square[10]);
+                return square[11];
+            }
+        },
+
+
+        // { row: [13, 14], restriction: square => square[12] + perm[0] + perm[1] + square[15] === MN },
+        // { row: [7, 11], restriction: square => square[3] + perm[0] + perm[1] + square[15] === MN },
+        //{ row: [13], compute: (square) => square[1] + square[5] + square[9] },
+        // { row: [14], compute: (square) => square[2] + square[6] + square[10] },
+
+        //{ row: [7], compute: (square) => square[4] + square[5] + square[6] },
+        // { row: [11], compute: (square) => square[8] + square[9] + square[10] }
+    ]
 
     const combineToMagicSquare = (square, combis, availableNumbers, lev, res) => {
+        // dump(res.length, square);
         if (availableNumbers.length === 0 && magicFcts.isMagic(square)) {
             dump(res.length, square);
             res.push(square);
             return;
         }
-        //console.log("combis", combis.map(c => c.numbersArray), 'Available Numbers:', availableNumbers, 'SQUARE', square, 'LEV', lev);
+        // console.log(dumpStr(square), "combis", combis.map(c => c.numbersArray), 'Available Numbers:', availableNumbers, 'LEV', lev);
+        const row = rows[lev];
         combis.forEach((combi, idx) => {
-            const newCombis =
-                [...combis.slice(0, idx), ...combis.slice(idx + 1)]
-                    .filter(c => lev <= 1 ? true : rows[lev].filter(x => x!=0).map(v => square[v]).isSubsetOf(c.numbersArray));
-            const newAvailableNumbers = availableNumbers.filter(n => !combi.numbersArray.includes(n));
-            combi.perms.forEach(perm => {
-                if (checkOK(square, rows[lev], perm, availableNumbers)) {
+            combi.perms.forEach(p => {
+                if (row.restriction && !row.restriction(square, p, availableNumbers))
+                    return;
+
+                if (row.setValue) {
+
                     const lsquare = [...square];
-                    setRow(lsquare, rows[lev], perm);
-                    dump('', lsquare);
+                    const valueSet = row.setValue(lsquare);
+                    const newAvailableNumbers = availableNumbers.filter(n => n != valueSet);
+                    newCombis = combinations(newAvailableNumbers, rows[lev + 1].row.length).map(xs => ({ numbersArray: xs, perms: perm(xs) }));
                     combineToMagicSquare(lsquare, newCombis, newAvailableNumbers, lev + 1, res)
+
+                } else {
+
+                    const lsquare = [...square];
+                    const valuesSet = setRow(lsquare, row.row, p);
+                    const newAvailableNumbers = availableNumbers.filter(n => !valuesSet.includes(n));
+                    const newCombis = rows[lev + 1].row.length === 4
+                        ? combis.filter(c => !intersect(c.numbersArray, valuesSet))
+                        : combinations(newAvailableNumbers, rows[lev + 1].row.length).map(xs => ({ numbersArray: xs, perms: perm(xs) }));
+                    combineToMagicSquare(lsquare, newCombis, newAvailableNumbers, lev + 1, res)
+
                 }
+
             })
         });
     }
@@ -130,6 +205,11 @@ const magicSquare = n => {
     const res = [];
     const square = range(n * n).map(() => 0);
     const availableNumbers = range(n * n).map(x => x + 1);
+    const combis =
+        combinations(availableNumbers, n)
+            .filter(xs => xs.sum() === MN)
+            .map(xs => ({ numbersArray: xs, perms: perm(xs) }))
+
 
     combineToMagicSquare(square, combis, availableNumbers, 0, res);
     return res;
