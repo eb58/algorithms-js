@@ -1,5 +1,6 @@
 const combinations = require('./combinations');
 const perm = require('./perm')[2];
+const FastBitSet = require('fastbitset')
 
 Array.prototype.sum = function (s, e) {
     s = s < 0 ? 0 : s;
@@ -168,7 +169,7 @@ const magicSquare = n => {
     const combis =
         combinations(range(n * n).map(x => x + 1), n)
             .filter(xs => xs.sum() === MN)
-            .map(xs => ({ numbersArray: xs, perms: perm(xs) }));
+            .map(xs => ({ numbersArray: new FastBitSet(xs), perms: perm(xs) }));
 
         // const x = combis.map(c => c.numbersArray);    console.log("Combis", x.length, x);
     const combineToMagicSquare = (square, combis, availableNumbers, res) => {
@@ -188,8 +189,8 @@ const magicSquare = n => {
         }
         // console.log("combis", combis.map(c =>c.numbersArray), 'Available Numbers:', availableNumbers, 'SQUARE', square);
         combis.forEach(combi => {
-            const newCombis = combis.filter(c => !intersect(c.numbersArray, combi.numbersArray));
-            const newAvailableNumbers = availableNumbers.filter(n => !combi.numbersArray.includes(n));
+            const newCombis = combis.filter(c => !c.numbersArray.intersects( combi.numbersArray));
+            const newAvailableNumbers = availableNumbers.filter(n => !combi.numbersArray.has(n));
             combi.perms.forEach(perm => {
                 combineToMagicSquare(square.concat(perm), newCombis, newAvailableNumbers, res)
             })
