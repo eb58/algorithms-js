@@ -5,7 +5,8 @@
       "permutations",
       "magic square",
       "combinations",
-      "sorting"
+      "sorting", 
+      "magic square"
    ],
    "jest": {
       "//": "Comment goes here",
@@ -15,11 +16,14 @@
    "contributors": [],
    "scripts": {
       "test": "jest",
-      "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand"
+      "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
+      "msqtest": "node src/algorithms/magic-square/magic-square-test.js",
+      "dmsqtest": "node --inspect-brk  src/algorithms/magic-square/magic-square-test.js"
    },
    "dependencies": {
       "bitset": "^5.0.5",
       "fastbitset": "^0.2.8",
+      "lodash": "^4.17.15",
       "underscore": "^1.9.1"
    },
    "devDependencies": {
