@@ -1,9 +1,9 @@
 solution1 = (N, reservations) => {
 
-  const arr = reservations.split(' ');
+  const reservationsArr = reservations.split(' ');
 
   const range = n => [...Array(n).keys()];
-  const makeRow = r => "ABCDEFGHIK".split('').map(ch => arr.includes((r + 1) + ch) ? 'X' : ch).join(''); // Mache ein X an alle belegten Sitze
+  const makeRow = r => "ABCDEFGHIK".split('').map(ch => reservationsArr.includes((r + 1) + ch) ? 'X' : ch).join(''); // Mache ein X an alle belegten Sitze
   const possibleInRow = r => r.includes('ABC') + (r.includes('DEF') || r.includes('EFG')) + r.includes('HIK');
 
   return range(N)
