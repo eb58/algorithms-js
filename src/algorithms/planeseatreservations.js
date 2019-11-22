@@ -24,8 +24,7 @@ solution2 = (nRows, reservations) => {
 }
 
 // TESTS
-const test = sol =>
-  sol(1, '') === 3
+const test = sol => sol(1, '') === 3
           && sol(1, '1A 1B 1D') === 2
           && sol(1, '1A 1B 1E') === 1
           && sol(2, '1A 1B 1D') === 5
