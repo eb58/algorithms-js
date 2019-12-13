@@ -1,22 +1,10 @@
 const combinations = require('../combinations');
 const perm = require('../perm')[2];
 const magicSquareUtils = require('./magic-square-utils');
-const FastBitSet = require('fastbitset')
-
-Array.prototype.sum = function (s, e) {
-    s = s < 0 ? 0 : s;
-    let sum = 0;
-    for (let i = s || 0, len = e || this.length; i < len; i++) sum += this[i];
-    return sum;
-};
-
-Array.prototype.subtract = function (xs){
-  return this.filter( x => !xs.includes(x) )
-};
-
+const FastBitSet = require('fastbitset');
 
 const magicSquare = n => {
-    const utils = magicSquareUtils(n)
+    const utils = magicSquareUtils(n);
     const MN = utils.computeMagicNumber(n);
 
     const magicFcts = (() => {

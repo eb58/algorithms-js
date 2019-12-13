@@ -1,5 +1,5 @@
-const permWithFilter = require('../permWithFilter');
-const magicFilter3 = (x) => {
+const permWithFilter = require('../perm').permWithFilter;
+const magicFilter3x3 = (x) => {
     // horizontal
     if (x.length === 3 && x[0] + x[1] + x[2] !== 15) return false;
     if (x.length === 6 && x[3] + x[4] + x[5] !== 15) return false;
@@ -17,7 +17,7 @@ const magicFilter3 = (x) => {
     return true;
 };
 
-const magicFilter4 = (x) => {
+const magicFilter4x4 = (x) => {
     // horizontal
     if (x.length === 3 && x[0] + x[1] + x[2] >= 34) return false;
     if (x.length === 3 && x[0] + x[1] + x[2] < 34 - 16) return false;
@@ -40,7 +40,7 @@ const magicFilter4 = (x) => {
     return true;
 };
 
-const magicSquare3x3 = permWithFilter(magicFilter3);
-const magicSquare4x4 = permWithFilter(magicFilter4);
+const magicSquare3x3 = permWithFilter(magicFilter3x3);
+const magicSquare4x4 = permWithFilter(magicFilter4x4);
 
 module.exports = { magicSquare3x3, magicSquare4x4 };

@@ -15,6 +15,7 @@
    "author": "A403163",
    "contributors": [],
    "scripts": {
+      "start": "node main.js",
       "test": "jest",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "msqtest": "node src/algorithms/magic-square/magic-square-test.js",
