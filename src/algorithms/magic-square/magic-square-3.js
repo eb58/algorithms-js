@@ -1,13 +1,13 @@
-const combinations = require('../combinations');
-const perm = require('../perm')[2];
-const magiqSuareUtils= require('./magic-square-utils');
+const combinations = require('../combinations').comb2;
+const perm = require('../perm').perm2;
+const magicSquareUtils= require('./magic-square-utils');
 
 Array.prototype.sum = function () { return this.reduce((sum, n) => sum + n, 0); };
 Array.prototype.isSubsetOf = function (xs) { return this.every(x => xs.includes(x)); }
 
 const magicSquare = n => {
-    const utils = magiqSuareUtils(n)
-    const MN = utils.magicNumber(n);
+    const utils = magicSquareUtils(n);
+    const MN = utils.computeMagicNumber(n);
 
     const magicFcts = (() => {
         const nSqr = n * n;
@@ -138,17 +138,17 @@ const magicSquare = n => {
 
                     const lsquare = [...square];
                     const valueSet = row.setValue(lsquare);
-                    const newAvailableNumbers = availableNumbers.filter(n => n != valueSet);
+                    const newAvailableNumbers = availableNumbers.filter(n => n !== valueSet);
                     newCombis = combinations(newAvailableNumbers, rows[lev + 1].row.length).map(xs => ({ numbersArray: xs, perms: perm(xs) }));
                     combineToMagicSquare(lsquare, newCombis, newAvailableNumbers, lev + 1, res)
 
                 } else {
 
                     const lsquare = [...square];
-                    const valuesSet = setRow(lsquare, row.row, p);
+                    const valuesSet = utils.setRow(lsquare, row.row, p);
                     const newAvailableNumbers = availableNumbers.filter(n => !valuesSet.includes(n));
                     const newCombis = rows[lev + 1].row.length === 4
-                        ? combis.filter(c => !intersect(c.numbersArray, valuesSet))
+                        ? combis.filter(c => !utils.intersect(c.numbersArray, valuesSet))
                         : combinations(newAvailableNumbers, rows[lev + 1].row.length).map(xs => ({ numbersArray: xs, perms: perm(xs) }));
                     combineToMagicSquare(lsquare, newCombis, newAvailableNumbers, lev + 1, res)
 
@@ -157,10 +157,9 @@ const magicSquare = n => {
             })
         });
     }
-
     const res = [];
-    const square = range(n * n).map(() => 0);
-    const availableNumbers = range(n * n).map(x => x + 1);
+    const square = utils.range(n * n).map(() => 0);
+    const availableNumbers = utils.range(n * n).map(x => x + 1);
     const combis =
         combinations(availableNumbers, n)
             .filter(xs => xs.sum() === MN)

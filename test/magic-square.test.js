@@ -25,12 +25,11 @@ test('testset magic-square-1 5x5', () => {
     // expect( magicSquare(5).length).toEqual(880*2);
 });
 
-
 ///// 
-test('testset magic-square-3 4x4', () => {
+0 && test('testset magic-square-3 3x3', () => {
     const magicSquare = require('../src/algorithms/magic-square/magic-square-3');
     debugger;
-    const res = magicSquare(4);
+    const res = magicSquare(3);
     expect(res.length).toEqual(4);
 });
 

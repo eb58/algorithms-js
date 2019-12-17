@@ -14,7 +14,7 @@ Array.prototype.isSubsetOf = function (xs) {
     return this.every(x => xs.includes(x));
 };
 
-const magicSquareUtils = (n) => {
+const magicSquareUtils = n => {
 
     const nSqr = n * n;
 

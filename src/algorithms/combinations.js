@@ -50,26 +50,22 @@ const comb1 = (xs, k) => {
  c([4,5],2).map(ys => [3,...ys]
  c([5],1).map(ys => [4,...ys]
  
- 
- 
+  
  */
-comb2 = (xs, k) => {
-    if (k === 1)
-        return xs.map(x => [x]);
 
-    let res = [];
-    for (let i = 0; i < xs.length - k + 1; i++) {
-        res = [...res, ...comb2(xs.slice(i + 1), k - 1).map(ys => [xs[i], ...ys])];
-    }
-    return res;
-};
+tails = (xs, k) => range(xs.length - k + 1).map(i => ({head: xs[i], tail: xs.slice(i + 1)}));
+comb2 = (xs, k) => k === 1 ? xs.map(x => [x]) : tails(xs, k).reduce((a, ys) => [...a, ...comb2(ys.tail, k - 1).map(zs => [ys.head, ...zs])], []);
 
-tails = (xs,k) => range(xs.length-k+1).map(i => ({head: xs[i], tail: xs.slice(i + 1)}));
-comb3 = (xs, k) => k === 1 ? xs.map(x => [x]): tails(xs,k).reduce((a, ys) => [...a, ...comb3(ys.tail, k - 1).map(zs => [ys.head, ...zs])], []);
 
+/*
+ combinations :: Int -> [a] -> [[a]]
+ combinations 0 _ = [[]]
+ combinations _ [] = []
+ combinations n (x:xs) = (map (x:) (combinations (n-1) xs)) ++ (combinations n xs)
+ */
+// comb = (xs, k) = comb(tail(xs), k)
 
 module.exports = {
     comb1,
     comb2,
-    comb3
 };
