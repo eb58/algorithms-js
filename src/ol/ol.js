@@ -2,13 +2,13 @@ const ol = {
   sqr: x => x * x,
   cub: x => x * x * x,
   abs: x => x > 0 ? x : -x,
-  fac: x => ol.range(x).reduce((acc, n) => acc * (n+1), 1),
+  fac: x => ol.range(x).reduce((acc, n) => acc * (n + 1), 1),
   fib: x => x <= 2 ? 1 : ol.fib(x - 1) + ol.fib(x - 2),
-  randomInRange: (min, max) => Math.random() * (max - min + 1) + min,
-  randomInRangeInt: (min, max) => Math.floor(Math.random() * (max - min + 1) + min),
+  randomInRange: (min, max) => Math.random() * (max - min) + min,
+  randomInRangeInt: (min, max) => Math.floor(ol.randomInRange(min, max + 1)),
 
   // pred
-  odd: x => x % 2 === 0,
+  odd: x => x % 2 !== 0,
   even: x => x % 2 === 0,
   inrange: (x, a, b) => a <= x && x <= b,
 
