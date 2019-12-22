@@ -16,7 +16,7 @@
    "contributors": [],
    "scripts": {
       "start": "node main.js",
-      "test": "jest",
+      "test": "jest --watch",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "msqtest": "node src/algorithms/magic-square/magic-square-test.js",
       "dmsqtest": "node --inspect-brk  src/algorithms/magic-square/magic-square-test.js"
