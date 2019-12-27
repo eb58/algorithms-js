@@ -1,7 +1,7 @@
 const ol = {
   sqr: x => x * x,
   cub: x => x * x * x,
-  abs: x => x > 0 ? x : -x,
+  abs: x => x >= 0 ? x : -x,
   fac: x => ol.range(x).reduce((acc, n) => acc * (n + 1), 1),
   fib: x => x <= 2 ? 1 : ol.fib(x - 1) + ol.fib(x - 2),
   randomInRange: (min, max) => Math.random() * (max - min) + min,
@@ -31,7 +31,7 @@ const num = x => {
   const api = {
     sqr: () => x * x,
     cube: () => x * x * x,
-    abs: () => x > 0 ? x : -x,
+    abs: () => x >= 0 ? x : -x,
     inrange: (a, b) => a <= x && x <= b,
   };
   return api;
@@ -50,6 +50,7 @@ const range = (a, b) => {
 };
 
 const arrayGenerators = {
+  range: n => ol.range(n),
   random: (n, min, max) => ol.range(n).map(() => ol.randomInRange(min, max))
 }
 
@@ -86,4 +87,4 @@ const memoize = fn => {
 
 f = memoize(ol.fib);
 
-module.exports = ol
+module.exports = { ol, num }
