@@ -84,7 +84,7 @@ const memoize = fn => {
   let cache = {};
   return x => cache.x || (cache[x] = fn(x));
 };
-
+ 
 f = memoize(ol.fib);
 
 module.exports = { ol, num }
