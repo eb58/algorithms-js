@@ -121,11 +121,10 @@ test('testset randomArray', () => {
 test('testset randomIntArray', () => {
   const arr = ol.randomIntArray(100, 1, 3);
   const grps = array(arr).groupByA(ol.id);
-  console.log(grps)
+  // console.log(grps)
   expect(arr.every(x => x === 1 || x === 2 || x === 3)).toBe(true);
   expect(Object.keys(grps).every(x => grps[x].length > 10)).toBe(true);
 });
-
 
 test('testset sum of arrays', () => {
   expect(ol.sum([])).toBe(0);
@@ -148,7 +147,6 @@ test('testset withoutIndex', () => {
   expect(ol.withoutIndex([1, 2, 3], 2)).toEqual([1, 2]);
   expect(ol.withoutIndex([1, 2, 3, 4], 2)).toEqual([1, 2, 4]);
 });
-
 
 // Wrappers
 {

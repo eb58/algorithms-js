@@ -19,7 +19,7 @@ const ol = {
 
   // arrays
   range: n => [...Array(n).keys()],
-  rangeFilled: (n,val) => [...Array(n).keys()].map(()=>val),
+  rangeFilled: (n, val) => [...Array(n).keys()].map(() => val),
   randomArray: (n, min, max) => ol.range(n).map(() => ol.randomInRange(min, max)),
   randomIntArray: (n, min, max) => ol.range(n).map(() => ol.randomInRangeInt(min, max)),
   sum: xs => xs.reduce((acc, x) => acc + x, 0),
@@ -28,8 +28,8 @@ const ol = {
   random: (n, min, max) => ol.range(n).map(() => ol.randomInRange(min, max)),
 
   // 
-  add2Arr: (a,v) => a ? [...a,v] : [v],
-  add2ObjArr: (o,key,val) => ( o[key] = o[key] ? [...o[key] ,val] : [v], o ),
+  add2Arr: (a, v) => a ? [...a, v] : [v],
+  add2ObjArr: (o, key, val) => (o[key] = o[key] ? [...o[key], val] : [v], o),
 };
 
 // Wrappers
@@ -39,7 +39,7 @@ const num = x => {
     abs: () => ol.abs(x),
     sqr: () => ol.sqr(x),
     cube: () => ol.cube(x),
-    ininterval: (a, b) => ol.ininterval(x,a, b),
+    ininterval: (a, b) => ol.ininterval(x, a, b),
   };
   return api;
 };
@@ -48,7 +48,7 @@ const interval = (a, b) => {
   return {
     array: () => [...Array(b - a + 1).keys()].map(x => x + a),
     contains: x => a <= x && x <= b,
-    intersects: (x, y) => !( x < a || y > b) ,
+    intersects: (x, y) => !(x < a || y > b),
     inc: x => x === b ? x : x + 1,
     dec: x => x === a ? x : x - 1,
     random: () => Math.random() * (b - a + 1) + a,
@@ -68,16 +68,16 @@ const array = xs => {
     unite: ys => {
     }, // TODO!!!!
     groupByA: projection => xs.reduce((a, n) => {
-      const p = projection(n);
-      a[p] = a[p] ? [...a[p], n] : [n];
-      return a;
-    }, {}),
+        const p = projection(n);
+        a[p] = a[p] ? [...a[p], n] : [n];
+        return a;
+      }, {}),
     groupByB: projection => xs.reduce((a, n) => {
-        const f = v => ( a[v] = ol.add2Arr(a[v],n), a);
+        const f = v => (a[v] = ol.add2Arr(a[v], n), a);
         return f(projection(n))
       }, {}),
-    groupByC: proj => xs.reduce((a, n) => (v => ( a[v] = ol.add2Arr(a[v],n), a))(proj(n)), {}), // auch nett!!!
-    groupBy: proj => xs.reduce((obj, val) => (key => ol.add2ObjArr(obj,key,val))(proj(n)), {}), // auch nett!!!
+    groupByC: proj => xs.reduce((a, n) => (v => (a[v] = ol.add2Arr(a[v], n), a))(proj(n)), {}), // auch nett!!!
+    groupBy: proj => xs.reduce((obj, val) => (key => ol.add2ObjArr(obj, key, val))(proj(n)), {}), // auch nett!!!
   }
   return api;
 }
@@ -88,7 +88,7 @@ const memoize = fn => {
   let cache = {};
   return x => cache.x || (cache[x] = fn(x));
 };
- 
+
 f = memoize(ol.fib);
 
-module.exports = { ol, num, interval, array }
+module.exports = {ol, num, interval, array}
