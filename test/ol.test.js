@@ -42,10 +42,10 @@ test('testset randomInRange', () => {
   //console.log(res);  
 });
 
-test('testset randomInRangeInt', () => {
+test('testset randomIntInRange', () => {
   const res = {};
   for (let i = 0; i < 1000; i++) {
-    const x = ol.randomInRangeInt(1, 6);
+    const x = ol.randomIntInRange(1, 6);
     res[x] = (res[x] || 0) + 1;
     expect(x).toBeGreaterThanOrEqual(1);
     expect(x).toBeLessThanOrEqual(6);
@@ -120,7 +120,7 @@ test('testset randomArray', () => {
 
 test('testset randomIntArray', () => {
   const arr = ol.randomIntArray(100, 1, 3);
-  const grps = array(arr).groupByA(ol.id);
+  const grps = array(arr).groupBy(ol.id);
   // console.log(grps)
   expect(arr.every(x => x === 1 || x === 2 || x === 3)).toBe(true);
   expect(Object.keys(grps).every(x => grps[x].length > 10)).toBe(true);
@@ -148,6 +148,19 @@ test('testset withoutIndex', () => {
   expect(ol.withoutIndex([1, 2, 3, 4], 2)).toEqual([1, 2, 4]);
 });
 
+test('testset add2arr', () => {
+  expect(ol.add2arr(undefined, 1)).toEqual([1]);
+  expect(ol.add2arr([], 1)).toEqual([1]);
+  expect(ol.add2arr([1, 2, 3], 4)).toEqual([1, 2, 3, 4]);
+});
+
+test('testset add2obj', () => {
+  const o = {};
+  expect(ol.add2obj(o, 'key', 1)).toEqual({'key': [1]});
+  expect(ol.add2obj(o, 'key', 2)).toEqual({'key': [1, 2]});
+//expect( ol.add2obj({'a':undefined},'a',1) ).toEqual({'a':[1]});
+});
+
 // Wrappers
 {
   test('testset num', () => {
@@ -169,7 +182,50 @@ test('testset withoutIndex', () => {
     expect(num(3).ininterval(2, 4)).toBe(true);
     expect(num(2).ininterval(3, 4)).toBe(false);
     expect(num(3).ininterval(1, 2)).toBe(false);
-
   });
+
+  test('testset interval', () => {
+    expect(interval(1, 2).array()).toEqual([1, 2]);
+    expect(interval(0, 10).array()).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+    expect(interval(1, 10).contains(1)).toBe(true);
+    expect(interval(1, 10).contains(2)).toBe(true);
+    expect(interval(1, 10).contains(0.5)).toBe(false);
+    expect(interval(1, 10).contains(10.5)).toBe(false);
+
+    expect(interval(1, 2).intersects(0.5, 1.5)).toBe(true);
+    expect(interval(1, 2).intersects(1.5, 2, 5)).toBe(true);
+    expect(interval(1, 2).intersects(0.5, 0.7)).toBe(false);
+    expect(interval(1, 2).intersects(2.1, 2, 5)).toBe(false);
+
+    expect(interval(1, 10).inc(1)).toBe(2);
+    expect(interval(1, 10).inc(9)).toBe(10);
+    expect(interval(1, 10).inc(10)).toBe(10);
+
+    expect(interval(0, 10).dec(10)).toBe(9);
+    expect(interval(0, 10).dec(9)).toBe(8);
+    expect(interval(0, 10).dec(1)).toBe(0);
+    expect(interval(0, 10).dec(0)).toBe(0);
+  });
+
+  test('testset array', () => {
+    expect(array([1, 2, 3]).sum()).toBe(6);
+
+    expect(array(['a', 'a', 'b', 'b']).uniq()).toEqual(['a', 'b']);
+    expect(array([1, 2, 3, 3]).uniq()).toEqual([1, 2, 3]);
+
+    expect(array([]).unite([])).toEqual([]);
+    expect(array(['a', 'b']).unite([1])).toEqual(['a', 'b', 1]);
+    expect(array(['a', 'b']).unite(['b', 'c', 'd'])).toEqual(['a', 'b', 'c', 'd']);
+
+    expect(array([]).intersect([])).toEqual([]);
+    expect(array([1, 2, 3]).intersect([3, 4, 5])).toEqual([3]);
+
+    expect(array([]).without([3])).toEqual([]);
+    expect(array([3]).without([3])).toEqual([]);
+    expect(array([1]).without([3])).toEqual([1]);
+
+
+  })
 
 }

@@ -6,7 +6,7 @@ const ol = {
   fac: x => ol.range(x).reduce((acc, n) => acc * (n + 1), 1),
   fib: x => x <= 2 ? 1 : ol.fib(x - 1) + ol.fib(x - 2),
   randomInRange: (min, max) => Math.random() * (max - min) + min,
-  randomInRangeInt: (min, max) => Math.floor(ol.randomInRange(min, max + 1)),
+  randomIntInRange: (min, max) => Math.floor(ol.randomInRange(min, max + 1)),
 
   // predicates
   odd: x => x % 2 !== 0,
@@ -21,15 +21,14 @@ const ol = {
   range: n => [...Array(n).keys()],
   rangeFilled: (n, val) => [...Array(n).keys()].map(() => val),
   randomArray: (n, min, max) => ol.range(n).map(() => ol.randomInRange(min, max)),
-  randomIntArray: (n, min, max) => ol.range(n).map(() => ol.randomInRangeInt(min, max)),
+  randomIntArray: (n, min, max) => ol.range(n).map(() => ol.randomIntInRange(min, max)),
   sum: xs => xs.reduce((acc, x) => acc + x, 0),
   without: (xs, x) => xs.filter(y => x !== y),
   withoutIndex: (xs, idx) => xs.filter((_, i) => i !== idx),
-  random: (n, min, max) => ol.range(n).map(() => ol.randomInRange(min, max)),
 
   // 
-  add2Arr: (a, v) => a ? [...a, v] : [v],
-  add2ObjArr: (o, key, val) => (o[key] = o[key] ? [...o[key], val] : [v], o),
+  add2arr: (a, v) => a ? [...a, v] : [v],
+  add2obj: (o, k, v) => (o[k] = ol.add2arr(o[k], v), o),
 };
 
 // Wrappers
@@ -48,11 +47,11 @@ const interval = (a, b) => {
   return {
     array: () => [...Array(b - a + 1).keys()].map(x => x + a),
     contains: x => a <= x && x <= b,
-    intersects: (x, y) => !(x < a || y > b),
-    inc: x => x === b ? x : x + 1,
-    dec: x => x === a ? x : x - 1,
-    random: () => Math.random() * (b - a + 1) + a,
-    randomInt: () => Math.floor(Math.random() * (b - a + 1) + a),
+    intersects: (x, y) => !(y < a || x > b),
+    inc: x => x >= b ? b : x + 1,
+    dec: x => x <= a ? a : x - 1,
+    random: () => ol.randomInRange(a, b),
+    randomInt: () => ol.randomIntInRange(a, b),
   };
 };
 
@@ -63,21 +62,15 @@ const array = xs => {
     withoutIndex: idx => ol.withoutIndex(idx),
     head: () => [xs[0]],
     tail: () => xs.slice(1),
-    intersect: ys => {
-    }, // TODO!!!!
-    unite: ys => {
-    }, // TODO!!!!
-    groupByA: projection => xs.reduce((a, n) => {
-        const p = projection(n);
-        a[p] = a[p] ? [...a[p], n] : [n];
-        return a;
-      }, {}),
-    groupByB: projection => xs.reduce((a, n) => {
-        const f = v => (a[v] = ol.add2Arr(a[v], n), a);
-        return f(projection(n))
-      }, {}),
-    groupByC: proj => xs.reduce((a, n) => (v => (a[v] = ol.add2Arr(a[v], n), a))(proj(n)), {}), // auch nett!!!
-    groupBy: proj => xs.reduce((obj, val) => (key => ol.add2ObjArr(obj, key, val))(proj(n)), {}), // auch nett!!!
+    first: () => xs[0],
+    last: () => xs[xs.length - 1],
+    max: () => xs.reduce((a, x) => x > a ? x : a),
+    min: () => xs.reduce((a, x) => x < a ? x : a),
+    groupBy: proj => xs.reduce((a, v) => ol.add2obj(a, proj(v), v), {}),
+    uniq: () => xs.reduce((a, x) => a.includes(x)? a : [...a,x], []),
+    unite: ys => array([...xs, ...ys]).uniq(),
+    intersect: ys => xs.filter(x => ys.includes(x)),
+    without: ys => xs.filter(x => !ys.includes(x)),
   }
   return api;
 }
@@ -89,6 +82,6 @@ const memoize = fn => {
   return x => cache.x || (cache[x] = fn(x));
 };
 
-f = memoize(ol.fib);
+const fib = memoize(ol.fib);
 
 module.exports = {ol, num, interval, array}
