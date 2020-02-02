@@ -5,7 +5,7 @@ const perm = require('../src/algorithms/perm');
 const fac = require('../src/algorithms/fac');
 
 const permWithFilter = perm.permWithFilter;
-const perms = [perm.perm1, perm.perm2, perm.perm3]
+const perms = [perm.perm1, perm.perm2, perm.perm3, perm.perm4]
 
 perms.forEach(perm => test('testset1 ' + perm.name, () => {
     const res = JSON.stringify(perm("ABC".split('')).map(x => x.join('')).sort());
@@ -37,7 +37,7 @@ test('testset permWithFilter', () => {
     expect(res).toEqual(expected);
 });
 
-test('testset sort with permWithFilter', () => {
+test('testset sort with permWithFilter', () => { 
     const sortFilter = x => x.reduce( (acc,elem,idx) => idx === 0 ? true : x[idx-1] < x[idx] );
     const permSorter = permWithFilter( sortFilter );
     const res = permSorter([2,4,5,1,3]);
