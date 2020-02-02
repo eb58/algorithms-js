@@ -1,4 +1,4 @@
-const combinations = require('../combinations').comb2;
+const combinations = require('../combinations')[0];
 const perm = require('../perm').perm2;
 const magicSquareUtils= require('./magic-square-utils');
 

@@ -1,7 +1,8 @@
 const range = n => [...Array(n).keys()];
 
+// comb1 - fastest solution
 const comb1 = (xs, k) => {
-  const r = [];
+  const result = [];
   const res = [];
 
   const run = (level, start) => {
@@ -11,48 +12,33 @@ const comb1 = (xs, k) => {
       if (level < k - 1) {
         run(level + 1, i + 1);
       } else {
-        r.push(res.slice());
+        result.push(res.slice());
       }
     }
   };
   run(0, 0);
-  return r;
+  return result;
 };
 
+// comb1a - similar to comb1
+comb1a = (xs, k) => { 
+  const result = [];
+  combX = (sofar, rest, k) => k === 0 ? result.push(sofar) : range(rest.length).forEach(i => combX([...sofar, rest[i]], rest.slice(i + 1), k - 1));
+  combX([], xs, k);
+  return result;
+}
 
 /*
- comb( [1,2,3,4], 0 ) ->  [ ]
- comb( [1,2,3,4], 1 ) ->  [ [1], [2], [3], [4] ]
- comb( [1,2,3,4], 2 ) ->  [ [1,2], [1,3], [1,4], [2,3], [2,4], [3,4] ]
- comb( [1,2,3,4], 3 ) ->  [ [1,2,3], [1,2,4], [1,3,4], [2,3,4] ]
- comb( [1,2,3,4], 4 ) ->  [ [1,2,3,4] ]
- 
- c( [1,2,3,4], 2 ) ->
- c([2,3,4],1).map(ys => [1,...ys]
- c([3,4],1).map(ys => [2,...ys]
- c([4],1).map(ys => [3,...ys]
- 
- c( [1,2,3,4,5], 2 ) ->
- c([2,3,4,5],1).map(ys => [1,...ys]
- c([3,4,5],1).map(ys => [2,...ys]
- c([4,5],1).map(ys => [3,...ys]
- c([5],1).map(ys => [4,...ys]
- 
- c( [1,2,3,4,5], 3 ) ->
- c([2,3,4,5],2).map(ys => [1,...ys]
- c([3,4,5],1).map(ys => [2,...ys]
- c([4,5],1).map(ys => [3,...ys]
- c([5],1).map(ys => [4,...ys]
- c([3,4,5],2).map(ys => [2,...ys]
- c([4,5],1).map(ys => [3,...ys]
- c([5],1).map(ys => [4,...ys]
- c([4,5],2).map(ys => [3,...ys]
- c([5],1).map(ys => [4,...ys]
+ /*
+ (12345,3) ->
+ 1 ++ (2345,2)
+ 2 ++ (345,2)
+ 3 ++ (45,2)
  */
-tails = (xs, k) => range(xs.length - k + 1).map(i => ({head: xs[i], tail: xs.slice(i + 1)}));
-comb2 = (xs, k) => !k ? [[]] : tails(xs, k).reduce((a, ys) => [...a, ...comb2(ys.tail, k - 1).map(zs => [ys.head, ...zs])], []);
+// comb2 - Most elegant solution
+comb2 = (xs, k) => !k ? [[]] : range(xs.length - k + 1).reduce((a, i) => [...a, ...comb2(xs.slice(i + 1), k - 1).map(ys => [xs[i], ...ys])], [])
 
-// comb3a only for ordered sets:  x= [1,2,3,4,5] 
+// only for ordered sets:  x= [1,2,3,4,5] 
 /* comb([1,2,3,4,5],k) ->
  2  3    4
  12 123  1234
@@ -67,28 +53,23 @@ comb2 = (xs, k) => !k ? [[]] : tails(xs, k).reduce((a, ys) => [...a, ...comb2(ys
  45 345
  */
 
+// comb3 --- too slow !!!
 max = xs => xs.reduce((a, x) => x > a ? x : a, 0);
 largerThan = (xs, a) => xs.filter(x => x > a);
-comb3a = (xs, k) => k === 1 ? xs.map(x=>[x]) : comb3a(xs, k - 1).reduce((a, ys) => [...a, ...largerThan(xs, max(ys)).map(x => [...ys, x])], []);
-comb3 = (xs, k) => comb3a(xs.map((x, i) => i), k).map(ys => ys.map((y) => xs[y]))
+comb3a = (xs, k) => k === 1 ? xs.map(x => [x]) : comb3a(xs, k - 1).reduce((a, ys) => [...a, ...largerThan(xs, max(ys)).map(x => [...ys, x])], []);
+comb3 = (xs, k) => comb3(xs.map((x, i) => i), k).map(ys => ys.map((y) => xs[y]))
 
-comb4 = (xs, k) => { 
-  const result = [];
-  combX = (sofar, rest, k) => k === 0 ? result.push(sofar) : range(rest.length).forEach(i => combX([...sofar, rest[i]], rest.slice(i + 1), k - 1));
-  combX([], xs, k);
-  return result;
-}
+
 /* Haskell
- combinations :: Int -> [a] -> [[a]]
- combinations 0 _ = [[]]
- combinations _ [] = []
- combinations n (x:xs) = (map (x:) (combinations (n-1) xs)) ++ (combinations n xs)
+ comb :: Int -> [a] -> [[a]]
+ comb 0 _ = [[]]
+ comb _ [] = []
+ comb n (x:xs) = (map (x:) (comb (n-1) xs)) ++ (comb n xs)
  */
 
-
-module.exports = {
+module.exports = [
   comb1,
+  comb1a,
   comb2,
-  comb3,
-  comb4,
-};
+  // comb3, too slow!!
+];
