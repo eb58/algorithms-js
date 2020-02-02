@@ -1,5 +1,13 @@
 const range = n => [...Array(n).keys()];
 
+/*
+ (12345,3) ->
+ 1 ++ (2345,2)
+ 2 ++ (345,2)
+ 3 ++ (45,2)
+ */
+
+
 // comb1 - fastest solution
 const comb1 = (xs, k) => {
   const result = [];
@@ -21,25 +29,17 @@ const comb1 = (xs, k) => {
 };
 
 // comb1a - similar to comb1
-comb1a = (xs, k) => { 
+comb1a = (xs, k) => {
   const result = [];
   combX = (sofar, rest, k) => k === 0 ? result.push(sofar) : range(rest.length).forEach(i => combX([...sofar, rest[i]], rest.slice(i + 1), k - 1));
   combX([], xs, k);
   return result;
 }
 
-/*
- /*
- (12345,3) ->
- 1 ++ (2345,2)
- 2 ++ (345,2)
- 3 ++ (45,2)
- */
 // comb2 - Most elegant solution
 comb2 = (xs, k) => !k ? [[]] : range(xs.length - k + 1).reduce((a, i) => [...a, ...comb2(xs.slice(i + 1), k - 1).map(ys => [xs[i], ...ys])], [])
 
-// only for ordered sets:  x= [1,2,3,4,5] 
-/* comb([1,2,3,4,5],k) ->
+/*
  2  3    4
  12 123  1234
  13 124  1235
@@ -52,13 +52,11 @@ comb2 = (xs, k) => !k ? [[]] : range(xs.length - k + 1).reduce((a, i) => [...a, 
  35 245
  45 345
  */
-
-// comb3 --- too slow !!!
+// comb3 --- too slow  but quite interesting!!!
 max = xs => xs.reduce((a, x) => x > a ? x : a, 0);
 largerThan = (xs, a) => xs.filter(x => x > a);
 comb3a = (xs, k) => k === 1 ? xs.map(x => [x]) : comb3a(xs, k - 1).reduce((a, ys) => [...a, ...largerThan(xs, max(ys)).map(x => [...ys, x])], []);
 comb3 = (xs, k) => comb3(xs.map((x, i) => i), k).map(ys => ys.map((y) => xs[y]))
-
 
 /* Haskell
  comb :: Int -> [a] -> [[a]]
@@ -71,5 +69,4 @@ module.exports = [
   comb1,
   comb1a,
   comb2,
-  // comb3, too slow!!
 ];
