@@ -58,7 +58,7 @@ const interval = (a, b) => {
 const array = xs => {
   const api = {
     sum: () => ol.sum(xs),
-    without: x => ol.without(x),
+    without: x => ol.without(xs,x),
     withoutIndex: idx => ol.withoutIndex(idx),
     head: () => [xs[0]],
     tail: () => xs.slice(1),
@@ -70,7 +70,9 @@ const array = xs => {
     uniq: () => xs.reduce((a, x) => a.includes(x)? a : [...a,x], []),
     unite: ys => array([...xs, ...ys]).uniq(),
     intersect: ys => xs.filter(x => ys.includes(x)),
-    without: ys => xs.filter(x => !ys.includes(x)),
+    subtract: ys => xs.filter(x => !xs.includes(x)),
+    subsetOf: ys => ys.every(x => xs.includes(x)),
+    tap: f => (f(xs),xs),
   }
   return api;
 }

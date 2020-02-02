@@ -23,14 +23,14 @@ const magicSquareUtils = n => {
             let res = "\n"
             for (let r = 0; r < n; r++) {
                 for (let c = 0; c < n; c++) {
-                    res += ("  " + valAt(square, r, c)).substr(-3);
+                    res += ("  " + utils.valAt(square, r, c)).substr(-3);
                 }
                 res += "\n";
             }
             return res;
         },
         dump: (prefix, square) => {
-            console.log("DUMP " + prefix + magicSquareUtils.dumpStr(square));
+            console.log("DUMP " + prefix + utils.dumpStr(square));
         },
         intersect: (a, b) => {
             const alen = a.length, blen = b.length;
@@ -43,7 +43,7 @@ const magicSquareUtils = n => {
             return false;
         },
         range: n => [...Array(n).keys()],
-        computeMagicNumber: n => utils.range(nSqr).map(x => x + 1).reduce((acc, x) => acc + x, 0) / n,
+        computeMagicNumber: () => utils.range(nSqr).map(x => x + 1).reduce((acc, x) => acc + x, 0) / n,
         isMagic: square => square.length === nSqr && utils.diag1SumOK(square) && utils.diag2SumOK(square) && utils.colSumOK(square),
         valAt: (square, r, c) => square[c + r * n],
         setRow: (square, row, perm) => {

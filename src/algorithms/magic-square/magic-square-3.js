@@ -41,7 +41,7 @@ const magicSquare = n => {
         { row: [12, 9, 6, 3] },  // diag2
 
         {
-            row: [1, 2], restriction: (square, perm, availableNumbers) => {
+            row: [1, 2], restriction: (square, availableNumbers, perm ) => {
 
                 if (square[0] + perm[0] + perm[1] + square[3] !== MN)
                     return false;
@@ -56,7 +56,7 @@ const magicSquare = n => {
         },
         {
             row: [13],
-            restriction: (square, perm, availableNumbers) => {
+            restriction: (square, availableNumbers) => {
                 if (!availableNumbers.includes(MN - (square[1] + square[5] + square[9])))
                     return false;
                 return true;
@@ -68,7 +68,7 @@ const magicSquare = n => {
         },
         {
             row: [14],
-            restriction: (square, perm, availableNumbers) => {
+            restriction: (square, availableNumbers) => {
                 if (!availableNumbers.includes(MN - (square[2] + square[6] + square[10])))
                     return false;
                 return true;
@@ -79,7 +79,7 @@ const magicSquare = n => {
             }
         },
         {
-            row: [4, 8], restriction: (square, perm, availableNumbers) => {
+            row: [4, 8], restriction: (square, availableNumbers) => {
 
                 if (square[0] + perm[0] + perm[1] + square[12] !== MN)
                     return false;
@@ -130,8 +130,8 @@ const magicSquare = n => {
         // console.log(dumpStr(square), "combis", combis.map(c => c.numbersArray), 'Available Numbers:', availableNumbers, 'LEV', lev);
         const row = rows[lev];
         combis.forEach((combi, idx) => {
-            combi.perms.forEach(p => {
-                if (row.restriction && !row.restriction(square, p, availableNumbers))
+            combi.perms.forEach(perm => {
+                if (row.restriction && !row.restriction(square, availableNumbers, perm))
                     return;
 
                 if (row.setValue) {
@@ -145,7 +145,7 @@ const magicSquare = n => {
                 } else {
 
                     const lsquare = [...square];
-                    const valuesSet = utils.setRow(lsquare, row.row, p);
+                    const valuesSet = utils.setRow(lsquare, row.row, perm);
                     const newAvailableNumbers = availableNumbers.filter(n => !valuesSet.includes(n));
                     const newCombis = rows[lev + 1].row.length === 4
                         ? combis.filter(c => !utils.intersect(c.numbersArray, valuesSet))

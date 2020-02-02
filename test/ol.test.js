@@ -221,10 +221,9 @@ test('testset add2obj', () => {
     expect(array([]).intersect([])).toEqual([]);
     expect(array([1, 2, 3]).intersect([3, 4, 5])).toEqual([3]);
 
-    expect(array([]).without([3])).toEqual([]);
-    expect(array([3]).without([3])).toEqual([]);
-    expect(array([1]).without([3])).toEqual([1]);
-
+    expect(array([]).without(3)).toEqual([]);
+    expect(array([3]).without(3)).toEqual([]);
+    expect(array([1]).without(3)).toEqual([1]);
 
   })
 
