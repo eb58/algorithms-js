@@ -12,13 +12,26 @@ module.exports = () => {
   const N = 4;
   const utils = magicSquareUtils(N);
   const MN = utils.computeMagicNumber();
+  const computeAvailable2Sums = availableNumbers => array(comb(availableNumbers, 2).map(x => x[0] + x[1]).sort((x,y)=>x-y)).uniq();
+  
   let square = ol.rangeFilled(N * N, 0);
   let availableNumbers = ol.range(N * N).map(x => x + 1);
+  let available2Sums = computeAvailable2Sums(availableNumbers);
+  
 
-  const computeCombis = (square, availableNumbers, rowdef) =>
-    rowdef ? comb(availableNumbers, rowdef.row.length)
+  const computeCombis = (square, availableNumbers, rowdef) => rowdef
+            ? comb(availableNumbers, rowdef.row.length)
             .filter(xs => rowdef.restriction(xs, square, availableNumbers))
-            .map(xs => ({numbersArray: xs, perms: perm(xs)})) : [];
+            .map(xs => ({
+                numbersArray: xs,
+                perms: perm(xs),
+                available2Sums: computeAvailable2Sums(xs),
+              }))
+            : [];
+
+  const numberOneIsNotInFirstQuad = (square) =>
+    [7, 10, 11, 13, 14, 15].some(x => square[x] === 1)
+  // || [8, 9, 10, 11, 12, 13, 14, 15].some(x => square[x] === 1);
 
   const rowsDef = [
     /*  
@@ -28,7 +41,12 @@ module.exports = () => {
      12 13 14 15
      */
     {row: [0, 5, 10, 15], restriction: xs => xs.sum() === MN}, // diag1
-    {row: [12, 9, 6, 3], restriction: xs => xs.sum() === MN}, // diag2
+    {row: [12, 9, 6, 3], restriction: xs => {
+        if (xs.sum() !== MN)
+          return false;
+        // if( )
+        return true;
+      }}, // diag2
     {row: [1, 2],
       restriction: (xs, square, availableNumbers) => {
         if (square[0] + xs[0] + xs[1] + square[3] !== MN)
@@ -49,36 +67,40 @@ module.exports = () => {
           return false;
         return true;
       }},
-    {row: [13], restriction: (xs, square, availableNumbers) => xs[0] + square[1] + square[5] + square[9] === MN },
+    {row: [13], restriction: (xs, square, availableNumbers) => xs[0] + square[1] + square[5] + square[9] === MN},
     {row: [14], restriction: (xs, square, availableNumbers) => xs[0] + square[2] + square[6] + square[10] === MN},
     {row: [7], restriction: (xs, square, availableNumbers) => xs[0] + square[4] + square[5] + square[6] === MN},
     {row: [11], restriction: (xs, square, availableNumbers) => xs[0] + square[8] + square[9] + square[10] === MN},
-    //{row: [4], restriction: (xs, square, availableNumbers) => xs[0] + square[5] + square[6] + square[7] === MN},
-    // {row: [8], restriction: (xs, square, availableNumbers) => xs[0] + square[9] + square[10] + square[11] === MN},
   ]
-  console.log(availableNumbers, rowsDef, JSON.stringify(rowsDef));
+
+  console.log(availableNumbers, computeAvailable2Sums, rowsDef, JSON.stringify(rowsDef), computeCombis(square, rowsDef[0]));
 
   const res = [];
+  let k = 0
 
-  const combineToMagicSquare = (square, availableNumbers, i) => {
+  const combineToMagicSquare = (square, availableNumbers, available2Sums, i) => {
 
     if (availableNumbers.length === 0 && utils.isMagic(square)) {
       res.push(square);
       return;
     }
 
+
+    // if (numberOneIsNotInFirstQuad(square)) { console.log('AAA', k++);      return;    }
+
     const combis = computeCombis(square, availableNumbers, rowsDef[i]);
     // console.log(availableNumbers, JSON.stringify(combis));
     combis.forEach(combi => {
       const lAvailableNumbers = availableNumbers.subtract(combi.numbersArray)
+      const available2Sums = combi.available2Sums;
       combi.perms.forEach(perm => {
         utils.setRow(square, rowsDef[i].row, perm);
         // utils.dump('>>>>>>>>>>>>>>>>>>>>>', square);
-        combineToMagicSquare([...square], lAvailableNumbers, i + 1)
+        combineToMagicSquare([...square], lAvailableNumbers, available2Sums, i + 1)
       })
     })
   }
-  combineToMagicSquare(square, availableNumbers, 0);
+  combineToMagicSquare(square, availableNumbers, available2Sums, 0);
   // console.log("RES", res.length, res);
   return res;
 }
