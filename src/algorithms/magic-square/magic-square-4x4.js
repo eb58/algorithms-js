@@ -39,7 +39,7 @@ module.exports = () => {
     {row: [12, 9, 6, 3], restriction: ( square, xs ) => {
         if (xs.sum() !== MN)
           return false;
-        // if( )
+        //if( )
         return true;
       }}, // diag2
     {row: [1, 2],
