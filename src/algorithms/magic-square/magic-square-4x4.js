@@ -13,18 +13,13 @@ module.exports = () => {
   const utils = magicSquareUtils(N);
   const MN = utils.computeMagicNumber();
   const computeAvailable2Sums = availableNumbers => array(comb(availableNumbers, 2).map(x => x[0] + x[1]).sort((x,y)=>x-y)).uniq();
-  
-  const square = ol.rangeFilled(N * N, 0);
-  const availableNumbers = ol.range(N * N).map(x => x + 1);
-  const available2Sums = computeAvailable2Sums(availableNumbers);
-  
 
   const computeCombis = (square, availableNumbers, rowdef) => rowdef
             ? comb(availableNumbers, rowdef.row.length)
             .filter(xs => rowdef.restriction(square, xs, availableNumbers))
             .map(xs => ({
-                numbersArray: xs,
                 perms: perm(xs),
+                numbersArray: xs,
                 available2Sums: computeAvailable2Sums(xs),
               }))
             : [];
@@ -76,7 +71,6 @@ module.exports = () => {
   console.log(availableNumbers, computeAvailable2Sums, rowsDef, JSON.stringify(rowsDef), computeCombis(square, rowsDef[0]));
 
   const res = [];
-  let k = 0
 
   const combineToMagicSquare = (square, availableNumbers, available2Sums, i) => {
 
@@ -85,22 +79,32 @@ module.exports = () => {
       return;
     }
 
-
     // if (numberOneIsNotInFirstQuad(square)) { console.log('AAA', k++);      return;    }
 
     const combis = computeCombis(square, availableNumbers, rowsDef[i]);
     // console.log(availableNumbers, JSON.stringify(combis));
     combis.forEach(combi => {
-      const lAvailableNumbers = availableNumbers.subtract(combi.numbersArray)
-      const available2Sums = combi.available2Sums;
       combi.perms.forEach(perm => {
         utils.setRow(square, rowsDef[i].row, perm);
-        // utils.dump('>>>>>>>>>>>>>>>>>>>>>', square);
-        combineToMagicSquare([...square], lAvailableNumbers, available2Sums, i + 1)
+        combineToMagicSquare(
+          [...square], 
+          availableNumbers.subtract(combi.numbersArray),
+          combi.available2Sums, 
+          i + 1)
       })
     })
   }
+
+
+  const square = ol.rangeFilled(N * N, 0);
+  const availableNumbers = ol.range(N * N).map(x => x + 1);
+  const available2Sums = computeAvailable2Sums(availableNumbers);
+  
   combineToMagicSquare(square, availableNumbers, available2Sums, 0);
   // console.log("RES", res.length, res);
   return res;
 }
+
+
+
+
