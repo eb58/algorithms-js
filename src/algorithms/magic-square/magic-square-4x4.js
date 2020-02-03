@@ -14,14 +14,14 @@ module.exports = () => {
   const MN = utils.computeMagicNumber();
   const computeAvailable2Sums = availableNumbers => array(comb(availableNumbers, 2).map(x => x[0] + x[1]).sort((x,y)=>x-y)).uniq();
   
-  let square = ol.rangeFilled(N * N, 0);
-  let availableNumbers = ol.range(N * N).map(x => x + 1);
-  let available2Sums = computeAvailable2Sums(availableNumbers);
+  const square = ol.rangeFilled(N * N, 0);
+  const availableNumbers = ol.range(N * N).map(x => x + 1);
+  const available2Sums = computeAvailable2Sums(availableNumbers);
   
 
   const computeCombis = (square, availableNumbers, rowdef) => rowdef
             ? comb(availableNumbers, rowdef.row.length)
-            .filter(xs => rowdef.restriction(xs, square, availableNumbers))
+            .filter(xs => rowdef.restriction(square, xs, availableNumbers))
             .map(xs => ({
                 numbersArray: xs,
                 perms: perm(xs),
@@ -40,15 +40,15 @@ module.exports = () => {
      8  9 10 11
      12 13 14 15
      */
-    {row: [0, 5, 10, 15], restriction: xs => xs.sum() === MN}, // diag1
-    {row: [12, 9, 6, 3], restriction: xs => {
+    {row: [0, 5, 10, 15], restriction:( square, xs ) => xs.sum() === MN}, // diag1
+    {row: [12, 9, 6, 3], restriction: ( square, xs ) => {
         if (xs.sum() !== MN)
           return false;
         // if( )
         return true;
       }}, // diag2
     {row: [1, 2],
-      restriction: (xs, square, availableNumbers) => {
+      restriction: ( square, xs, availableNumbers) => {
         if (square[0] + xs[0] + xs[1] + square[3] !== MN)
           return false;
         if (!availableNumbers.includes(MN - (xs[0] + square[5] + square[9])) && !availableNumbers.includes(MN - (xs[1] + square[5] + square[9])))
@@ -58,7 +58,7 @@ module.exports = () => {
         return true;
       }
     },
-    {row: [4, 8], restriction: (xs, square, availableNumbers) => {
+    {row: [4, 8], restriction: (square, xs, availableNumbers) => {
         if (xs.sum() !== MN - square[0] - square[12])
           return false;
         if (!availableNumbers.includes(MN - (xs[0] + square[5] + square[6])) && !availableNumbers.includes(MN - (xs[1] + square[5] + square[6])))
@@ -67,10 +67,10 @@ module.exports = () => {
           return false;
         return true;
       }},
-    {row: [13], restriction: (xs, square, availableNumbers) => xs[0] + square[1] + square[5] + square[9] === MN},
-    {row: [14], restriction: (xs, square, availableNumbers) => xs[0] + square[2] + square[6] + square[10] === MN},
-    {row: [7], restriction: (xs, square, availableNumbers) => xs[0] + square[4] + square[5] + square[6] === MN},
-    {row: [11], restriction: (xs, square, availableNumbers) => xs[0] + square[8] + square[9] + square[10] === MN},
+    {row: [13], restriction: ( square, xs, availableNumbers) => xs[0] + square[1] + square[5] + square[9] === MN},
+    {row: [14], restriction: ( square, xs, availableNumbers) => xs[0] + square[2] + square[6] + square[10] === MN},
+    {row: [7], restriction: ( square, xs, availableNumbers) => xs[0] + square[4] + square[5] + square[6] === MN},
+    {row: [11], restriction: ( square, xs, availableNumbers) => xs[0] + square[8] + square[9] + square[10] === MN},
   ]
 
   console.log(availableNumbers, computeAvailable2Sums, rowsDef, JSON.stringify(rowsDef), computeCombis(square, rowsDef[0]));
