@@ -16,7 +16,6 @@ module.exports = () => {
   const idxNotForNumberOne = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
   const computeAvailable2Sums = availableNumbers => comb(availableNumbers, 2).map(x => x[0] + x[1]);
-  const computeCombis = (availableNumbers, rowdef) => comb(availableNumbers, rowdef.row.length);
   const setRow = (square, row, perm) => row.forEach((x, idx) => square[x] = perm[idx]);
   const numberOneIsNotInUpperLeft = xs => idxNotForNumberOne.some(x => xs[x] === 1);
 
@@ -29,15 +28,10 @@ module.exports = () => {
           return false;
 
         const x59 = MN - sq[5] - sq[9]
-        const x610 = MN - sq[6] - sq[10]
-
-        const av0 = availableNumbers.without(xs[0]);
-        const av1 = availableNumbers.without(xs[1]);
-
-        if (!av1.includes(x59 - xs[0]) && !av0.includes(x59 - xs[1]))
+        if (!availableNumbers.without(xs[1]).includes(x59 - xs[0]) && !availableNumbers.without(xs[0]).includes(x59 - xs[1]))
           return false;
-
-        if (!av1.includes(x610 - xs[0]) && !av0.includes(x610 - xs[1]))
+        const x610 = MN - sq[6] - sq[10]
+        if (!availableNumbers.without(xs[1]).includes(x610 - xs[0]) && !availableNumbers.without(xs[0]).includes(x610 - xs[1]))
           return false;
 
         return true;
@@ -48,16 +42,14 @@ module.exports = () => {
         if (sq[0] + xs[0] + xs[1] + sq[12] !== MN)
           return false;
 
-        if (!availableNumbers.includes(MN - (xs[0] + sq[5] + sq[6])) && !availableNumbers.includes(MN - (xs[1] + sq[5] + sq[6])))
-          return false;
-        if (!availableNumbers.includes(MN - (xs[0] + sq[9] + sq[10])) && !availableNumbers.includes(MN - (xs[1] + sq[9] + sq[10])))
-          return false;
-
-        if (!availableNumbers.includes(MN - (sq[1] + sq[5] + sq[9])))
-          return false;
-        if (!availableNumbers.includes(MN - (sq[2] + sq[6] + sq[10])))
+        const x56 = MN - sq[5] - sq[6]
+        if (!availableNumbers.without(xs[1]).includes(x56 - xs[0]) && !availableNumbers.without(xs[0]).includes(x56 - xs[1]))
           return false;
 
+        const x910 = MN - sq[9] - sq[10]
+        if (!availableNumbers.without(xs[1]).includes(x910 - xs[0]) && !availableNumbers.without(xs[0]).includes(x910 - xs[1]))
+          return false; 
+        
         return true;
       }},
     {row: [13], restriction: (xs, sq) => xs[0] + sq[1] + sq[5] + sq[9] === MN},
@@ -78,21 +70,21 @@ module.exports = () => {
     }
 
     const rowDef = rowsDef[i];
-    const combis = computeCombis(availableNumbers, rowDef)
+    const combis = comb(availableNumbers, rowDef.row.length)
             .filter(xs => rowDef.restriction(xs, square, availableNumbers))
 
-//    if (i === 20)  {
-//      console.log('i:', i, 'combis#:', combis.length, combis, 'available:', availableNumbers.join(' '), 'available2sums:', computeAvailable2Sums(availableNumbers).sort().join(' '));
-//      utils.dump('aaa', square);//, JSON.stringify(x, 0, 3));
-//    }
+    if (i === 200 && combis.length > 0) {
+      console.log('i:', i, 'combis#:', combis.length, combis, 'available:', availableNumbers.join(' '), 'available2sums:', computeAvailable2Sums(availableNumbers).sort().join(' '));
+      utils.dump('aaa', square);//, JSON.stringify(x, 0, 3));
+    }
 
     combis.forEach(combi => {
-      const newAvailableNumbers = availableNumbers.subtract(combi)
+      const newAvailableNumbers = availableNumbers.subtract(combi) 
       perm(combi).forEach(p => {
         setRow(square, rowDef.row, p);
         combineToMagicSquare([...square], newAvailableNumbers, i + 1)
       })
-    })
+    }) 
   }
 
   const square = ol.rangeFilled(N * N, 0);
