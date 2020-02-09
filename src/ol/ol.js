@@ -70,7 +70,7 @@ const array = xs => {
     uniq: () => xs.reduce((a, x) => a.includes(x)? a : [...a,x], []),
     unite: ys => array([...xs, ...ys]).uniq(),
     intersect: ys => xs.filter(x => ys.includes(x)),
-    subtract: ys => xs.filter(x => !xs.includes(x)),
+    subtract: ys => xs.filter(x => !ys.includes(x)),
     subsetOf: ys => ys.every(x => xs.includes(x)),
     tap: f => (f(xs),xs),
   }
