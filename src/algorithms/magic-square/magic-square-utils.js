@@ -44,7 +44,7 @@ const magicSquareUtils = n => {
         },
         range: n => [...Array(n).keys()],
         computeMagicNumber: () => utils.range(nSqr).map(x => x + 1).reduce((acc, x) => acc + x, 0) / n,
-        isMagic: sq => sq.length === nSqr && utils.diag1SumOK(sq) && utils.diag2SumOK(sq) && utils.colSumOK(sq) && utils.rowSumOK(sq),
+        isMagic: sq => sq.length === nSqr && utils.diag1SumOK(sq) && utils.diag2SumOK(sq) && utils.colSumOK(sq),
         valAt: (square, r, c) => square[c + r * n],
         setRow: (square, row, perm) => {
             row.forEach((x, idx) => {
