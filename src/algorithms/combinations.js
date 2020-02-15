@@ -9,7 +9,7 @@ const range = n => [...Array(n).keys()];
 
 
 // comb1 - fastest solution
-const comb1 = (xs, k) => {
+const comb1 = (xs, k, pred) => {
   const result = [];
   const res = [];
 
@@ -20,7 +20,9 @@ const comb1 = (xs, k) => {
       if (level < k - 1) {
         run(level + 1, i + 1);
       } else {
-        result.push(res.slice());
+        if (!pred || pred(res)) {
+          result.push(res.slice());
+        }
       }
     }
   };
