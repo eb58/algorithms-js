@@ -1,5 +1,9 @@
 module.exports = () => {
-
+  /*   
+   0  1  2  
+   3  4  5
+   6  7  8
+   */
   const ol = require('../../ol/ol').ol;
   const num = require('../../ol/ol').num;
   const interval = require('../../ol/ol').interval;
@@ -12,20 +16,12 @@ module.exports = () => {
   const N = 3;
   const utils = magicSquareUtils(N);
   const MN = utils.computeMagicNumber();
-  let square = ol.rangeFilled(N * N, 0);
-  let availableNumbers = ol.range(N * N).map(x => x + 1);
+  const idxNotForNumberOne = [2, 3, 4, 5, 6, 7, 8, 9];
 
-  const computeCombis = (square, availableNumbers, rowdef) =>
-    rowdef ? comb(availableNumbers, rowdef.row.length)
-            .filter(xs => rowdef.restriction(xs, square))
-            .map(xs => ({numbersArray: xs, perms: perm(xs)})) : [];
+  const setRow = (square, row, perm) => row.forEach((x, idx) => square[x] = perm[idx]);
+  const numberOneIsNotInUpperLeft = xs => idxNotForNumberOne.some(x => xs[x] === 1);
 
   const rowsDef = [
-    /*   
-     0  1  2  
-     3  4  5
-     6  7  8
-     */
     {row: [0, 4, 8], restriction: (xs) => xs.sum() === MN}, // diag
     {row: [1, 2], restriction: (xs, square) => xs.sum() === MN - square[0]},
     {row: [5], restriction: (xs, square) => xs.sum() === MN - square[2] - square[8]},
@@ -33,28 +29,34 @@ module.exports = () => {
     {row: [6], restriction: (xs, square) => xs.sum() === MN - square[7] - square[8]},
     {row: [3], restriction: (xs, square) => xs.sum() === MN - square[0] - square[6]},
   ]
-  console.log(availableNumbers, rowsDef, JSON.stringify(rowsDef));
-
-  const res = [];
+  //console.log(availableNumbers, rowsDef, JSON.stringify(rowsDef));
 
   const combineToMagicSquare = (square, availableNumbers, i) => {
-    if (availableNumbers.length === 0 && utils.isMagic(square)) {
+    if (numberOneIsNotInUpperLeft(square)) {
+      return;
+    }
+
+    if (availableNumbers.length === 0) {
       res.push(square);
       return;
     }
 
-    const combis = computeCombis(square, availableNumbers, rowsDef[i]);
-    // console.log(availableNumbers, JSON.stringify(combis));
+    const rowDef = rowsDef[i];
+    const combis = comb(availableNumbers, rowDef.row.length)
+            .filter(xs => rowDef.restriction(xs, square, availableNumbers))
+
     combis.forEach(combi => {
-      const lAvailableNumbers = availableNumbers.subtract(combi.numbersArray)
-      combi.perms.forEach(perm => {
-        utils.setRow(square, rowsDef[i].row, perm);
-        // utils.dump('>>>>>>>>>>>>>>>>>>>>>', square);
-        combineToMagicSquare([...square], lAvailableNumbers, i + 1)
+      const newAvailableNumbers = availableNumbers.subtract(combi)
+      perm(combi).forEach(p => {
+        setRow(square, rowDef.row, p);
+        combineToMagicSquare([...square], newAvailableNumbers, i + 1)
       })
     })
   }
+
+  const square = ol.rangeFilled(N * N, 0);
+  const availableNumbers = ol.range(N * N).map(x => x + 1);
+  const res = [];
   combineToMagicSquare(square, availableNumbers, 0);
-  // console.log("RES", res.length, res);
   return res;
 }
