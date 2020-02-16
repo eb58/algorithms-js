@@ -18,16 +18,16 @@ module.exports = () => {
   const MN = utils.computeMagicNumber();
   const idxNotForNumberOne = [2, 3, 4, 5, 6, 7, 8, 9];
 
-  const setRow = (square, row, perm) => row.forEach((x, idx) => square[x] = perm[idx]);
   const numberOneIsNotInUpperLeft = xs => idxNotForNumberOne.some(x => xs[x] === 1);
+  const setRow = (square, row, perm) => row.forEach((x, idx) => square[x] = perm[idx]);
 
   const rowsDef = [
     {row: [0, 4, 8], restriction: (xs) => xs.sum() === MN}, // diag
-    {row: [1, 2], restriction: (xs, square) => xs.sum() === MN - square[0]},
-    {row: [5], restriction: (xs, square) => xs.sum() === MN - square[2] - square[8]},
-    {row: [7], restriction: (xs, square) => xs.sum() === MN - square[1] - square[4]},
-    {row: [6], restriction: (xs, square) => xs.sum() === MN - square[7] - square[8]},
-    {row: [3], restriction: (xs, square) => xs.sum() === MN - square[0] - square[6]},
+    {row: [1, 2], restriction: (xs, sq) => xs.sum() === MN - sq[0]},
+    {row: [5], restriction: (xs, sq) => xs.sum() === MN - sq[2] - sq[8]},
+    {row: [7], restriction: (xs, sq) => xs.sum() === MN - sq[1] - sq[4]},
+    {row: [6], restriction: (xs, sq) => xs.sum() === MN - sq[7] - sq[8]},
+    {row: [3], restriction: (xs, sq) => xs.sum() === MN - sq[0] - sq[6]},
   ]
   //console.log(availableNumbers, rowsDef, JSON.stringify(rowsDef));
 
