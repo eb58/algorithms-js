@@ -5,8 +5,7 @@ module.exports = () => {
   const magicSquareUtils = require("./magic-square-utils");
 
   const N = 4;
-  const utils = magicSquareUtils(N);
-  const MN = utils.computeMagicNumber();
+  const MN = magicSquareUtils(N).computeMagicNumber();
   const idxNotForNumberOne = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
   const setRow = (square, row, perm) => row.forEach((x, idx) => (square[x] = perm[idx]));
@@ -50,7 +49,7 @@ module.exports = () => {
         combineToMagicSquare([...square], newAvailableNumbers, i + 1);
       });
     });
-  };
+  }; 
 
   const square = ol.rangeFilled(N * N, 0);
   const availableNumbers = ol.range(N * N).map(x => x + 1);
