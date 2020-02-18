@@ -15,15 +15,16 @@ const qsort1 = (arr, cmp) => {
     return [...lt, ...eq, ...gt];
 };
 
-const qsort2 = (arr, cmp) =>
-    arr.length <= 1
-            ? arr
-            : [
-                ...qsort2(arr.filter(n => cmp(n, arr[0]) < 0), cmp),
-                ...arr.filter(n => cmp(n, arr[0]) === 0),
-                ...qsort2(arr.filter(n => cmp(n, arr[0]) > 0), cmp)
-            ];
-
+const qsort2 = (arr, cmp) =>{
+    if (arr.length <= 1)
+        return arr;
+    const piv = arr.rndElem();
+    return  [
+        ...qsort2(arr.filter(n => cmp(n, arr[0]) < 0), cmp),
+        ...arr.filter(n => cmp(n, arr[0]) === 0),
+        ...qsort2(arr.filter(n => cmp(n, arr[0]) > 0), cmp)
+    ];
+} 
 
 const qsort3 = (arr, cmp) => {
     const partition = (arr, piv, cmp) => arr.reduce((res, n) => (res[cmp(n, piv) + 1].push(n), res), [[], [], []]);

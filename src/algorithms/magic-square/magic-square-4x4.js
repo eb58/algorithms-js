@@ -15,7 +15,7 @@ module.exports = () => {
 
   const check = {
     avn2: (xs, sq, availableNumbers) => checkPair(xs, sq, availableNumbers, 5, 9) && checkPair(xs, sq, availableNumbers, 6, 10),
-    avn3: (xs, sq, availableNumbers) => checkPair(xs, sq, availableNumbers, 5, 6) && checkPair(xs, sq, availableNumbers, 9, 10)
+    avn3: (xs, sq, availableNumbers) => checkPair(xs, sq, availableNumbers, 5, 6) && checkPair(xs, sq, availableNumbers, 9, 10),
   };
 
   const rowsDef = [
@@ -26,7 +26,7 @@ module.exports = () => {
     { row: [7], restriction: (xs, sq) => xs[0] + sq[4] + sq[5] + sq[6] === MN },
     { row: [11], restriction: (xs, sq) => xs[0] + sq[8] + sq[9] + sq[10] === MN },
     { row: [13], restriction: (xs, sq) => xs[0] + sq[1] + sq[5] + sq[9] === MN },
-    { row: [14], restriction: (xs, sq) => xs[0] + sq[2] + sq[6] + sq[10] === MN }
+    { row: [14], restriction: (xs, sq) => xs[0] + sq[2] + sq[6] + sq[10] === MN },
   ];
 
   const combineToMagicSquare = (square, availableNumbers, i) => {
@@ -54,7 +54,7 @@ module.exports = () => {
 
   const square = ol.rangeFilled(N * N, 0);
   const availableNumbers = ol.range(N * N).map(x => x + 1);
-  const res = []; 
+  const res = [];
   combineToMagicSquare(square, availableNumbers, 0);
   return res;
 };
