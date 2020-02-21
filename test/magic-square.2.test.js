@@ -1,6 +1,4 @@
-/* global expect */
 const ol = require('../src/ol/ol').ol;
-
 
 test('testset magic-square-3x3', () => {
   const magicSquare = require('../src/algorithms/magic-square/magic-square-3x3');
