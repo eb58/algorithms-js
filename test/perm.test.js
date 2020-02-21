@@ -4,8 +4,8 @@ const _ = require('underscore');
 const perm = require('../src/algorithms/perm');
 const fac = require('../src/algorithms/fac');
 
+const perms = Object.keys(perm).filter(name => name !== 'permWithFilter').map( k => perm[k]);
 const permWithFilter = perm.permWithFilter;
-const perms = [perm.perm1, perm.perm2, perm.perm3, perm.perm4]
 
 perms.forEach(perm => test('testset1 ' + perm.name, () => {
     const res = JSON.stringify(perm("ABC".split('')).map(x => x.join('')).sort());
