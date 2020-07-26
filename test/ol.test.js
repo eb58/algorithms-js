@@ -59,7 +59,7 @@ test('testset fibonacci', () => {
   expect(ol.fib(3)).toEqual(2);
   expect(ol.fib(4)).toEqual(3);
   expect(ol.fib(5)).toEqual(5);
-  expect(ol.fib(5)).toEqual(5);
+  expect(ol.fib(6)).toEqual(8);
 });
 
 test('testset odd & even', () => {
