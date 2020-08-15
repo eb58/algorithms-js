@@ -1,21 +1,11 @@
 module.exports = () => {
-  /*   
-   0  1  2  
-   3  4  5
-   6  7  8
-   */
-  const ol = require('../../ol/ol').ol;
-  const num = require('../../ol/ol').num;
-  const interval = require('../../ol/ol').interval;
-  const array = require('../../ol/ol').array;
-
-  const comb = require('../combinations')[0];
-  const perm = require('../perm').perm4;
   const magicSquareUtils = require('./magic-square-utils');
+  const comb = require('../combinations').comb1;
+  const perm = require('../perm').perm4;
+  const range = n => [...Array(n).keys()];
 
   const N = 3;
-  const utils = magicSquareUtils(N);
-  const MN = utils.computeMagicNumber();
+  const MN = range(N * N).map(x => x + 1).reduce((acc, x) => acc + x, 0) / N;
   const idxNotForNumberOne = [2, 3, 4, 5, 6, 7, 8, 9];
 
   const numberOneIsNotInUpperLeft = xs => idxNotForNumberOne.some(x => xs[x] === 1);
@@ -29,7 +19,6 @@ module.exports = () => {
     {row: [6], restriction: (xs, sq) => xs.sum() === MN - sq[7] - sq[8]},
     {row: [3], restriction: (xs, sq) => xs.sum() === MN - sq[0] - sq[6]},
   ]
-  //console.log(availableNumbers, rowsDef, JSON.stringify(rowsDef));
 
   const combineToMagicSquare = (square, availableNumbers, i) => {
     if (numberOneIsNotInUpperLeft(square)) {
@@ -42,8 +31,8 @@ module.exports = () => {
     }
 
     const rowDef = rowsDef[i];
-    const combis = comb(availableNumbers, rowDef.row.length)
-            .filter(xs => rowDef.restriction(xs, square, availableNumbers))
+    const predicate = xs => rowDef.restriction(xs, square, availableNumbers);
+    const combis = comb(availableNumbers, rowDef.row.length, predicate)
 
     combis.forEach(combi => {
       const newAvailableNumbers = availableNumbers.subtract(combi)
@@ -54,8 +43,8 @@ module.exports = () => {
     })
   }
 
-  const square = ol.rangeFilled(N * N, 0);
-  const availableNumbers = ol.range(N * N).map(x => x + 1);
+  const square = range(N * N).map(x => 0);
+  const availableNumbers = range(N * N).map(x => x + 1);
   const res = [];
   combineToMagicSquare(square, availableNumbers, 0);
   return res;

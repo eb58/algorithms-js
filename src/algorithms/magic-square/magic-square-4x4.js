@@ -1,11 +1,11 @@
 module.exports = () => {
-  const ol = require('../../ol/ol').ol;
-  const comb = require('../combinations')[0];
+  const comb = require('../combinations').comb1;
   const perm = require('../perm').perm4;
   const magicSquareUtils = require('./magic-square-utils');
+  const range = n => [...Array(n).keys()];
 
   const N = 4;
-  const MN = magicSquareUtils(N).computeMagicNumber();
+  const MN = range(N * N).map(x => x + 1).reduce((acc, x) => acc + x, 0) / N;
   const idxNotForNumberOne = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
   const setRow = (square, row, perm) => row.forEach((x, idx) => (square[x] = perm[idx]));
@@ -36,8 +36,8 @@ module.exports = () => {
     }
 
     const rowDef = rowsDef[i];
-    const predicate = (square, availableNumbers, rowDef) => xs => rowDef.restriction(xs, square, availableNumbers);
-    const combis = comb(availableNumbers, rowDef.row.length, predicate(square, availableNumbers, rowDef));
+    const predicate = xs => rowDef.restriction(xs, square, availableNumbers);
+    const combis = comb(availableNumbers, rowDef.row.length, predicate);
 
     combis.forEach(combi => {
       const newAvailableNumbers = availableNumbers.subtract(combi);
@@ -48,8 +48,8 @@ module.exports = () => {
     });
   };
 
-  const square = ol.rangeFilled(N * N, 0);
-  const availableNumbers = ol.range(N * N).map(x => x + 1);
+  const square = range(N * N).map(x => 0);
+  const availableNumbers = range(N * N).map(x => x + 1);
   const res = [];
   combineToMagicSquare(square, availableNumbers, 0);
   return res;

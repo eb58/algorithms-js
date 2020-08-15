@@ -9,14 +9,14 @@ const range = n => [...Array(n).keys()];
 
 
 // comb1 - fastest solution
-const comb1 = (xs, k, pred) => {
+comb1 = (xs, k, pred) => {
   const result = [];
   const res = [];
 
   const run = (level, start) => {
-    for (let i = start, len = xs.length - k + level + 1; i < len; i++) {
+    const len = xs.length - k + level + 1
+    for (let i = start; i < len; i++) {
       res[level] = xs[i];
-
       if (level < k - 1) {
         run(level + 1, i + 1);
       } else {
@@ -67,8 +67,25 @@ comb3 = (xs, k) => comb3(xs.map((x, i) => i), k).map(ys => ys.map((y) => xs[y]))
  comb n (x:xs) = (map (x:) (comb (n-1) xs)) ++ (comb n xs)
  */
 
-module.exports = [
+comb4 = (() => {
+  const range = n => [...Array(n).keys()];
+  const cache = {};
+  return comb4 = (xs, k) => {
+    const len = xs.length;
+    if (!cache[len]) {
+      cache[len] = {}
+    }
+    if (!cache[len][k]) {
+      cache[len][k] = comb1(range(len), k);
+    }
+    const mapping = xs.reduce((acc, x, i) => (acc[i] = x, acc), {});
+    return cache[len][k].map(ys => ys.map(y => mapping[y]))
+  }
+})();
+
+module.exports = {
   comb1,
   comb1a,
   comb2,
-];
+  comb4
+};
