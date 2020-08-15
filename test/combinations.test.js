@@ -1,6 +1,7 @@
 /* global  expect */
 const range = n => [...Array(n).keys()];
-const combinations = require('../src/algorithms/combinations');
+const combs = require('../src/algorithms/combinations');
+const combinations = Object.keys(combs).map(k => combs[k]);
 
 combinations.forEach(comb => test('testset1 '+ comb.name,  () => {
     expect(comb(range(3), 2).length).toEqual(3);
