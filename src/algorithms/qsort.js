@@ -1,4 +1,4 @@
-const _ = require("underscore");
+const ol = require("./ol").ol;
 
 Array.prototype.rndElem = function () {
     return this[Math.floor(Math.random() * this.length)];
@@ -33,7 +33,7 @@ const qsort3 = (arr, cmp) => {
 };
 
 const qsort4 = (arr, cmp) => {
-    const p = _.groupBy(arr, n => cmp(n, arr.rndElem()) + 1);
+    const p = ol.groupBy(arr, n => cmp(n, arr.rndElem()) + 1);
     return arr.length <= 1 ? arr : [...qsort4(p[0] || [], cmp), ...(p[1] || []), ...qsort4(p[2] || [], cmp)];
 };
 

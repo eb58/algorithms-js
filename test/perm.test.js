@@ -1,8 +1,6 @@
-/* global expect */
-
-const _ = require('underscore');
+const range = require('../src/algorithms/ol').ol.range;
+const fac = require('../src/algorithms/ol').ol.fac;
 const perm = require('../src/algorithms/perm');
-const fac = require('../src/algorithms/fac');
 
 const perms = Object.keys(perm).filter(name => name !== 'permWithFilter').map( k => perm[k]);
 const permWithFilter = perm.permWithFilter;
@@ -20,14 +18,14 @@ perms.forEach(perm => test('testset2 ' + perm.name, () => {
   }));
 
 perms.forEach(perm => test('testset3 ' + perm.name, () => {
-    expect(perm(_.range(0)).length).toEqual(fac(0));
-    expect(perm(_.range(1)).length).toEqual(fac(1));
-    expect(perm(_.range(2)).length).toEqual(fac(2));
-    expect(perm(_.range(3)).length).toEqual(fac(3));
+    expect(perm(range(0)).length).toEqual(fac(0));
+    expect(perm(range(1)).length).toEqual(fac(1));
+    expect(perm(range(2)).length).toEqual(fac(2));
+    expect(perm(range(3)).length).toEqual(fac(3));
   }));
 
 perms.forEach(perm => test('testset4 ' + perm.name, () =>
-    expect(perm(_.range(1, 10)).length).toEqual(fac(9))
+    expect(perm(range(9)).length).toEqual(fac(9))
   ));
 
 test('testset permWithFilter', () => {

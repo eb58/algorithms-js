@@ -22,9 +22,7 @@
    },
    "dependencies": {
       "bitset": "^5.0.5",
-      "fastbitset": "^0.2.8",
-      "lodash": "^4.17.15",
-      "underscore": "^1.9.1"
+      "fastbitset": "^0.2.8"
    },
    "devDependencies": {
       "jest": "^25.1.0"

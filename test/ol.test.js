@@ -1,9 +1,7 @@
-/* global expect */
-
-const ol = require('../src/ol/ol').ol;
-const num = require('../src/ol/ol').num;
-const interval = require('../src/ol/ol').interval;
-const array = require('../src/ol/ol').array;
+const ol = require('../src/algorithms/ol').ol;
+const num = require('../src/algorithms/ol').num;
+const interval = require('../src/algorithms/ol').interval;
+const array = require('../src/algorithms/ol').array;
 
 test('testset simple', () => {
 

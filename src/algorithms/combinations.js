@@ -1,4 +1,4 @@
-const range = n => [...Array(n).keys()];
+const range = (n) => [...Array(n).keys()];
 
 /*
  (12345,3) ->
@@ -7,14 +7,13 @@ const range = n => [...Array(n).keys()];
  3 ++ (45,2)
  */
 
-
 // comb1 - fastest solution
 comb1 = (xs, k, pred) => {
   const result = [];
   const res = [];
 
   const run = (level, start) => {
-    const len = xs.length - k + level + 1
+    const len = xs.length - k + level + 1;
     for (let i = start; i < len; i++) {
       res[level] = xs[i];
       if (level < k - 1) {
@@ -33,13 +32,13 @@ comb1 = (xs, k, pred) => {
 // comb1a - similar to comb1
 comb1a = (xs, k) => {
   const result = [];
-  combX = (sofar, rest, k) => k === 0 ? result.push(sofar) : range(rest.length).forEach(i => combX([...sofar, rest[i]], rest.slice(i + 1), k - 1));
+  combX = (sofar, rest, k) => (k === 0 ? result.push(sofar) : range(rest.length).forEach((i) => combX([...sofar, rest[i]], rest.slice(i + 1), k - 1)));
   combX([], xs, k);
   return result;
-}
+};
 
 // comb2 - Most elegant solution
-comb2 = (xs, k) => !k ? [[]] : range(xs.length - k + 1).reduce((a, i) => [...a, ...comb2(xs.slice(i + 1), k - 1).map(ys => [xs[i], ...ys])], [])
+comb2 = (xs, k) => (!k ? [[]] : range(xs.length - k + 1).reduce((a, i) => [...a, ...comb2(xs.slice(i + 1), k - 1).map((ys) => [xs[i], ...ys])], []));
 
 /*
  2  3    4
@@ -55,10 +54,14 @@ comb2 = (xs, k) => !k ? [[]] : range(xs.length - k + 1).reduce((a, i) => [...a, 
  45 345
  */
 // comb3 --- too slow  but quite interesting!!!
-max = xs => xs.reduce((a, x) => x > a ? x : a, 0);
-largerThan = (xs, a) => xs.filter(x => x > a);
-comb3a = (xs, k) => k === 1 ? xs.map(x => [x]) : comb3a(xs, k - 1).reduce((a, ys) => [...a, ...largerThan(xs, max(ys)).map(x => [...ys, x])], []);
-comb3 = (xs, k) => comb3(xs.map((x, i) => i), k).map(ys => ys.map((y) => xs[y]))
+max = (xs) => xs.reduce((a, x) => (x > a ? x : a), 0);
+largerThan = (xs, a) => xs.filter((x) => x > a);
+comb3a = (xs, k) => (k === 1 ? xs.map((x) => [x]) : comb3a(xs, k - 1).reduce((a, ys) => [...a, ...largerThan(xs, max(ys)).map((x) => [...ys, x])], []));
+comb3 = (xs, k) =>
+  comb3(
+    xs.map((x, i) => i),
+    k
+  ).map((ys) => ys.map((y) => xs[y]));
 
 /* Haskell
  comb :: Int -> [a] -> [[a]]
@@ -68,24 +71,25 @@ comb3 = (xs, k) => comb3(xs.map((x, i) => i), k).map(ys => ys.map((y) => xs[y]))
  */
 
 comb4 = (() => {
-  const range = n => [...Array(n).keys()];
+  const range = (n) => [...Array(n).keys()];
   const cache = {};
-  return comb4 = (xs, k) => {
+  return (comb4 = (xs, k) => {
     const len = xs.length;
     if (!cache[len]) {
-      cache[len] = {}
+      cache[len] = {};
     }
     if (!cache[len][k]) {
       cache[len][k] = comb1(range(len), k);
     }
-    const mapping = xs.reduce((acc, x, i) => (acc[i] = x, acc), {});
-    return cache[len][k].map(ys => ys.map(y => mapping[y]))
-  }
+    const mapping = xs.reduce((acc, x, i) => ((acc[i] = x), acc), {});
+    return cache[len][k].map((ys) => ys.map((y) => mapping[y]));
+  });
 })();
 
 module.exports = {
+  comb0,
   comb1,
   comb1a,
   comb2,
-  comb4
+  comb4,
 };

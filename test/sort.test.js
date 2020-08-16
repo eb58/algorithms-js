@@ -1,6 +1,6 @@
 /* global expect */
 
-const _ = require('underscore');
+const range = require('../src/algorithms/ol').ol.range;
 const qsorts = require('../src/algorithms/qsort');
 const mergesort = require('../src/algorithms/mergesort');
 
@@ -11,7 +11,7 @@ const sorts = [...qsorts, mergesort];
 sorts.forEach(sort =>
   test('test-set1 sort numbers ' + sort.name, () => {
     const arr1 = [99, 44, 55, 23, 11, 44, 66, 88, 45, 87, 10, 20, 30, 90, 70, 40, 55, 23, 11, 4];
-    const arr2 = _.range(100000).map(n => (Math.floor(Math.random() * 1000)));
+    const arr2 = range(100000).map(n => (Math.floor(Math.random() * 1000)));
     expect(sort([], cmp)).toMatchObject([]);
     expect(sort([1], cmp)).toMatchObject([1]);
     expect(sort([0, 0], cmp)).toMatchObject([0, 0]);
