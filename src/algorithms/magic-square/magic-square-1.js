@@ -104,7 +104,7 @@ const magicSquare = n => {
          }))
            
     // console.log(JSON.stringify(combis,0,2));
-    console.log(combis.length);
+    // console.log(combis.length);
     combineToMagicSquare(square, combis, availableNumbers, res);
     return res;
 }

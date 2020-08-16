@@ -1,7 +1,7 @@
-const range = (n) => [...Array(n).keys()];
+const range = require('./ol').ol.range;
 
 /*
- (12345,3) ->
+ (12345,3) -> 
  1 ++ (2345,2)
  2 ++ (345,2)
  3 ++ (45,2)
@@ -54,14 +54,10 @@ comb2 = (xs, k) => (!k ? [[]] : range(xs.length - k + 1).reduce((a, i) => [...a,
  45 345
  */
 // comb3 --- too slow  but quite interesting!!!
-max = (xs) => xs.reduce((a, x) => (x > a ? x : a), 0);
-largerThan = (xs, a) => xs.filter((x) => x > a);
-comb3a = (xs, k) => (k === 1 ? xs.map((x) => [x]) : comb3a(xs, k - 1).reduce((a, ys) => [...a, ...largerThan(xs, max(ys)).map((x) => [...ys, x])], []));
-comb3 = (xs, k) =>
-  comb3(
-    xs.map((x, i) => i),
-    k
-  ).map((ys) => ys.map((y) => xs[y]));
+const array = require('./ol').ol.array;
+
+comb3a = (xs, k) =>
+    (k === 1 ? xs.map((x) => [x]) : comb3a(xs, k - 1).reduce((a, ys) => [...a, ...array(xs).largerThan(array(ys).max()).map((x) => [...ys, x])], []));
 
 /* Haskell
  comb :: Int -> [a] -> [[a]]
@@ -87,7 +83,6 @@ comb4 = (() => {
 })();
 
 module.exports = {
-  comb0,
   comb1,
   comb1a,
   comb2,

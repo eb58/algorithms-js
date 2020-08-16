@@ -25,6 +25,6 @@
       "fastbitset": "^0.2.8"
    },
    "devDependencies": {
-      "jest": "^25.1.0"
+      "jest": "^26.2.0"
    }
 }
