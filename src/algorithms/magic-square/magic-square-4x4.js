@@ -1,8 +1,8 @@
 module.exports = () => {
   const magicSquareUtils = require('./magic-square-utils');
+  const range = require('../ol').ol.range;
   const comb = require('../combinations').comb1;
   const perm = require('../perm').perm4;
-  const range = require('../ol').ol.range;
 
   const N = 4;
   const square = range(N * N).map(() => 0);
@@ -15,7 +15,7 @@ module.exports = () => {
 
   const chk = (avn, s1, s2) => s1 != s2 && avn.includes(MN - s1) && avn.includes(MN - s2);
   const check = (xs, sq, avn, x1, x2, y1, y2) => chk(avn, xs[0] + sq[x1] + sq[x2], xs[1] + sq[y1] + sq[y2]) || chk(avn, xs[1] + sq[x1] + sq[x2], xs[0] + sq[y1] + sq[y2]);
-
+  
   const rowsDef = [
     { row: [0, 5, 10, 15], restriction: (xs) => xs[0] + xs[1] + xs[2] + xs[3] === MN }, // diag1
     { row: [12, 9, 6, 3], restriction: (xs) => xs[0] + xs[1] + xs[2] + xs[3] === MN }, // diag2
