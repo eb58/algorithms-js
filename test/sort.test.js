@@ -1,10 +1,9 @@
 /* global expect */
 
 const range = require('../src/algorithms/ol').ol.range;
-const qsorts = require('../src/algorithms/qsort');
-const mergesort = require('../src/algorithms/mergesort');
-
-const cmp = (s1, s2) => (s1 === s2) ? 0 : (s1 < s2 ? -1 : +1);
+const cmp = require('../src/algorithms/ol').ol.cmp;
+const qsorts = require('../src/algorithms/sorting/qsort');
+const mergesort = require('../src/algorithms/sorting/mergesort');
 
 const sorts = [...qsorts, mergesort];
 
@@ -28,8 +27,8 @@ sorts.forEach(sort =>
 sorts.forEach(sort =>
   test('test-set2 quicksort objects ' + sort.name, () => {
     const cmp = (o1, o2) => o1.a === o2.a ? 0 : o1.a < o2.a ? -1 : +1;
-    const arr = [{a: 99}, {a: 88}, {a: 10}, {a: 111}, {a: 37}];
-    expect(sort(arr, cmp)).toMatchObject([{a: 10}, {a: 37}, {a: 88}, {a: 99}, {a: 111}]);
+    const arr = [{ a: 99 }, { a: 88 }, { a: 10 }, { a: 111 }, { a: 37 }];
+    expect(sort(arr, cmp)).toMatchObject([{ a: 10 }, { a: 37 }, { a: 88 }, { a: 99 }, { a: 111 }]);
   })
 );
 

@@ -1,5 +1,5 @@
 {
-   "name": "algorithms-js",
+   "name": "algorithms-js-eb",
    "version": "1.0.0",
    "keywords": [
       "permutations",
@@ -11,7 +11,7 @@
       "//": "Comment goes here",
       "verbose": true
    },
-   "author": "A403163",
+   "author": "eb",
    "contributors": [],
    "scripts": {
       "start": "node main.js",
@@ -20,10 +20,7 @@
       "msqtest": "node src/algorithms/magic-square/magic-square-test.js",
       "dmsqtest": "node --inspect-brk  src/algorithms/magic-square/magic-square-test.js"
    },
-   "dependencies": {
-      "bitset": "^5.0.5",
-      "fastbitset": "^0.2.8"
-   },
+   "dependencies": { },
    "devDependencies": {
       "jest": "^26.2.0"
    }

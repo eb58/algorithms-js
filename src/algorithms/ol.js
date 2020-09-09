@@ -7,6 +7,7 @@ const ol = {
   fib: (x) => (x <= 2 ? 1 : ol.fib(x - 1) + ol.fib(x - 2)),
   randomInRange: (min, max) => Math.random() * (max - min) + min,
   randomIntInRange: (min, max) => Math.floor(ol.randomInRange(min, max + 1)),
+  feedx: (x,f) => f(x),
 
   // predicates
   odd: (x) => x % 2 !== 0,
@@ -25,7 +26,7 @@ const ol = {
   sum: (xs) => xs.reduce((acc, x) => acc + x, 0),
   without: (xs, x) => xs.filter((y) => x !== y),
   withoutIndex: (xs, idx) => xs.filter((_, i) => i !== idx),
-
+  sort: (cmp) => (xs.sort(cmp),xs),
   //
   add2arr: (a, v) => (a ? [...a, v] : [v]),
   add2obj: (o, k, v) => ((o[k] = ol.add2arr(o[k], v)), o),
