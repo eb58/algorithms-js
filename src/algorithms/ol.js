@@ -7,7 +7,7 @@ const ol = {
   fib: (x) => (x <= 2 ? 1 : ol.fib(x - 1) + ol.fib(x - 2)),
   randomInRange: (min, max) => Math.random() * (max - min) + min,
   randomIntInRange: (min, max) => Math.floor(ol.randomInRange(min, max + 1)),
-  feedx: (x,f) => f(x),
+  feedx: (x, f) => f(x),
 
   // predicates
   odd: (x) => x % 2 !== 0,
@@ -26,63 +26,57 @@ const ol = {
   sum: (xs) => xs.reduce((acc, x) => acc + x, 0),
   without: (xs, x) => xs.filter((y) => x !== y),
   withoutIndex: (xs, idx) => xs.filter((_, i) => i !== idx),
-  sort: (cmp) => (xs.sort(cmp),xs),
+  sort: (cmp) => (xs.sort(cmp), xs),
   //
   add2arr: (a, v) => (a ? [...a, v] : [v]),
   add2obj: (o, k, v) => ((o[k] = ol.add2arr(o[k], v)), o),
 };
 
 // Wrappers
-const num = (x) => {
-  const api = {
-    id: () => ol.id(x),
-    abs: () => ol.abs(x),
-    sqr: () => ol.sqr(x),
-    cube: () => ol.cube(x),
-    ininterval: (a, b) => ol.ininterval(x, a, b),
-  };
-  return api;
-};
+const num = (x) => ({
+  id: () => ol.id(x),
+  abs: () => ol.abs(x),
+  sqr: () => ol.sqr(x),
+  cube: () => ol.cube(x),
+  ininterval: (a, b) => ol.ininterval(x, a, b),
+});
 
-const interval = (a, b) => {
-  return {
-    array: () => [...Array(b - a + 1).keys()].map((x) => x + a),
-    contains: (x) => a <= x && x <= b,
-    intersects: (x, y) => !(y < a || x > b),
-    inc: (x) => (x >= b ? b : x + 1),
-    dec: (x) => (x <= a ? a : x - 1),
-    random: () => ol.randomInRange(a, b),
-    randomInt: () => ol.randomIntInRange(a, b),
-  };
-};
+const interval = (a, b) => ({
+  array: () => [...Array(b - a + 1).keys()].map((x) => x + a),
+  contains: (x) => a <= x && x <= b,
+  intersects: (x, y) => !(y < a || x > b),
+  inc: (x) => (x >= b ? b : x + 1),
+  dec: (x) => (x <= a ? a : x - 1),
+  random: () => ol.randomInRange(a, b),
+  randomInt: () => ol.randomIntInRange(a, b),
+});
 
-const array = (xs) => {
-  const api = {
-    sum: () => ol.sum(xs),
-    without: (x) => ol.without(xs, x),
-    withoutIndex: (idx) => ol.withoutIndex(idx),
-    head: () => [xs[0]],
-    tail: () => xs.slice(1),
-    first: () => xs[0],
-    last: () => xs[xs.length - 1],
-    max: () => xs.reduce((a, x) => (x > a ? x : a)),
-    min: () => xs.reduce((a, x) => (x < a ? x : a)),
-    groupBy: (proj) => xs.reduce((a, v) => ol.add2obj(a, proj(v), v), {}),
-    uniq: () => xs.reduce((a, x) => (a.includes(x) ? a : [...a, x]), []),
-    unite: (ys) => array([...xs, ...ys]).uniq(),
-    intersect: (ys) => xs.filter((x) => ys.includes(x)),
-    subtract: (ys) => xs.filter((x) => !ys.includes(x)),
-    subsetOf: (ys) => ys.every((x) => xs.includes(x)),
-    tap: (f) => (f(xs), xs),
-    largerThan: (a) => xs.filter((x) => x > a),
-  };
-  return api;
-};
+const array = (xs) => ({
+  sum: () => ol.sum(xs),
+  without: (x) => ol.without(xs, x),
+  withoutIndex: (idx) => ol.withoutIndex(idx),
+  initial: () => xs.slice(0, length - 1),
+  head: () => [xs[0]],
+  tail: () => xs.slice(1),
+  rest: () => xs.slice(1),
+  first: () => xs[0],
+  last: () => xs[xs.length - 1],
+  max: () => xs.reduce((a, x) => (x > a ? x : a)),
+  min: () => xs.reduce((a, x) => (x < a ? x : a)),
+  groupBy: (proj) => xs.reduce((a, v) => ol.add2obj(a, proj(v), v), {}),
+  uniq: () => xs.reduce((a, x) => (a.includes(x) ? a : [...a, x]), []),
+  unite: (ys) => array([...xs, ...ys]).uniq(),
+  intersect: (ys) => xs.filter((x) => ys.includes(x)),
+  subtract: (ys) => xs.filter((x) => !ys.includes(x)),
+  subsetOf: (ys) => ys.every((x) => xs.includes(x)),
+  tap: (f) => (f(xs), xs),
+  largerThan: (a) => xs.filter((x) => x > a),
+});
 
 //state as natural enemy of one liners!
 const memoize = (fn) => {
   let cache = {};
-  return (x) => cache.x || (cache[x] = fn(x));
+  return (x) => cache[x] || (cache[x] = fn(x));
 };
 
 const fib = memoize(ol.fib);
