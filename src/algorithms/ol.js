@@ -14,6 +14,7 @@ const ol = {
   even: (x) => x % 2 === 0,
   ininterval: (x, a, b) => a <= x && x <= b,
   leapyear: (x) => (x % 4 === 0 && x % 100 !== 0) || x % 400 === 0,
+  isISBN: (x) => true,
 
   // cmp
   cmp: (x, y) => (x === y ? 0 : x < y ? -1 : +1),
