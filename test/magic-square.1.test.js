@@ -8,14 +8,12 @@ test('testset magic-square-2 perm', () => {
 
 test('testset magic-square-1 3x3', () => {
     const magicSquare = require('../src/algorithms/magic-square/magic-square-1');
-    debugger;
     const res = magicSquare(3);
     expect(res.length).toEqual(4);
 });
 
 xtest('testset magic-square-1 4x4', () => {
     const magicSquare = require('../src/algorithms/magic-square/magic-square-1');
-    debugger;
     const res = magicSquare(4);
     expect(res.length).toEqual(880*2);
 });
