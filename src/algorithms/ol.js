@@ -14,7 +14,6 @@ const ol = {
   even: (x) => x % 2 === 0,
   ininterval: (x, a, b) => a <= x && x <= b,
   leapyear: (x) => (x % 4 === 0 && x % 100 !== 0) || x % 400 === 0,
-  isISBN: (x) => true,
 
   // cmp
   cmp: (x, y) => (x === y ? 0 : x < y ? -1 : +1),
@@ -67,11 +66,13 @@ const array = (xs) => ({
   groupBy: (proj) => xs.reduce((a, v) => ol.add2obj(a, proj(v), v), {}),
   uniq: () => xs.reduce((a, x) => (a.includes(x) ? a : [...a, x]), []),
   unite: (ys) => array([...xs, ...ys]).uniq(),
+  xor: (ys) => ([...xs, ...ys]).filter(x => !(xs.includes(x) && ys.includes(x))),
   intersect: (ys) => xs.filter((x) => ys.includes(x)),
   subtract: (ys) => xs.filter((x) => !ys.includes(x)),
   subsetOf: (ys) => ys.every((x) => xs.includes(x)),
   tap: (f) => (f(xs), xs),
   largerThan: (a) => xs.filter((x) => x > a),
+  smallerThan: (a) => xs.filter((x) => x < a),
 });
 
 //state as natural enemy of one liners!
