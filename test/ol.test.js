@@ -2,6 +2,7 @@ const ol = require('../src/algorithms/ol').ol;
 const num = require('../src/algorithms/ol').num;
 const interval = require('../src/algorithms/ol').interval;
 const array = require('../src/algorithms/ol').array;
+const bitset = require('../src/algorithms/ol').bitset;
 
 test('testset simple', () => {
 
@@ -154,9 +155,9 @@ test('testset add2arr', () => {
 
 test('testset add2obj', () => {
   const o = {};
-  expect(ol.add2obj(o, 'key', 1)).toEqual({'key': [1]});
-  expect(ol.add2obj(o, 'key', 2)).toEqual({'key': [1, 2]});
-//expect( ol.add2obj({'a':undefined},'a',1) ).toEqual({'a':[1]});
+  expect(ol.add2obj(o, 'key', 1)).toEqual({ 'key': [1] });
+  expect(ol.add2obj(o, 'key', 2)).toEqual({ 'key': [1, 2] });
+  //expect( ol.add2obj({'a':undefined},'a',1) ).toEqual({'a':[1]});
 });
 
 // Wrappers
@@ -222,6 +223,16 @@ test('testset add2obj', () => {
     expect(array([]).without(3)).toEqual([]);
     expect(array([3]).without(3)).toEqual([]);
     expect(array([1]).without(3)).toEqual([1]);
+
+  })
+
+  test('bitset', () => {
+    expect(bitset.toArray(bitset.fromArray([0, 1, 2]))).toEqual([0, 1, 2])
+    expect(bitset.toArray(bitset.fromArray([ 1, 2,3 ]))).toEqual([1, 2, 3])
+    expect(bitset.toArray(bitset.fromArray([1, 2, 5, 17]))).toEqual([1, 2, 5, 17])
+    expect(bitset.size(bitset.fromArray([]))).toBe(0)
+    expect(bitset.size(bitset.fromArray([7]))).toBe(1)
+    expect(bitset.size(bitset.fromArray([11, 1, 2, 9]))).toBe(4)
 
   })
 
