@@ -1,11 +1,11 @@
 const bitset = {
   fromArray: (xs) => xs.reduce((acc, x) => acc | 1 << x, 0),
-  toArray:(bs) => bs.toString(2).split('').reverse().reduce((acc,x,i)=> x==='0' ? acc : [...acc,i], []),
-  size: (bs) => bs.toString(2).split('').filter(x=>x==='1').length,
-  union: (bs1,bs2) => bs1 | bs2, 
-  intersection: (bs1,bs2) => bs1 & bs2, 
-  diff: (bs1,bs2) => bs1 & ~bs2, 
-  xor: (bs1,bs2) => bs1 ^ bs2, 
+  toArray: (bs) => bs.toString(2).split('').reverse().reduce((acc, x, i) => x === '0' ? acc : [...acc, i], []),
+  size: (bs) => bs.toString(2).split('').filter(x => x === '1').length,
+  union: (bs1, bs2) => bs1 | bs2,
+  intersection: (bs1, bs2) => bs1 & bs2,
+  diff: (bs1, bs2) => bs1 & ~bs2,
+  xor: (bs1, bs2) => bs1 ^ bs2,
 }
 
 const ol = {
@@ -37,6 +37,7 @@ const ol = {
   without: (xs, x) => xs.filter((y) => x !== y),
   withoutIndex: (xs, idx) => xs.filter((_, i) => i !== idx),
   sort: (cmp) => (xs.sort(cmp), xs),
+  zip: (xs,ys,f) => xs.map( (x,i) => f(xa[i],ys[i])),
   //
   add2arr: (a, v) => (a ? [...a, v] : [v]),
   add2obj: (o, k, v) => ((o[k] = ol.add2arr(o[k], v)), o),
@@ -94,10 +95,10 @@ const memoize = (fn) => {
 
 const fib = memoize(ol.fib);
 
-module.exports = { 
-  ol, 
-  num, 
-  interval, 
-  array, 
-  bitset 
+module.exports = {
+  ol,
+  num,
+  interval,
+  array,
+  bitset
 };
