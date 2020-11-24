@@ -10,13 +10,29 @@ const candidates = (fld, n) => range(9).map(x => x + 1).filter(x => !connectionS
 const set = (fld, idx, c) => { const cpy = [...fld]; cpy[idx] = c; return cpy; }
 
 const solve = (fld) => {
-    let res; 
+    let res;
     const solv = (fld) => feedX(
         fld.findIndex(x => x === 0),
         (idx) => idx < 0 ? (res = fld) : candidates(fld, idx).forEach(c => solv(set(fld, idx, c)))
     )
-    solv(fld.split('').map(x => x === '.' ? 0 : Number(x)))
-    return res.join('');
+    solv(fld);
+    return res;
+}
+
+const solve2 = (fld) => {
+    let res;
+
+    const solv = (fld) => {
+        const allCandidates = fld.map((x, i) => x === 0 ? candidates(fld, i) : []);
+        if (allCandidates.length === 0) {
+            res = fld
+        } else {
+            const bestIdx = allCandidates.reduce((a, cand) => (cand.length < a.length ? idx : a), 0);
+            allCandidates[bestIdx].forEach(x => solv(set(fld, bestIdx, x)))
+        }
+    }
+    solv(fld);
+    return res;
 }
 
 
