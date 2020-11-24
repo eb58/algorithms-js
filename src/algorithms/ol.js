@@ -30,7 +30,7 @@ const ol = {
 
   // arrays
   range: (n) => [...Array(n).keys()],
-  rangeFilled: (n, val) => [...Array(n).keys()].map(() => val),
+  rangeFilled: (n, val) => ol.range(n).map(() => val),
   randomArray: (n, min, max) => ol.range(n).map(() => ol.randomInRange(min, max)),
   randomIntArray: (n, min, max) => ol.range(n).map(() => ol.randomIntInRange(min, max)),
   sum: (xs) => xs.reduce((acc, x) => acc + x, 0),
