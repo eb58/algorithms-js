@@ -38,6 +38,7 @@ const ol = {
   withoutIndex: (xs, idx) => xs.filter((_, i) => i !== idx),
   sort: (cmp) => (xs.sort(cmp), xs),
   zip: (xs,ys,f) => xs.map( (x,i) => f(xa[i],ys[i])),
+  equal: (xs,ys) => JSON.stringify(xs) === JSON.stringify(ys),
   //
   add2arr: (a, v) => (a ? [...a, v] : [v]),
   add2obj: (o, k, v) => ((o[k] = ol.add2arr(o[k], v)), o),
@@ -82,6 +83,7 @@ const array = (xs) => ({
   intersect: (ys) => xs.filter((x) => ys.includes(x)),
   subtract: (ys) => xs.filter((x) => !ys.includes(x)),
   subsetOf: (ys) => ys.every((x) => xs.includes(x)),
+  equals: (ys) => equal(xs,ys),
   tap: (f) => (f(xs), xs),
   largerThan: (a) => xs.filter((x) => x > a),
   smallerThan: (a) => xs.filter((x) => x < a),
