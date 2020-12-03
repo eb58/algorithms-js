@@ -87,8 +87,7 @@ const solve3 = (fld) => {
 }
 
 
-const solve4 = (()=>{
-    let statn = 0;
+const solve4 = (() => {
     const ALL = range(81);
     const COORD = ALL.map(n => {
         const r = Math.floor(n / 9);
@@ -105,12 +104,6 @@ const solve4 = (()=>{
         FLDSINBLK[c.b].push(i);
     })
 
-    function initEmpty(m) {
-        m.empty = ALL.filter(i => m.fld[i] === 0);
-        m.empty.forEach(o => m.cand[o] = getCandidates(m, o))
-        m.empty.sort((a, b) => (m.cand[b].cnt - m.cand[a].cnt));
-    }
-
     function setUsedFlags(m, n, v, flag) {
         const o = COORD[n];
         if (flag) {
@@ -125,7 +118,6 @@ const solve4 = (()=>{
     }
 
     function setVal(m, n, v) {
-        statn++;
         if (v !== 0)
             m.cnt++;
         m.fld[n] = v;
@@ -153,16 +145,12 @@ const solve4 = (()=>{
     function getBestCandidates(m) { // returns entry with shortest list of candidates  
         let bestCandidates = null;
         m.cand = [];
-        for (let r = 0; r < m.empty.length; r++) {
-            if (m.fld[m.empty[r]] !== 0)
-                continue;
-            const c = getCandidates(m, m.empty[r]);
-            if (c.cnt === 1)
-                return { n: m.empty[r], cand: c };
+        for (let r = 0; r < m.fld.length; r++) if (m.fld[r] === 0) {
+            const c = getCandidates(m, r);
             if (!bestCandidates || c.cnt < bestCandidates.cand.cnt) {
-                bestCandidates = { n: m.empty[r], cand: c };
+                bestCandidates = { n: r, cand: c };
             }
-            m.cand[m.empty[r]] = c;
+            m.cand[r] = c;
         }
         return bestCandidates;
     }
@@ -195,7 +183,6 @@ const solve4 = (()=>{
 
     const solve = (fld) => {
 
-        statn = 0;
         const model = {
             cnt: 0,
             fld: [],
@@ -206,8 +193,6 @@ const solve4 = (()=>{
         };
 
         fld.forEach((v, n) => setVal(model, n, v));
-
-        initEmpty(model);
 
         let res = null;
         const fill = m => {
