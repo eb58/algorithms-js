@@ -17,8 +17,7 @@
       "start": "node main.js",
       "test": "jest --watchAll",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
-      "sudoku-test": "node src/algorithms/sudoku.js",
-      "sudoku-test-debug": "node --inspect-brk  src/algorithms/sudoku.js",
+      "sudoku": "node src/algorithms/sudoku/sudoku.js",
       "msqtest": "node src/algorithms/magic-square/magic-square-test.js",
       "dmsqtest": "node --inspect-brk  src/algorithms/magic-square/magic-square-test.js"
    },
