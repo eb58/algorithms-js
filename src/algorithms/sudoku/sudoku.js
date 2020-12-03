@@ -104,35 +104,34 @@ const solve4 = (() => {
         FLDSINBLK[c.b].push(i);
     })
 
-    function setUsedFlags(m, n, v, flag) {
-        const o = COORD[n];
+    const setUsedFlags = (model, idx, val, flag) => {
+        const o = COORD[idx];
         if (flag) {
-            m.usedRow[o.r] |= 1 << v;
-            m.usedCol[o.c] |= 1 << v;
-            m.usedBlk[o.b] |= 1 << v;
+            model.usedRow[o.r] |= 1 << val;
+            model.usedCol[o.c] |= 1 << val;
+            model.usedBlk[o.b] |= 1 << val;
         } else {
-            m.usedRow[o.r] &= ~(1 << v);
-            m.usedCol[o.c] &= ~(1 << v);
-            m.usedBlk[o.b] &= ~(1 << v);
+            model.usedRow[o.r] &= ~(1 << val);
+            model.usedCol[o.c] &= ~(1 << val);
+            model.usedBlk[o.b] &= ~(1 << val);
         }
     }
 
-    function setVal(m, n, v) {
-        if (v !== 0)
-            m.cnt++;
-        m.fld[n] = v;
-        setUsedFlags(m, n, v, true);
+    const setVal = (model, idx, val) => {
+        setUsedFlags(model, idx, val, true);
+        model.cnt++;
+        model.fld[idx] = val;
     }
 
-    function unsetVal(m, n) {
-        m.cnt--;
-        setUsedFlags(m, n, m.fld[n], false);
-        m.fld[n] = 0;
+    const unsetVal = (model, idx) => {
+        setUsedFlags(model, idx, model.fld[idx], false);
+        model.cnt--;
+        model.fld[idx] = 0;
     }
 
-    function getCandidates(m, n) {  // Candidates for m[n]
-        const o = COORD[n];
-        const unsetbits = ~(m.usedRow[o.r] | m.usedCol[o.c] | m.usedBlk[o.b]);
+    const getCandidates = (model, idx) => {  // Candidates for m[n]
+        const o = COORD[idx];
+        const unsetbits = ~(model.usedRow[o.r] | model.usedCol[o.c] | model.usedBlk[o.b]);
         const res = { cnt: 0, vals: unsetbits };
         for (let v = 1; v <= 9; v++) {
             if (unsetbits & (1 << v)) {
@@ -142,16 +141,18 @@ const solve4 = (() => {
         return res;
     }
 
-    function getBestCandidates(m) { // returns entry with shortest list of candidates  
+    const getBestCandidates = (model) => { // returns entry with shortest list of candidates  
         let bestCandidates = null;
-        m.cand = [];
-        for (let r = 0; r < m.fld.length; r++) if (m.fld[r] === 0) {
-            const c = getCandidates(m, r);
-            if (!bestCandidates || c.cnt < bestCandidates.cand.cnt) {
-                bestCandidates = { n: r, cand: c };
+        model.cand = [];
+        model.fld.forEach((x, r) => {
+            if (x === 0) {
+                const c = getCandidates(model, r);
+                if (!bestCandidates || c.cnt < bestCandidates.cand.cnt) {
+                    bestCandidates = { n: r, cand: c };
+                }
+                model.cand[r] = c;
             }
-            m.cand[r] = c;
-        }
+        });
         return bestCandidates;
     }
 
@@ -184,26 +185,28 @@ const solve4 = (() => {
     const solve = (fld) => {
 
         const model = {
-            cnt: 0,
-            fld: [],
+            cnt: fld.reduce((acc, x) => acc + (x !== 0), 0),
+            fld,
             cand: [],
             usedRow: [],
             usedCol: [],
             usedBlk: []
         };
 
-        fld.forEach((v, n) => setVal(model, n, v));
+        fld.forEach((val, idx) => setUsedFlags(model, idx, val, true));
 
         let res = null;
         const fill = m => {
-            if (m.cnt === 81)
+
+            if (m.cnt === 81) {
                 return res = [...m.fld];
+            }
+
             let c = getBestCandidates(m);
             if (!c)
                 return;
             if (c.cand.cnt > 1) {
-                const hn = findHiddenNaked(m);
-                c = hn ? hn : c;
+                c = findHiddenNaked(m) || c;
                 // if( c.cand.cnt > 1 ) findPairs(m);
             }
             for (let i = 1; i <= 9; i++) {
@@ -218,16 +221,7 @@ const solve4 = (() => {
         fill(model);
         return res;
     }
-    return {
-        solve,
-    };
-})().solve;
-
+    return solve
+})();
 
 module.exports = { solve1, solve2, solve3, solve4 };
-
-// const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
-// const mysolve = xs => solve(conv2Arr(xs)).join('')
-// mysolve('.914.7..8.74.3.....8..2.9...2..4...6...2..5..8..5....1.37.1..5241...93..6.8......');
-
-
