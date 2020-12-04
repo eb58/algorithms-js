@@ -1,13 +1,3 @@
-const bitset = {
-  fromArray: (xs) => xs.reduce((acc, x) => acc | 1 << x, 0),
-  toArray: (bs) => bs.toString(2).split('').reverse().reduce((acc, x, i) => x === '0' ? acc : [...acc, i], []),
-  size: (bs) => bs.toString(2).split('').filter(x => x === '1').length,
-  union: (bs1, bs2) => bs1 | bs2,
-  intersection: (bs1, bs2) => bs1 & bs2,
-  diff: (bs1, bs2) => bs1 & ~bs2,
-  xor: (bs1, bs2) => bs1 ^ bs2,
-}
-
 const ol = {
   id: (x) => x,
   abs: (x) => (x >= 0 ? x : -x),
@@ -102,5 +92,4 @@ module.exports = {
   num,
   interval,
   array,
-  bitset
 };
