@@ -1,8 +1,7 @@
-const ol = require('../src/algorithms/ol').ol;
-const num = require('../src/algorithms/ol').num;
-const interval = require('../src/algorithms/ol').interval;
-const array = require('../src/algorithms/ol').array;
-const bitset = require('../src/algorithms/ol').bitset;
+const ol = require('../src/ol').ol;
+const num = require('../src/ol').num;
+const interval = require('../src/ol').interval;
+const array = require('../src/ol').array;
 
 test('testset simple', () => {
 
@@ -225,15 +224,4 @@ test('testset add2obj', () => {
     expect(array([1]).without(3)).toEqual([1]);
 
   })
-
-  test('bitset', () => {
-    expect(bitset.toArray(bitset.fromArray([0, 1, 2]))).toEqual([0, 1, 2])
-    expect(bitset.toArray(bitset.fromArray([ 1, 2,3 ]))).toEqual([1, 2, 3])
-    expect(bitset.toArray(bitset.fromArray([1, 2, 5, 17]))).toEqual([1, 2, 5, 17])
-    expect(bitset.size(bitset.fromArray([]))).toBe(0)
-    expect(bitset.size(bitset.fromArray([7]))).toBe(1)
-    expect(bitset.size(bitset.fromArray([11, 1, 2, 9]))).toBe(4)
-
-  })
-
 }

@@ -1,7 +1,6 @@
 const combinations = require('../combinations').comb1;
 const perm = require('../perm').perm4;
 const magicSquareUtils = require('./magic-square-utils');
-const FastBitSet = require('fastbitset');
 
 const magicSquare = n => {
     const utils = magicSquareUtils(n);

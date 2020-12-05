@@ -1,5 +1,4 @@
-const { solve1, solve2, solve3 } = require('../src/algorithms/sudoku/sudoku');
-
+const { solve1, solve2, solve3 } = require('../src/sudoku/sudoku');
 
 const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
 const mysolve = xs => solve2(conv2Arr(xs)).join('');

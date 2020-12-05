@@ -1,4 +1,4 @@
-const ol = require('../src/algorithms/ol').ol;
+const ol = require('../src/ol').ol;
 
 test('testset magic-square-3x3', () => {
   const magicSquare = require('../src/algorithms/magic-square/magic-square-3x3');

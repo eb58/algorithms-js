@@ -33,31 +33,29 @@ const solve1 = (fld) => {
 
 const solve2 = (fld) => {
 
-    const findIndexOfBestCandidates = (cands) => 
+    const findIndexOfBestCandidates = (cands) =>
         cands.reduce((bestIdx, c, idx) => (c && (bestIdx === -1 || c.length < cands[bestIdx].length)) ? idx : bestIdx, -1)
 
+    const solv = (fld) => {
+        const idx = fld.findIndex(x => x === 0);
 
-const solv = (fld) => {
-    const idx = fld.findIndex(x => x === 0);
-
-    if (idx < 0) {
-        res = [...fld]
+        if (idx < 0) {
+            res = [...fld]
+        }
+        else {
+            const cands = range81.map(idx => fld[idx] === 0 ? candidates(fld, idx) : null)
+            const bestIdx = findIndexOfBestCandidates(cands);
+            bestIdx >= 0 && cands[bestIdx].forEach(val => {
+                fld[bestIdx] = val;
+                solv(fld);
+                fld[bestIdx] = 0;
+            })
+        }
     }
-    else {
-        const cands = range81.map(idx => fld[idx] === 0 ? candidates(fld, idx) : null)
-        const idx = findIndexOfBestCandidates(cands);
-        idx >= 0 && cands[idx].forEach(val => {
-            fld[idx] = val;
-            solv(fld);
-            fld[idx] = 0;
-
-        })
-    }
-}
-let res;
-//const cands = range81.map(idx => fld[idx] === 0 ? candidates(fld, idx) : []).map(c => bitset.fromArray(c))
-solv(fld);
-return res;
+    let res;
+    //const cands = range81.map(idx => fld[idx] === 0 ? candidates(fld, idx) : []).map(c => bitset.fromArray(c))
+    solv(fld);
+    return res;
 }
 const solve3 = (() => {
     const ALL = range(81);
