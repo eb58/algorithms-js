@@ -74,6 +74,7 @@ const array = (xs) => ({
   subtract: (ys) => xs.filter((x) => !ys.includes(x)),
   subsetOf: (ys) => ys.every((x) => xs.includes(x)),
   equals: (ys) => equal(xs, ys),
+  clone: () => JSON.parse(JSON.stringify(xs)),
   tap: (f) => (f(xs), xs),
   largerThan: (a) => xs.filter((x) => x > a),
   smallerThan: (a) => xs.filter((x) => x < a),
