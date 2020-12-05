@@ -2,7 +2,7 @@ const { solve1, solve2, solve3 } = require('../src/algorithms/sudoku/sudoku');
 
 
 const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
-const mysolve = xs => solve1(conv2Arr(xs)).join('');
+const mysolve = xs => solve2(conv2Arr(xs)).join('');
 
 test('testset1 easy ones', () => {
     expect(mysolve('.914.7..8.74.3.....8..2.9...2..4...6...2..5..8..5....1.37.1..5241...93..6.8......')).toEqual('591467238274938165386125974125743896769281543843596721937814652412659387658372419');

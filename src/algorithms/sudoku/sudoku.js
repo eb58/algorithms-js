@@ -1,3 +1,7 @@
+const { bitset } = require("../ol");
+const { ol } = require("../ol");
+const { array } = require("../ol");
+
 const feedX = (x, f) => f(x);
 const range = (n) => [...Array(n).keys()];
 const row = (x) => x % 9;
@@ -6,33 +10,55 @@ const block = (x) => Math.floor(col(x) / 3) * 3 + Math.floor(row(x) / 3);
 const range81 = range(9 * 9);
 const range9 = range(9);
 const range1_9 = range9.map(x => x + 1);
-const inSameConnectionSet = (x, y) =>  row(x) === row(y) || col(x) === col(y) || block(x) === block(y);
-const connectionSet = (x) => range(9 * 9).reduce((acc, y) => inSameConnectionSet(x, y) ? [...acc, y] : acc, []);
-const candidates = (fld, n) => range1_9.filter(x => !connectionSets[n].some(y => fld[y] === x));
+const inSameConnectionSet = (x, y) => row(x) === row(y) || col(x) === col(y) || block(x) === block(y);
+const connectionSet = (x) => range81.reduce((acc, y) => inSameConnectionSet(x, y) ? [...acc, y] : acc, []);
+const isCandidate = (fld, idx, val) => !connectionSets[idx].some(y => fld[y] === val)
+const candidates = (fld, idx) => range1_9.filter(val => isCandidate(fld, idx, val));
 const set = (fld, idx, val) => { const cpy = [...fld]; cpy[idx] = val; return cpy; }
 const connectionSets = range81.map(connectionSet);
 
 const solve1 = (fld) => {
-    let res;
     const solv = (fld) => feedX(
         fld.findIndex(x => x === 0),
-        (idx) => idx < 0 ? (res = fld) : candidates(fld, idx).forEach(c => solv(set(fld, idx, c)))
+        (idx) => idx < 0 ? (res = [...fld]) : candidates(fld, idx).forEach(val => {
+            fld[idx] = val;
+            solv(fld);
+            fld[idx] = 0;
+        })
     )
+    let res;
     solv(fld);
     return res;
 }
 
 const solve2 = (fld) => {
-    let res;
-    const solv = (fld) => feedX(
-        fld.findIndex(x => x === 0),
-        (idx) => idx < 0 ? (res = fld) : candidates(fld, idx).forEach(c => solv(set(fld, idx, c)))
-    )
-    solv(fld);
-    return res;
+
+    const findIndexOfBestCandidates = (cands) => 
+        cands.reduce((bestIdx, c, idx) => (c && (bestIdx === -1 || c.length < cands[bestIdx].length)) ? idx : bestIdx, -1)
+
+
+const solv = (fld) => {
+    const idx = fld.findIndex(x => x === 0);
+
+    if (idx < 0) {
+        res = [...fld]
+    }
+    else {
+        const cands = range81.map(idx => fld[idx] === 0 ? candidates(fld, idx) : null)
+        const idx = findIndexOfBestCandidates(cands);
+        idx >= 0 && cands[idx].forEach(val => {
+            fld[idx] = val;
+            solv(fld);
+            fld[idx] = 0;
+
+        })
+    }
 }
-
-
+let res;
+//const cands = range81.map(idx => fld[idx] === 0 ? candidates(fld, idx) : []).map(c => bitset.fromArray(c))
+solv(fld);
+return res;
+}
 const solve3 = (() => {
     const ALL = range(81);
     const COORD = ALL.map(n => ({ r: row(n), c: col(n), b: block(n) }));
