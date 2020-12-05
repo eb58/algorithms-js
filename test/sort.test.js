@@ -1,9 +1,9 @@
 /* global expect */
 
-const range = require('../src/algorithms/ol').ol.range;
-const cmp = require('../src/algorithms/ol').ol.cmp;
-const qsorts = require('../src/algorithms/sorting/qsort');
-const mergesort = require('../src/algorithms/sorting/mergesort');
+const range = require('../src/ol').ol.range;
+const cmp = require('../src/ol').ol.cmp;
+const qsorts = require('../src/sorting/qsort');
+const mergesort = require('../src/sorting/mergesort');
 
 const sorts = [...qsorts, mergesort];
 
