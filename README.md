@@ -3,3 +3,4 @@ permutations
 combinations
 sorting
 magic square
+sudoku
