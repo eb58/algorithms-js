@@ -86,6 +86,12 @@ const memoize = (fn) => {
   return (x) => cache[x] || (cache[x] = fn(x));
 };
 
+const timer = (f) => {
+  const t = performance.now();
+  f();
+  return performance.now() - t;
+}
+
 const fib = memoize(ol.fib);
 
 module.exports = {

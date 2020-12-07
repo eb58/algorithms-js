@@ -7,15 +7,23 @@ const range = (n) => [...Array(n).keys()];
 const row = (x) => x % 9;
 const col = (x) => Math.floor(x / 9);
 const block = (x) => Math.floor(col(x) / 3) * 3 + Math.floor(row(x) / 3);
-const range81 = range(9 * 9);
-const range9 = range(9);
-const range1_9 = range9.map(x => x + 1);
+const generateEmptyArrays = () => range(9).map(() => []); // [ [], [], [], [], [], [], [], [], [] ]
+const RANGE81 = range(9 * 9);
+const RANGE9 = range(9);
+const RANGE1_9 = RANGE9.map(x => x + 1);
+const COORDR = RANGE81.map(n => row(n));
+const COORDC = RANGE81.map(n => col(n));
+const COORDB = RANGE81.map(n => block(n));
+const CELLSINROW = RANGE81.reduce((acc, n) => (acc[COORDR[n]].push(n), acc), generateEmptyArrays());
+const CELLSINCOL = RANGE81.reduce((acc, n) => (acc[COORDC[n]].push(n), acc), generateEmptyArrays());
+const CELLSINBLK = RANGE81.reduce((acc, n) => (acc[COORDB[n]].push(n), acc), generateEmptyArrays());
+
 const inSameConnectionSet = (x, y) => row(x) === row(y) || col(x) === col(y) || block(x) === block(y);
-const connectionSet = (x) => range81.reduce((acc, y) => inSameConnectionSet(x, y) ? [...acc, y] : acc, []);
-const isCandidate = (fld, idx, val) => !connectionSets[idx].some(y => fld[y] === val)
-const candidates = (fld, idx) => range1_9.filter(val => isCandidate(fld, idx, val));
+const connectionSet = (x) => RANGE81.reduce((acc, y) => inSameConnectionSet(x, y) ? [...acc, y] : acc, []);
+const isCandidate = (fld, idx, val) => !CONNECTIONSETS[idx].some(y => fld[y] === val)
+const candidates = (fld, idx) => RANGE1_9.filter(val => isCandidate(fld, idx, val));
 const set = (fld, idx, val) => { const cpy = [...fld]; cpy[idx] = val; return cpy; }
-const connectionSets = range81.map(connectionSet);
+const CONNECTIONSETS = RANGE81.map(connectionSet);
 
 const solve1 = (fld) => {
     const solv = (fld) => feedX(
@@ -33,22 +41,26 @@ const solve1 = (fld) => {
 
 const solve2 = (fld) => {
 
-    const findIndexOfBestCandidates = (cands) =>
-        cands.reduce((bestIdx, c, idx) => (c && (bestIdx === -1 || c.length < cands[bestIdx].length)) ? idx : bestIdx, -1)
+    const findIndexOfBestCandidates = (candsForAll) => {
+        return candsForAll.reduce((bestIdx, c, idx) => {
+            return (c && (bestIdx === -1 || c.length < candsForAll[bestIdx].length)) ? idx : bestIdx
+        }, -1)
+    }
+
+    const findBestCandidates = (candsForAll) => {
+        const idx = findIndexOfBestCandidates(candsForAll);
+        return idx < 0 ? null : { idx, values: candsForAll[idx] }
+    }
 
     const solv = (fld) => {
-        const idx = fld.findIndex(x => x === 0);
-
-        if (idx < 0) {
+        if (fld.findIndex(x => x === 0) < 0) {
             res = [...fld]
         }
         else {
-            const cands = range81.map(idx => fld[idx] === 0 ? candidates(fld, idx) : null)
-            const bestIdx = findIndexOfBestCandidates(cands);
-            bestIdx >= 0 && cands[bestIdx].forEach(val => {
-                fld[bestIdx] = val;
-                solv(fld);
-                fld[bestIdx] = 0;
+            const candsForAll = RANGE81.map(idx => fld[idx] === 0 ? candidates(fld, idx) : null)
+            const bestCands = findBestCandidates(candsForAll);
+            bestCands && bestCands.values.forEach(val => {
+                solv(set(fld, bestCands.idx, val));
             })
         }
     }
@@ -58,34 +70,20 @@ const solve2 = (fld) => {
     return res;
 }
 const solve3 = (() => {
-    const ALL = range(81);
-    const COORD = ALL.map(n => ({ r: row(n), c: col(n), b: block(n) }));
-    const generateEmptyArrays = () => range(9).map(() => []); // [ [], [], [], [], [], [], [], [], [] ]
-    const FLDSINROW = ALL.reduce((acc, n) => (acc[COORD[n].r].push(n), acc), generateEmptyArrays());
-    const FLDSINCOL = ALL.reduce((acc, n) => (acc[COORD[n].c].push(n), acc), generateEmptyArrays());
-    const FLDSINBLK = ALL.reduce((acc, n) => (acc[COORD[n].c].push(n), acc), generateEmptyArrays());
-
-    const setUsedFlags = (model, idx, val, flag) => {
-        const o = COORD[idx];
-        if (flag) {
-            model.usedInRow[o.r] |= 1 << val;
-            model.usedInCol[o.c] |= 1 << val;
-            model.usedInBlk[o.b] |= 1 << val;
-        } else {
-            model.usedInRow[o.r] &= ~(1 << val);
-            model.usedInCol[o.c] &= ~(1 << val);
-            model.usedInBlk[o.b] &= ~(1 << val);
-        }
-    }
 
     const setVal = (model, idx, val) => {
-        setUsedFlags(model, idx, val, true);
-        model.cnt++;
+        model.usedInRow[COORDR[idx]] |= 1 << val;
+        model.usedInCol[COORDC[idx]] |= 1 << val;
+        model.usedInBlk[COORDB[idx]] |= 1 << val;
+        model.cnt += val === 0 ? 0 : 1;
         model.fld[idx] = val;
     }
 
     const unsetVal = (model, idx) => {
-        setUsedFlags(model, idx, model.fld[idx], false);
+        const val = model.fld[idx];
+        model.usedInRow[COORDR[idx]] &= ~(1 << val);
+        model.usedInCol[COORDC[idx]] &= ~(1 << val);
+        model.usedInBlk[COORDB[idx]] &= ~(1 << val);
         model.cnt--;
         model.fld[idx] = 0;
     }
@@ -96,13 +94,12 @@ const solve3 = (() => {
         return cnt;
     }
 
-    const getCandidates = (model, idx) => {  // Candidates for m[idx]
-        const o = COORD[idx];
-        const candidatesAsBitset = ~(model.usedInRow[o.r] | model.usedInCol[o.c] | model.usedInBlk[o.b]);
+    const getCandidates = (model, idx) => {
+        const candidatesAsBitset = ~(model.usedInRow[COORDR[idx]] | model.usedInCol[COORDC[idx]] | model.usedInBlk[COORDB[idx]]);
         return { cnt: countBits(candidatesAsBitset), vals: candidatesAsBitset };
     }
 
-    const getBestCandidates = (model) => { // returns entry with shortest list of candidates  
+    const getBestCandidates = (model) => {
         let bestCandidates = null;
         model.cand = [];
         model.fld.forEach((x, idx) => {
@@ -117,18 +114,18 @@ const solve3 = (() => {
         return bestCandidates;
     }
 
-    const findHN = (m, FLDS) => {
-        for (let v = 1; v <= 9; v++) { // all possible values of fld = 1,2,3,...,9
+    const findHN = (m, CELLS) => {
+        for (let v = 1; v <= 9; v++) {
             const mask = 1 << v;
             for (let n = 0; n < 9; n++) { // all blocks ( or  cols or rows )
-                const flds = FLDS[n];
+                const cells = CELLS[n];
                 let cnt = 0, idx = -1;
-                for (let i = 0; i < flds.length; i++) { // all fields of fieldset
-                    const x = m.cand[flds[i]];
+                for (let i = 0; i < cells.length; i++) { // all fields of fieldset
+                    const x = m.cand[cells[i]];
                     if (x && (x.vals & mask)) {
                         if (++cnt > 1)
                             break;
-                        idx = flds[i];
+                        idx = cells[i];
                     }
                 }
                 if (cnt === 1) {
@@ -141,20 +138,18 @@ const solve3 = (() => {
         return null;
     }
 
-    const findHiddenNaked = (m) => findHN(m, FLDSINBLK) || findHN(m, FLDSINROW) || findHN(m, FLDSINCOL);
+    const findHiddenNaked = (m) => findHN(m, CELLSINBLK) || findHN(m, CELLSINROW) || findHN(m, CELLSINCOL);
 
     const solve = (fld) => {
 
         const model = {
-            cnt: fld.reduce((acc, x) => acc + (x !== 0), 0),
+            cnt: 0,
             fld,
             cand: [],
-            usedInRow: [],
-            usedInCol: [],
-            usedInBlk: []
+            usedInRow: [], usedInCol: [], usedInBlk: []
         };
 
-        fld.forEach((val, idx) => setUsedFlags(model, idx, val, true));
+        fld.forEach((val, idx) => setVal(model, idx, val));
 
         let res = null;
         const fill = m => {
