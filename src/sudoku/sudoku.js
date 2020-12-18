@@ -100,19 +100,19 @@ const solve3 = (() => {
         return { cnt: countBits(candidatesAsBitset), vals: candidatesAsBitset };
     }
 
-    const getBestCandidates = (model) => {
-        let bestCandidates = null;
+    const getBestCell = (model) => {
+        let bestCell = null;
         model.cand = [];
         model.fld.forEach((x, idx) => {
             if (x === 0) {
                 const cand = getCandidates(model, idx);
-                if (!bestCandidates || cand.cnt < bestCandidates.cand.cnt) {
-                    bestCandidates = { idx, cand };
+                if (!bestCell || cand.cnt < bestCell.cand.cnt) {
+                    bestCell = { idx, cand };
                 }
                 model.cand[idx] = cand;
             }
         });
-        return bestCandidates;
+        return bestCell;
     }
 
     const findHiddenNaked = (m) => {
@@ -158,19 +158,18 @@ const solve3 = (() => {
                 return res = [...m.fld];
             }
 
-            let c = getBestCandidates(m);
-            if (!c)
+            let bestCell = getBestCell(m);
+            if (!bestCell)
                 return;
-            if (c.cand.cnt > 1) {
-                c = findHiddenNaked(m) || c;
-                // if( c.cand.cnt > 1 ) findPairs(m);
+            if (bestCell.cand.cnt > 1) {
+                bestCell = findHiddenNaked(m) || bestCell;
             }
             for (let i = 1; i <= 9; i++) {
-                if (c.cand.vals & (1 << i)) {
-                    setVal(m, c.idx, i);
+                if (bestCell.cand.vals & (1 << i)) {
+                    setVal(m, bestCell.idx, i);
                     fill(m);
                     if (!res)
-                        unsetVal(m, c.idx);
+                        unsetVal(m, bestCell.idx);
                 }
             }
         };
