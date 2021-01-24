@@ -22,4 +22,7 @@ test('bitset', () => {
     expect(bitset.diff(bs1, bs2)).toBe(bitset.fromArray([1, 2, 9]));
     expect(bitset.xor(bs1, bs2)).toBe(bitset.fromArray([1, 2, 9, 12]));
 
+    expect(bitset.contains(bs1,2)).toBe(true);
+    expect(bitset.contains(bs1,12)).toBe(false);
+
 });
