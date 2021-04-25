@@ -11,7 +11,7 @@ const solveEightQueens = (N) => {
     }
     const CONNECTIONSETS = range(N * N).map(connectionSet);
     const hasCollision = (fld, idx) => CONNECTIONSETS[idx].some(x => fld[x] === 1);
-    const solve = (fld, row, cols) => {
+    const solve = (fld, row, cols) =>
         row >= N
             ? res.push([...fld])
             : cols.filter(col => !hasCollision(fld, row * N + col)).forEach(c => {
@@ -19,7 +19,6 @@ const solveEightQueens = (N) => {
                 solve(fld, row + 1, cols.filter(x => x != c))
                 fld[row * N + c] = 0;
             })
-    }
     const res = [];
     solve(range(N * N).map(() => 0), 0, range(N));
     return res;
