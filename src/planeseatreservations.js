@@ -1,11 +1,8 @@
 const range = n => [...Array(n).keys()];
-
-const solution = (N, reservations) => {
-  const reservationsArr = reservations.split(' ');
-  const makeRow = r => "ABCDEFGHIK".split('').map(ch => reservationsArr.includes((r + 1) + ch) ? 'X' : ch).join(''); // Mache ein X an alle belegten Sitze
-  const possibleInRow = r => r.includes('ABC') + (r.includes('DEF') || r.includes('EFG')) + r.includes('HIK');
-  return range(N).map(makeRow).reduce((acc, r) => acc + possibleInRow(r), 0);
-}
+const makeRow = (r,arr) => "ABCDEFGHIK".split('').map(ch => arr.includes((r + 1) + ch) ? 'X' : ch).join(''); // Mache ein X an alle belegten Sitze
+const possibleInRow = r => r.includes('ABC') + (r.includes('DEF') || r.includes('EFG')) + r.includes('HIK');
+const sol = (N, arr) => range(N).map(r=>makeRow(r,arr)).reduce((acc, r) => acc + possibleInRow(r), 0);
+const solution = (N, reservations) => sol(N, reservations.split(' '))
 
 // TESTS
 const test = sol => sol(1, '') === 3
