@@ -23,3 +23,5 @@ const solveEightQueens = (N) => {
     solve(range(N * N).map(() => 0), 0, range(N));
     return res;
 }
+
+module.exports = solveEightQueens;
