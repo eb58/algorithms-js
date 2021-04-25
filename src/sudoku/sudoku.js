@@ -1,6 +1,6 @@
 const range = (n) => [...Array(n).keys()];
-const row = (x) => x % 9;
-const col = (x) => Math.floor(x / 9);
+const col = (x) => x % 9;
+const row = (x) => Math.floor(x / 9);
 const block = (x) => Math.floor(col(x) / 3) * 3 + Math.floor(row(x) / 3);
 const RANGE81 = range(9 * 9);
 const RANGE1_9 = range(9).map(x => x + 1);
