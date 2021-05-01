@@ -1,18 +1,8 @@
-const bitset = {
-  fromArray: (xs) => xs.reduce((acc, x) => acc | 1 << x, 0),
-  toArray: (bs) => bs.toString(2).split('').reverse().reduce((acc, x, i) => x === '0' ? acc : [...acc, i], []),
-  size: (bs) => bs.toString(2).split('').filter(x => x === '1').length,
-  union: (bs1, bs2) => bs1 | bs2,
-  intersection: (bs1, bs2) => bs1 & bs2,
-  diff: (bs1, bs2) => bs1 & ~bs2,
-  xor: (bs1, bs2) => bs1 ^ bs2,
-}
-
 const ol = {
   id: (x) => x,
   abs: (x) => (x >= 0 ? x : -x),
-  sqr: (x) => x * x,
-  cube: (x) => x * x * x,
+  sqr: (x) => x ** 2,
+  cube: (x) => x ** 3,
   fac: (x) => ol.range(x).reduce((acc, n) => acc * (n + 1), 1),
   fib: (x) => (x <= 2 ? 1 : ol.fib(x - 1) + ol.fib(x - 2)),
   randomInRange: (min, max) => Math.random() * (max - min) + min,
@@ -37,7 +27,9 @@ const ol = {
   without: (xs, x) => xs.filter((y) => x !== y),
   withoutIndex: (xs, idx) => xs.filter((_, i) => i !== idx),
   sort: (cmp) => (xs.sort(cmp), xs),
-  zip: (xs,ys,f) => xs.map( (x,i) => f(xa[i],ys[i])),
+  zip: (xs, ys, f) => xs.map((x, i) => f ? f(xs[i], ys[i]) : [xs[i], ys[i]]),
+  equal: (xs, ys) => JSON.stringify(xs) === JSON.stringify(ys),
+  uniq: (xs) => Array.from(new Set(xs)),
   //
   add2arr: (a, v) => (a ? [...a, v] : [v]),
   add2obj: (o, k, v) => ((o[k] = ol.add2arr(o[k], v)), o),
@@ -73,15 +65,17 @@ const array = (xs) => ({
   rest: () => xs.slice(1),
   first: () => xs[0],
   last: () => xs[xs.length - 1],
-  max: () => xs.reduce((a, x) => (x > a ? x : a)),
-  min: () => xs.reduce((a, x) => (x < a ? x : a)),
+  max: () => xs.reduce((a, x) => x > a ? x : a, xs[0]),
+  min: () => xs.reduce((a, x) => x < a ? x : a, xs[0]),
   groupBy: (proj) => xs.reduce((a, v) => ol.add2obj(a, proj(v), v), {}),
-  uniq: () => xs.reduce((a, x) => (a.includes(x) ? a : [...a, x]), []),
-  unite: (ys) => array([...xs, ...ys]).uniq(),
+  uniq: () => ol.uniq(xs),
+  unite: (ys) => ol.uniq([...xs, ...ys]),
   xor: (ys) => ([...xs, ...ys]).filter(x => !(xs.includes(x) && ys.includes(x))),
   intersect: (ys) => xs.filter((x) => ys.includes(x)),
   subtract: (ys) => xs.filter((x) => !ys.includes(x)),
   subsetOf: (ys) => ys.every((x) => xs.includes(x)),
+  equals: (ys) => equal(xs, ys),
+  clone: () => JSON.parse(JSON.stringify(xs)),
   tap: (f) => (f(xs), xs),
   largerThan: (a) => xs.filter((x) => x > a),
   smallerThan: (a) => xs.filter((x) => x < a),
@@ -93,6 +87,12 @@ const memoize = (fn) => {
   return (x) => cache[x] || (cache[x] = fn(x));
 };
 
+const timer = (f) => {
+  const t = performance.now();
+  f();
+  return performance.now() - t;
+}
+
 const fib = memoize(ol.fib);
 
 module.exports = {
@@ -100,5 +100,4 @@ module.exports = {
   num,
   interval,
   array,
-  bitset
 };

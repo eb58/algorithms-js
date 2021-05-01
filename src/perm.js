@@ -1,10 +1,5 @@
-Array.prototype.without = function (n) {
-  return this.filter(x => x !== n);
-};
-
-Array.prototype.withoutIndex = function (n) {
-  return this.filter((_, idx) => idx !== n);
-};
+Array.prototype.without = function (n) { return this.filter(x => x !== n); };
+Array.prototype.withoutIndex = function (n) { return this.filter((_, idx) => idx !== n); };
 
 perms2 = xs => [[xs[0], xs[1]], [xs[1], xs[0]]];
 perms3 = xs => [
@@ -44,17 +39,35 @@ perms4 = xs => [
 ];
 
 permX = xs => {
-  const length = xs.length;
+  const len = xs.length;
   const result = [xs.slice()];
-  const c = Array(length).fill(0);
-  let i = 1, k, p;
-
-  while (i < length) {
+  const c = Array(len).fill(0);
+  let i = 1;
+  while (i < len) {
     if (c[i] < i) {
-      k = i % 2 && c[i];
-      p = xs[i];
+      const k = i % 2 && c[i];
+      const p = xs[i];
       xs[i] = xs[k];
       xs[k] = p;
+      ++c[i];
+      i = 1;
+      result.push(xs.slice());
+    } else {
+      c[i++] = 0;
+    }
+  }
+  return result;
+};
+
+permX2 = xs => { // Heaps algorithm --- https://en.wikipedia.org/wiki/Heap%27s_algorithm
+  const swap = (xs, i, k) => { const p = xs[i]; xs[i] = xs[k]; xs[k] = p; }
+  const len = xs.length
+  const result = [...xs];
+  const c = Array(len).fill(0);
+  let i = 1;
+  while (i < len) {
+    if (c[i] < i) {
+      swap(xs, i, i % 2 && c[i]);
       ++c[i];
       i = 1;
       result.push(xs.slice());
@@ -97,15 +110,10 @@ permWithFilter = f => {
   return perm;
 };
 
-/*  doesnt work but interesting
- const rotations = ([l, ...ls], right=[]) =>  l ? [[l, ...ls, ...right], ...rotations(ls, [...right, l])] : []
- const perm5 = ([x, ...xs]) => x ? perm5(xs).flatMap(p => rotations([x, ...p])) : [[]]
- */
-
 perm6 = (() => {
   const range = n => [...Array(n).keys()];
   const cache = [];
-  return perm6 = xs => {
+  return xs => {
     const len = xs.length;
     if (!cache[len]) {
       cache[len] = perm4(range(len));
@@ -124,5 +132,4 @@ module.exports = {
   perm4,
   perm6,
   permWithFilter,
-
 };
