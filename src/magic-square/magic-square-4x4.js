@@ -1,5 +1,6 @@
+Array.prototype.subtract = function(xs){ return this.filter(x => !xs.includes(x)); }
+
 module.exports = () => {
-  const magicSquareUtils = require('./magic-square-utils');
   const range = require('../ol').ol.range;
   const comb = require('../combinations').comb1;
   const perm = require('../perm').perm4;
@@ -31,15 +32,15 @@ module.exports = () => {
     if (numberOneIsNotInUpperLeft(square)) {
       return;
     }
-
+ 
     if (availableNumbers.length === 0) {
       res.push(square);
-      return;
+      return; 
     }
 
     const rowDef = rowsDef[i];
     const predicate = (xs) => rowDef.restriction(xs, square, availableNumbers);
-    comb(availableNumbers, rowDef.row.length, predicate).forEach((combi) => {
+    comb(availableNumbers, rowDef.row.length, predicate).forEach((combi) => { 
       const newAvailableNumbers = availableNumbers.subtract(combi);
       perm(combi).forEach((p) => {
         setRow(square, rowDef.row, p);
