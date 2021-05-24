@@ -17,15 +17,33 @@ const ol = {
   cube: (x) => x ** 3,
   fac: (x) => ol.range(x).reduce((acc, n) => acc * (n + 1), 1),
   fib: (x) => (x <= 2 ? 1 : ol.fib(x - 1) + ol.fib(x - 2)),
+  gcd: (a, b) => a % b === 0 ? b : gcd(b, a % b),
+  add: (a, b) => a + b,
+
   randomInRange: (min, max) => Math.random() * (max - min) + min,
   randomIntInRange: (min, max) => Math.floor(ol.randomInRange(min, max + 1)),
   feedx: (x, f) => f(x),
 
   // predicates
+  eq: (x, y) => x === y,
+  lt: (x, y) => x < y,
+  gt: (x, y) => x > y,
   odd: (x) => x % 2 !== 0,
   even: (x) => x % 2 === 0,
   ininterval: (x, a, b) => a <= x && x <= b,
   leapyear: (x) => (x % 4 === 0 && x % 100 !== 0) || x % 400 === 0,
+
+  // generate predicates
+  gtPred: (x) => (y) => y > x,
+  ltPred: (x) => (y) => y < x,
+
+  // combine predicates
+  not: (f) => (x) => !f(x),
+  and: (f, g) => (x) => f(x) && g(x),
+  or: (f, g) => (x) => f(x) || g(x),
+  xor: (f, g) => (x) => !!(f(x) ^ g(x)),
+  every: (...fs) => (x) => fs.every(f => f(x)),
+  some: (...fs) => (x) => fs.some(f => f(x)),
 
   // cmp
   cmp: (x, y) => (x === y ? 0 : x < y ? -1 : +1),
@@ -44,6 +62,7 @@ const ol = {
   //
   add2arr: (a, v) => (a ? [...a, v] : [v]),
   add2obj: (o, k, v) => ((o[k] = ol.add2arr(o[k], v)), o),
+  clone: (o) => JSON.parse(JSON.stringify(o)),
 };
 
 
@@ -70,7 +89,7 @@ const array = (xs) => ({
   sum: () => ol.sum(xs),
   without: (x) => ol.without(xs, x),
   withoutIndex: (idx) => ol.withoutIndex(idx),
-  initial: () => xs.slice(0, length - 1),
+  initial: () => xs.slice(0, - 1),
   head: () => [xs[0]],
   tail: () => xs.slice(1),
   rest: () => xs.slice(1),

@@ -87,6 +87,22 @@ test('testset leapyear', () => {
   expect(ol.leapyear(2008)).toBe(true);
 });
 
+test('testset combine predicates', () => {
+  expect(ol.not(ol.leapyear)(1800)).toBe(true);
+  expect(ol.not(ol.not(ol.even))(2)).toBe(true);
+  expect(ol.or(ol.leapyear, ol.odd)(1804)).toBe(true);
+  expect(ol.or(ol.leapyear, ol.odd)(1801)).toBe(true);
+  expect(ol.and(ol.even, ol.odd)(1804)).toBe(false);
+  expect(ol.and(ol.even, ol.leapyear)(1804)).toBe(true);
+  expect(ol.xor(ol.even, ol.odd)(54)).toBe(true);
+  expect(ol.every(ol.leapyear, ol.even)(1804)).toBe(true);
+  expect(ol.every(ol.leapyear, ol.even)(1800)).toBe(false);
+  expect(ol.some(ol.leapyear, ol.even)(1804)).toBe(true);
+  expect(ol.some(ol.leapyear, ol.even)(1800)).toBe(true);
+});
+
+
+
 test('testset cmp', () => {
   expect(ol.cmp(1, 1)).toBe(0);
   expect(ol.cmp(1, 2)).toBe(-1);
@@ -220,16 +236,16 @@ test('testset add2obj', () => {
     expect(array([1, 2, 3]).intersect([3, 4, 5])).toEqual([3]);
 
     expect(array([]).without(3)).toEqual([]);
-    expect(array([3]).without(3)).toEqual([]); 
+    expect(array([3]).without(3)).toEqual([]);
     expect(array([1]).without(3)).toEqual([1]);
     expect(array([1]).max()).toEqual(1);
 
-    expect(array([]).max()).toEqual(undefined); 
+    expect(array([]).max()).toEqual(undefined);
     expect(array([1]).max()).toEqual(1);
-    expect(array([1,2]).max()).toEqual(2);
+    expect(array([1, 2]).max()).toEqual(2);
     expect(array([]).min()).toEqual(undefined);
     expect(array([1]).min()).toEqual(1);
-    expect(array([1,2]).min()).toEqual(1);
+    expect(array([1, 2]).min()).toEqual(1);
 
 
   })
