@@ -1,6 +1,6 @@
 // You have a plane with N rows and seats ABC DEFG HIK for every row
 // And you have given a String with reservations i.e. '1A 1B 1D 2B 11F'
-// Compute number of remaining triple of adjacent seats.
+// Compute number of remaining triples of adjacent seats.
 const range = n => [...Array(n).keys()];
 
 const solution1 = (N, reservations) => {
