@@ -4,7 +4,7 @@
 const range = n => [...Array(n).keys()];
 
 const solution1 = (N, reservations) => {
-  const makeRow = (r) => "ABCDEFGHIK".split('').map(ch => reservations.includes((r + 1) + ch) ? 'X' : ch).join(''); // Mache ein X an alle belegten Sitze
+  const makeRow = (r) => "ABCDEFGHIK".split('').map(c => reservations.includes((r + 1) + c) ? 'X' : c).join(''); // Mache ein X an alle belegten Sitze
   const countPossibleInRow = (r) => r.includes('ABC') + (r.includes('DEF') || r.includes('EFG')) + r.includes('HIK');
   return range(N).map(r => makeRow(r)).reduce((sum, r) => sum + countPossibleInRow(r), 0);
 }
