@@ -22,7 +22,9 @@ const ol = {
 
   randomInRange: (min, max) => Math.random() * (max - min) + min,
   randomIntInRange: (min, max) => Math.floor(ol.randomInRange(min, max + 1)),
+  
   feedx: (x, f) => f(x),
+  call: (f,...args) => f(...args),
 
   // predicates
   eq: (x, y) => x === y,
@@ -44,6 +46,7 @@ const ol = {
   xor: (f, g) => (x) => !!(f(x) ^ g(x)),
   every: (...fs) => (x) => fs.every(f => f(x)),
   some: (...fs) => (x) => fs.some(f => f(x)),
+  comb: (f,g) => x => f(g(x)),
 
   // cmp
   cmp: (x, y) => (x === y ? 0 : x < y ? -1 : +1),
@@ -59,9 +62,7 @@ const ol = {
   sort: (cmp) => (xs.sort(cmp), xs),
   zip: (xs, ys, f) => xs.map((x, i) => f ? f(xs[i], ys[i]) : [xs[i], ys[i]]),
   uniq: (xs) => Array.from(new Set(xs)),
-  //
-  add2arr: (a, v) => (a ? [...a, v] : [v]),
-  add2obj: (o, k, v) => ((o[k] = ol.add2arr(o[k], v)), o),
+  add2obj: (o, k, v) => ({...o, [k]: o[k] ? [...o[k], v] : [v]}),
   clone: (o) => JSON.parse(JSON.stringify(o)),
 };
 
