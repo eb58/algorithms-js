@@ -15,7 +15,7 @@ const solution2 = (N, reservations) => {
   return range(N).reduce((sum, r) => sum + countPossibleInRow(r), 0);
 }
 
-const addjustSol = (f) => (N, reservationsAsString) => f(N, reservationsAsString.split(" "));
+const adjustSol = (f) => (N, reservationsAsString) => f(N, reservationsAsString.split(" "));
 
 const test = sol => sol(1, '') === 3
   && sol(1, '1A 1B 1D') === 2
@@ -27,4 +27,4 @@ const test = sol => sol(1, '') === 3
   && sol(12, '1A 1B 2D 2E 2F') === 34
   && sol(12, '11A 11B 2D 2E 2F') === 34
 
-test(addjustSol(solution1)) && test(addjustSol(solution2));
+test(adjustSol(solution1)) && test(adjustSol(solution2));
