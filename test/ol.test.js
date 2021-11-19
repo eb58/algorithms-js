@@ -162,12 +162,6 @@ test('testset withoutIndex', () => {
   expect(ol.withoutIndex([1, 2, 3, 4], 2)).toEqual([1, 2, 4]);
 });
 
-test('testset add2arr', () => {
-  expect(ol.add2arr(undefined, 1)).toEqual([1]);
-  expect(ol.add2arr([], 1)).toEqual([1]);
-  expect(ol.add2arr([1, 2, 3], 4)).toEqual([1, 2, 3, 4]);
-});
-
 test('testset add2obj', () => {
   const o = {};
   expect(ol.add2obj(o, 'key', 1)).toEqual({ 'key': [1] });
