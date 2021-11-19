@@ -24,8 +24,8 @@
    },
    "dependencies": {},
    "devDependencies": {
-      "jest": "26.6.3",
-      "jest-util": "^26.6.2",
+      "jest": "27.3.1",
+      "jest-util": "^27.3.1",
       "fastbitset": "0.3.0"
    }
 }
