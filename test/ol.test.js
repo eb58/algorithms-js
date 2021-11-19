@@ -166,7 +166,7 @@ test('testset add2obj', () => {
   const o = {};
   expect(ol.add2obj(o, 'key', 1)).toEqual({ 'key': [1] });
   expect(ol.add2obj(o, 'key', 2)).toEqual({ 'key': [1, 2] });
-  //expect( ol.add2obj({'a':undefined},'a',1) ).toEqual({'a':[1]});
+  expect(ol.add2obj({ 'a': undefined }, 'a', 1)).toEqual({ 'a': [1] });
 });
 
 // Wrappers

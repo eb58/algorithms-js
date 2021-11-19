@@ -1,5 +1,4 @@
-const bitset = require('../src/bitset');
-
+const bitset = require('../src/ol');
 test('bitset', () => {
     
     expect(bitset.size(bitset.fromArray([]))).toBe(0);
