@@ -1,4 +1,6 @@
 const range = require('./ol').ol.range;
+const array = require('./ol').array;
+const bitset = require('./ol').bitset;
 
 /*
  (12345,3) -> 
@@ -38,33 +40,31 @@ comb1a = (xs, k) => {
 };
 
 // comb2 - Most elegant solution
-comb2 = (xs, k) => (!k ? [[]] : range(xs.length - k + 1).reduce((a, i) => [...a, ...comb2(xs.slice(i + 1), k - 1).map((ys) => [xs[i], ...ys])], []));
+comb2 = (xs, k) => !k
+  ? [[]]
+  : range(xs.length - k + 1).reduce((a, i) =>
+    [...a, ...comb2(xs.slice(i + 1), k - 1).map((ys) => [xs[i], ...ys])],
+    []);
 
-/*
- 2  3    4
- 12 123  1234
- 13 124  1235
- 14 125  1245
- 15 134  1345
- 23 135  2345
- 24 145
- 25 234
- 34 235
- 35 245
- 45 345
- */
+
+{// combinations for Set
+  slice = (S, n) => new Set([...S].slice(n))
+  at = (S, i) => [...S][i]
+  combS = (S, k) => !k
+    ? [[]]
+    : range(S.size - k + 1).reduce((a, i) => {
+      return [...a, ...combS(slice(S, i + 1), k - 1).map((T) => new Set([...T, at(S, i)]))]
+    }, []);
+}
+
+combBS = (S, k) => !k
+  ? [[]]
+  : range(bitset.size(S) - k + 1).reduce((a, i) => {
+    return [...a, ...combBS(bitset.slice(S, i + 1), k - 1).map((T) => bitset.add(T, bitset.at(S, i)))]
+  }, []);
+
 // comb3 --- too slow  but quite interesting!!!
-const array = require('./ol').ol.array;
-
-comb3a = (xs, k) =>
-    (k === 1 ? xs.map((x) => [x]) : comb3a(xs, k - 1).reduce((a, ys) => [...a, ...array(xs).largerThan(array(ys).max()).map((x) => [...ys, x])], []));
-
-/* Haskell
- comb :: Int -> [a] -> [[a]]
- comb 0 _ = [[]]
- comb _ [] = []
- comb n (x:xs) = (map (x:) (comb (n-1) xs)) ++ (comb n xs)
- */
+comb3a = (xs, k) => (k === 1 ? xs.map((x) => [x]) : comb3a(xs, k - 1).reduce((a, ys) => [...a, ...array(xs).largerThan(array(ys).max()).map((x) => [...ys, x])], []));
 
 comb4 = (() => {
   const range = (n) => [...Array(n).keys()];
@@ -87,4 +87,5 @@ module.exports = {
   comb1a,
   comb2,
   comb4,
+  combBS,
 };
