@@ -113,10 +113,9 @@ const magicSquare = n => {
 
         // { row: [13, 14], restriction: square => square[12] + perm[0] + perm[1] + square[15] === MN },
         // { row: [7, 11], restriction: square => square[3] + perm[0] + perm[1] + square[15] === MN },
-        //{ row: [13], compute: (square) => square[1] + square[5] + square[9] },
+        // { row: [13], compute: (square) => square[1] + square[5] + square[9] },
         // { row: [14], compute: (square) => square[2] + square[6] + square[10] },
-
-        //{ row: [7], compute: (square) => square[4] + square[5] + square[6] },
+        // { row: [7], compute: (square) => square[4] + square[5] + square[6] },
         // { row: [11], compute: (square) => square[8] + square[9] + square[10] }
     ]
 
