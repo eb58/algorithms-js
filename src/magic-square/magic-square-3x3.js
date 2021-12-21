@@ -1,8 +1,10 @@
+Array.prototype.subtract = function(xs){ return this.filter(x => !xs.includes(x)); }
+
 module.exports = () => {
-  const magicSquareUtils = require('./magic-square-utils');
   const comb = require('../combinations').comb1;
   const perm = require('../perm').perm4;
   const range = require('../ol').ol.range;
+  const sum = require('../ol').ol.sum;
 
   const N = 3;
   const square = range(N * N).map(() => 0);
@@ -14,12 +16,12 @@ module.exports = () => {
   const setRow = (square, row, perm) => row.forEach((x, idx) => (square[x] = perm[idx]));
 
   const rowsDef = [
-    { row: [0, 4, 8], restriction: (xs) => xs.sum() === MN }, // diag
-    { row: [1, 2], restriction: (xs, sq) => xs.sum() === MN - sq[0] },
-    { row: [5], restriction: (xs, sq) => xs.sum() === MN - sq[2] - sq[8] },
-    { row: [7], restriction: (xs, sq) => xs.sum() === MN - sq[1] - sq[4] },
-    { row: [6], restriction: (xs, sq) => xs.sum() === MN - sq[7] - sq[8] },
-    { row: [3], restriction: (xs, sq) => xs.sum() === MN - sq[0] - sq[6] },
+    { row: [0, 4, 8], restriction: (xs) => sum(xs) === MN }, // diag
+    { row: [1, 2], restriction: (xs, sq) => sum(xs) === MN - sq[0] },
+    { row: [5], restriction: (xs, sq) => sum(xs) === MN - sq[2] - sq[8] },
+    { row: [7], restriction: (xs, sq) => sum(xs) === MN - sq[1] - sq[4] },
+    { row: [6], restriction: (xs, sq) => sum(xs) === MN - sq[7] - sq[8] },
+    { row: [3], restriction: (xs, sq) => sum(xs) === MN - sq[0] - sq[6] },
   ];
 
   const combineToMagicSquare = (square, availableNumbers, i) => {
