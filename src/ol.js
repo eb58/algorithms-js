@@ -1,13 +1,33 @@
 const bitset = {
+  MAX: 32,
   fromArray: (xs) => xs.reduce((acc, x) => acc | 1 << x, 0),
-  toArray: (bs) => bs.toString(2).split('').reverse().reduce((acc, x, i) => x === '0' ? acc : [...acc, i], []),
+  toArray: (bs) => { const res = []; let i = 0; while (bs) { if (bs & 1) res.push(i); i++; bs >>= 1; } return res },
+  add: (bs, v) => bs | (1 << v),
+  rm: (bs, v) => bs & ~(1 << v),
+  set: (bs, n, v) => bs | (v ? 1 : 0) << n,
+  
+  isEmpty: (bs) => bs === 0,
   size: (bs) => { let count = 0; while (bs) bs & 1 ? count++ : 0, bs >>= 1; return count; },
   union: (bs1, bs2) => bs1 | bs2,
   intersection: (bs1, bs2) => bs1 & bs2,
   diff: (bs1, bs2) => bs1 & ~bs2,
   xor: (bs1, bs2) => bs1 ^ bs2,
-  includes: (bs, n) => !!(bs & 1 << n),
-  contains: (bs, n) => !!(bs & 1 << n),
+  has: (bs, v) => !!(bs & (1 << v)),
+  includes: (bs, v) => !!(bs & (1 << v)),
+  contains: (bs, n) => !!(bs & (1 << n)),
+  slice: (S, n) => {
+    let res = 0; let i = 0;
+    let cnt = 0
+    while (i <= bitset.MAX && cnt < n) { if (S & (1 << i)) cnt++; i++; }
+    for (let j = i; j < bitset.MAX; j++) { res |= S & (1 << j) }
+    return res
+  },
+  at: (S, n) => {
+    let i = cnt = 0;
+    while (i <= bitset.MAX && cnt <= n) { if (S & (1 << i)) cnt++; i++; }
+    if (i === 0 || i > bitset.MAX) throw "Wrong index " + n;
+    return i - 1;
+  }
 }
 
 const ol = {
@@ -61,7 +81,7 @@ const ol = {
   withoutIndex: (xs, idx) => xs.filter((_, i) => i !== idx),
   sort: (cmp) => (xs.sort(cmp), xs),
   zip: (xs, ys, f) => xs.map((x, i) => f ? f(xs[i], ys[i]) : [xs[i], ys[i]]),
-  uniq: (xs) => Array.from(new Set(xs)), 
+  uniq: (xs) => Array.from(new Set(xs)),
   add2obj: (o, k, v) => (o[k] = o[k] ? [...o[k], v] : [v], o),
   clone: (o) => JSON.parse(JSON.stringify(o)),
 };
