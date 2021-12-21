@@ -1,6 +1,11 @@
-const bitset = require('../src/ol');
+const bitset = require('../src/ol').bitset;
 test('bitset', () => {
-    
+
+    const bs = bitset.fromArray([11, 1, 2, 9]);
+    expect(bitset.add(bs, 3)).toBe(bitset.fromArray([1, 2, 3, 9, 11]));
+    expect(bitset.has(bs, 2)).toBe(true);
+    expect(bitset.has(bs, 30)).toBe(false);
+
     expect(bitset.size(bitset.fromArray([]))).toBe(0);
     expect(bitset.size(bitset.fromArray([7]))).toBe(1);
     expect(bitset.size(bitset.fromArray([11, 1, 2, 9]))).toBe(4);
@@ -21,7 +26,8 @@ test('bitset', () => {
     expect(bitset.diff(bs1, bs2)).toBe(bitset.fromArray([1, 2, 9]));
     expect(bitset.xor(bs1, bs2)).toBe(bitset.fromArray([1, 2, 9, 12]));
 
-    expect(bitset.contains(bs1,2)).toBe(true);
-    expect(bitset.contains(bs1,12)).toBe(false);
+    expect(bitset.contains(bs1, 2)).toBe(true);
+    expect(bitset.contains(bs1, 12)).toBe(false);
+
 
 });
