@@ -87,5 +87,4 @@ module.exports = {
   comb1a,
   comb2,
   comb4,
-  combBS,
 };
