@@ -1,9 +1,5 @@
-const ol = require('../src/ol').ol;
-
 test('testset magic-square-4x4', () => {
-  const magicSquare = require('../src/magic-square/magic-square-4x4');
-  ol.range(1).forEach(() => {
-    expect(magicSquare().length).toBe(880); 
-  })
+  const magic4x4Solver = require('../src/magic-square/magic-square-4x4').magic4x4Solver;
+  expect(magic4x4Solver().length).toBe(880); 
 });
 

@@ -1,13 +1,5 @@
-const range = require('./ol').ol.range;
-const array = require('./ol').array;
-const bitset = require('./ol').bitset;
-
-/*
- (12345,3) -> 
- 1 ++ (2345,2)
- 2 ++ (345,2)
- 3 ++ (45,2)
- */
+const { ol, bitset, array } = require('./ol');
+const { range } = ol;
 
 // comb1 - fastest solution
 comb1 = (xs, k, pred) => {
@@ -87,4 +79,4 @@ module.exports = {
   comb1a,
   comb2,
   comb4,
-};
+}
