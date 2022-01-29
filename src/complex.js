@@ -30,7 +30,7 @@ lexParser = (input) => {
             name = name + input.charAt(strpos++);
         return {
             token: tokens.ident,
-            value: values[name.toUpperCase] || 0.0,
+            value: values[name.toUpperCase()],
             name,
             strpos,
         }
@@ -82,7 +82,7 @@ evalComplex = (s, variables) => {
             return val;
         }
         if (token && token.token == tokens.ident) {
-            if (token.value) {
+            if (token.value) { // Constants PI or E
                 const val = token.value;
                 token = lex.getToken();
                 return val;
@@ -92,18 +92,10 @@ evalComplex = (s, variables) => {
                 token = lex.getToken();
                 return val;
             }
-            else {
-                if (!v) {
-                    throw (`Unknow identifier ${token.name}. Pos:${token.strpos}`)
-                }
-
-            }
-
+            throw `Unknow identifier <${token.name}>. Pos:${token.strpos}`
             //short i= 0;
             //while (functable[i].f && Ident, functable[i].fname))i++;
             //if (functable[i].f) return Function(i);
-            Errors++;
-            return BAD;
         }
 
         if (token && token.token == tokens.lparen) {
@@ -153,9 +145,7 @@ evalComplex = (s, variables) => {
     return expression();
 }
 
-console.log(evalComplex("1+3") === 4)
-console.log(evalComplex("3*3") === 9)
-console.log(evalComplex("(3*3)") === 9)
-console.log(evalComplex("(1+1)*(3*3)") === 18)
-console.log(evalComplex("a+b", { a: 3, b: 7 }) === 10)
-console.log(evalComplex("a*b", { a: 3, b: 7 }) === 21)
+module.exports = {
+    lexParser,
+    evalComplex
+};
