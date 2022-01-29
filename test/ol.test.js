@@ -1,38 +1,43 @@
-const ol = require('../src/ol').ol;
-const num = require('../src/ol').num;
-const interval = require('../src/ol').interval;
-const array = require('../src/ol').array;
+const { ol, num, interval, array } = require('../src/ol');
+const { id, sqr, abs, cube, fac, fib, range, rangeFilled,
+  randomArray, randomInRange, randomIntArray, randomIntInRange,
+  cmp, 
+  leapyear, odd, even, 
+  not, or, and, xor, comb, every, some,
+  ininterval, add2obj, sum,
+  without, withoutIndex
+} = ol;
 
 test('testset simple', () => {
 
-  expect(ol.id('a')).toEqual('a');
-  expect(ol.id(3)).toEqual(3);
+  expect(id('a')).toEqual('a');
+  expect(id(3)).toEqual(3);
 
-  expect(ol.sqr(3)).toEqual(9);
-  expect(ol.sqr(-4)).toEqual(16);
+  expect(sqr(3)).toEqual(9);
+  expect(sqr(-4)).toEqual(16);
 
-  expect(ol.abs(2)).toEqual(2);
-  expect(ol.abs(-2)).toEqual(2);
+  expect(abs(2)).toEqual(2);
+  expect(abs(-2)).toEqual(2);
 
-  expect(ol.cube(0)).toEqual(0);
-  expect(ol.cube(1)).toEqual(1);
-  expect(ol.cube(2)).toEqual(8);
-  expect(ol.cube(3)).toEqual(27);
+  expect(cube(0)).toEqual(0);
+  expect(cube(1)).toEqual(1);
+  expect(cube(2)).toEqual(8);
+  expect(cube(3)).toEqual(27);
 
 });
 
 test('testset faculty', () => {
-  expect(ol.fac(0)).toEqual(1);
-  expect(ol.fac(1)).toEqual(1);
-  expect(ol.fac(2)).toEqual(2);
-  expect(ol.fac(3)).toEqual(6);
-  expect(ol.fac(4)).toEqual(24);
+  expect(fac(0)).toEqual(1);
+  expect(fac(1)).toEqual(1);
+  expect(fac(2)).toEqual(2);
+  expect(fac(3)).toEqual(6);
+  expect(fac(4)).toEqual(24);
 });
 
 test('testset randomInRange', () => {
   const res = {};
   for (let i = 0; i < 1000; i++) {
-    const x = Math.floor(ol.randomInRange(1, 6));
+    const x = Math.floor(randomInRange(1, 6));
     res[x] = (res[x] || 0) + 1;
     expect(x).toBeGreaterThanOrEqual(1);
     expect(x).toBeLessThanOrEqual(6);
@@ -43,7 +48,7 @@ test('testset randomInRange', () => {
 test('testset randomIntInRange', () => {
   const res = {};
   for (let i = 0; i < 1000; i++) {
-    const x = ol.randomIntInRange(1, 6);
+    const x = randomIntInRange(1, 6);
     res[x] = (res[x] || 0) + 1;
     expect(x).toBeGreaterThanOrEqual(1);
     expect(x).toBeLessThanOrEqual(6);
@@ -52,121 +57,121 @@ test('testset randomIntInRange', () => {
 });
 
 test('testset fibonacci', () => {
-  expect(ol.fib(1)).toEqual(1);
-  expect(ol.fib(2)).toEqual(1);
-  expect(ol.fib(3)).toEqual(2);
-  expect(ol.fib(4)).toEqual(3);
-  expect(ol.fib(5)).toEqual(5);
-  expect(ol.fib(6)).toEqual(8);
+  expect(fib(1)).toEqual(1);
+  expect(fib(2)).toEqual(1);
+  expect(fib(3)).toEqual(2);
+  expect(fib(4)).toEqual(3);
+  expect(fib(5)).toEqual(5);
+  expect(fib(6)).toEqual(8);
 });
 
 test('testset odd & even', () => {
-  expect(ol.odd(3)).toBe(true);
-  expect(ol.odd(4)).toBe(false);
-  expect(ol.even(3)).toBe(false);
-  expect(ol.even(4)).toBe(true);
+  expect(odd(3)).toBe(true);
+  expect(odd(4)).toBe(false);
+  expect(even(3)).toBe(false);
+  expect(even(4)).toBe(true);
 });
 
 test('testset ininterval', () => {
-  expect(ol.ininterval(3, 3, 4)).toEqual(true);
-  expect(ol.ininterval(3.5, 4, 6)).toEqual(false);
-  expect(ol.ininterval(0, 0, 1)).toBe(true);
-  expect(ol.ininterval(1, 0, 1)).toBe(true);
-  expect(ol.ininterval(0.5, 0, 1)).toBe(true);
-  expect(ol.ininterval(1.1, 0, 1)).toBe(false);
-  expect(ol.ininterval(-0.1, 0, 1)).toBe(false);
+  expect(ininterval(3, 3, 4)).toEqual(true);
+  expect(ininterval(3.5, 4, 6)).toEqual(false);
+  expect(ininterval(0, 0, 1)).toBe(true);
+  expect(ininterval(1, 0, 1)).toBe(true);
+  expect(ininterval(0.5, 0, 1)).toBe(true);
+  expect(ininterval(1.1, 0, 1)).toBe(false);
+  expect(ininterval(-0.1, 0, 1)).toBe(false);
 });
 
 test('testset leapyear', () => {
-  expect(ol.leapyear(1800)).toBe(false);
-  expect(ol.leapyear(1900)).toBe(false);
-  expect(ol.leapyear(2000)).toBe(true);
-  expect(ol.leapyear(2001)).toBe(false);
-  expect(ol.leapyear(2004)).toBe(true);
-  expect(ol.leapyear(2005)).toBe(false);
-  expect(ol.leapyear(2008)).toBe(true);
+  expect(leapyear(1800)).toBe(false);
+  expect(leapyear(1900)).toBe(false);
+  expect(leapyear(2000)).toBe(true);
+  expect(leapyear(2001)).toBe(false);
+  expect(leapyear(2004)).toBe(true);
+  expect(leapyear(2005)).toBe(false);
+  expect(leapyear(2008)).toBe(true);
 });
 
 test('testset combine predicates', () => {
-  expect(ol.not(ol.leapyear)(1800)).toBe(true);
-  expect(ol.not(ol.not(ol.even))(2)).toBe(true);
-  expect(ol.or(ol.leapyear, ol.odd)(1804)).toBe(true);
-  expect(ol.or(ol.leapyear, ol.odd)(1801)).toBe(true);
-  expect(ol.and(ol.even, ol.odd)(1804)).toBe(false);
-  expect(ol.and(ol.even, ol.leapyear)(1804)).toBe(true);
-  expect(ol.xor(ol.even, ol.odd)(54)).toBe(true);
-  expect(ol.every(ol.leapyear, ol.even)(1804)).toBe(true);
-  expect(ol.every(ol.leapyear, ol.even)(1800)).toBe(false);
-  expect(ol.some(ol.leapyear, ol.even)(1804)).toBe(true);
-  expect(ol.some(ol.leapyear, ol.even)(1800)).toBe(true);
+  expect(not(leapyear)(1800)).toBe(true);
+  expect(not(not(even))(2)).toBe(true);
+  expect(or(leapyear, odd)(1804)).toBe(true);
+  expect(or(leapyear, odd)(1801)).toBe(true);
+  expect(and(even, odd)(1804)).toBe(false);
+  expect(and(even, leapyear)(1804)).toBe(true);
+  expect(xor(even, odd)(54)).toBe(true);
+  expect(every(leapyear, even)(1804)).toBe(true);
+  expect(every(leapyear, even)(1800)).toBe(false);
+  expect(some(leapyear, even)(1804)).toBe(true);
+  expect(some(leapyear, even)(1800)).toBe(true);
 });
 
 
 
 test('testset cmp', () => {
-  expect(ol.cmp(1, 1)).toBe(0);
-  expect(ol.cmp(1, 2)).toBe(-1);
-  expect(ol.cmp(2, 1)).toBe(+1);
-  expect(ol.cmp('a', 'a')).toBe(0);
-  expect(ol.cmp('a', 'b')).toBe(-1);
-  expect(ol.cmp('b', 'a')).toBe(+1);
+  expect(cmp(1, 1)).toBe(0);
+  expect(cmp(1, 2)).toBe(-1);
+  expect(cmp(2, 1)).toBe(+1);
+  expect(cmp('a', 'a')).toBe(0);
+  expect(cmp('a', 'b')).toBe(-1);
+  expect(cmp('b', 'a')).toBe(+1);
 });
 
 test('testset range', () => {
-  expect(ol.range(0)).toEqual([]);
-  expect(ol.range(1)).toEqual([0]);
-  expect(ol.range(2)).toEqual([0, 1]);
-  expect(ol.range(3)).toEqual([0, 1, 2]);
+  expect(range(0)).toEqual([]);
+  expect(range(1)).toEqual([0]);
+  expect(range(2)).toEqual([0, 1]);
+  expect(range(3)).toEqual([0, 1, 2]);
 });
 
 test('testset rangeFilled', () => {
-  expect(ol.rangeFilled(0, 'a')).toEqual([]);
-  expect(ol.rangeFilled(1, 'a')).toEqual(['a']);
-  expect(ol.rangeFilled(2, 1)).toEqual([1, 1]);
-  expect(ol.rangeFilled(3, 10)).toEqual([10, 10, 10]);
+  expect(rangeFilled(0, 'a')).toEqual([]);
+  expect(rangeFilled(1, 'a')).toEqual(['a']);
+  expect(rangeFilled(2, 1)).toEqual([1, 1]);
+  expect(rangeFilled(3, 10)).toEqual([10, 10, 10]);
 });
 
 test('testset randomArray', () => {
-  const arr = ol.randomArray(100, 1, 2);
+  const arr = randomArray(100, 1, 2);
   // console.log(arr)
-  expect(arr.every(x => ol.ininterval(x, 1, 2))).toBe(true);
+  expect(arr.every(x => ininterval(x, 1, 2))).toBe(true);
 });
 
 test('testset randomIntArray', () => {
-  const arr = ol.randomIntArray(100, 1, 3);
-  const grps = array(arr).groupBy(ol.id);
+  const arr = randomIntArray(100, 1, 3);
+  const grps = array(arr).groupBy(id);
   // console.log(grps)
   expect(arr.every(x => x === 1 || x === 2 || x === 3)).toBe(true);
   expect(Object.keys(grps).every(x => grps[x].length > 10)).toBe(true);
 });
 
 test('testset sum of arrays', () => {
-  expect(ol.sum([])).toBe(0);
-  expect(ol.sum([10])).toBe(10);
-  expect(ol.sum([10, 20, 30])).toBe(60);
-  expect(ol.sum(interval(1, 3).array())).toBe(6);
-  expect(ol.sum(interval(1, 100).array())).toBe(5050);
+  expect(sum([])).toBe(0);
+  expect(sum([10])).toBe(10);
+  expect(sum([10, 20, 30])).toBe(60);
+  expect(sum(interval(1, 3).range())).toBe(6);
+  expect(sum(interval(1, 100).range())).toBe(5050);
 });
 
 test('testset without', () => {
-  expect(ol.without([], 2)).toEqual([]);
-  expect(ol.without([3], 2)).toEqual([3]);
-  expect(ol.without([1, 2, 3], 2)).toEqual([1, 3]);
-  expect(ol.without([1, 2, 3, 4], 2)).toEqual([1, 3, 4]);
+  expect(without([], 2)).toEqual([]);
+  expect(without([3], 2)).toEqual([3]);
+  expect(without([1, 2, 3], 2)).toEqual([1, 3]);
+  expect(without([1, 2, 3, 4], 2)).toEqual([1, 3, 4]);
 });
 
 test('testset withoutIndex', () => {
-  expect(ol.withoutIndex([], 2)).toEqual([]);
-  expect(ol.withoutIndex([3], 0)).toEqual([]);
-  expect(ol.withoutIndex([1, 2, 3], 2)).toEqual([1, 2]);
-  expect(ol.withoutIndex([1, 2, 3, 4], 2)).toEqual([1, 2, 4]);
+  expect(withoutIndex([], 2)).toEqual([]);
+  expect(withoutIndex([3], 0)).toEqual([]);
+  expect(withoutIndex([1, 2, 3], 2)).toEqual([1, 2]);
+  expect(withoutIndex([1, 2, 3, 4], 2)).toEqual([1, 2, 4]);
 });
 
 test('testset add2obj', () => {
   const o = {};
-  expect(ol.add2obj(o, 'key', 1)).toEqual({ 'key': [1] });
-  expect(ol.add2obj(o, 'key', 2)).toEqual({ 'key': [1, 2] });
-  expect(ol.add2obj({ 'a': undefined }, 'a', 1)).toEqual({ 'a': [1] });
+  expect(add2obj(o, 'key', 1)).toEqual({ 'key': [1] });
+  expect(add2obj(o, 'key', 2)).toEqual({ 'key': [1, 2] });
+  expect(add2obj({ 'a': undefined }, 'a', 1)).toEqual({ 'a': [1] });
 });
 
 // Wrappers
@@ -193,8 +198,8 @@ test('testset add2obj', () => {
   });
 
   test('testset interval', () => {
-    expect(interval(1, 2).array()).toEqual([1, 2]);
-    expect(interval(0, 10).array()).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+    expect(interval(1, 2).range()).toEqual([1, 2]);
+    expect(interval(0, 10).range()).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
     expect(interval(1, 10).contains(1)).toBe(true);
     expect(interval(1, 10).contains(2)).toBe(true);
