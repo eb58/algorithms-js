@@ -273,3 +273,4 @@ module.exports = {
 swap = (x, y) => [y, x]
 // let [x,y] = [11,12]
 // [x,y] = swap (x,y)
+flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flatten(o) : o), []);

@@ -84,7 +84,7 @@ evalComplex = (s, variables) => {
             return val;
         }
         if (token.token === tokens.ident) {
-            const val = CONSTS[token.name] || variables[token.name]
+            const val = CONSTS[token.name.toUpperCase()] || variables[token.name]
             if (!val)
                 throw `Unknow identifier <${token.name}>. Pos:${token.strpos}`
             token = lex.getToken();
@@ -110,7 +110,7 @@ evalComplex = (s, variables) => {
             token = lex.getToken();
             if (multop == tokens.times)
                 val *= operand();
-            else if (multop == tokens.slash)
+            else if (multop == tokens.divide)
                 val /= operand();
         }
         return val;
@@ -138,7 +138,7 @@ evalComplex = (s, variables) => {
     return expression();
 }
 
-module.exports = {
+module && (module.exports = {
     lexParser,
     evalComplex
-};
+});
