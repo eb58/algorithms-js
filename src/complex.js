@@ -1,3 +1,30 @@
+complex = (r, i) => ({ r, i: (i || 0) })
+cneg = (c) => complex(-c.r, -c.i)
+cadd = (c1, c2) => complex(c1.r + c2.r, c1.i + c2.i)
+csub = (c1, c2) => complex(c1.r - c2.r, c1.i - c2.i)
+cmul = (c1, c2) => complex(c1.r * c2.r - c1.i * c2.i, c1.r * c2.i + c1.i * c2.r)
+cdiv = (c1, c2) => {
+    const x = c2.r * c2.r + c2.i * c2.i;
+    return complex((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x);
+}
+
+complex_ops = {
+    id: x => complex(x, 0),
+    neg: cneg,
+    add: cadd,
+    sub: csub,
+    mul: cmul,
+    div: cdiv
+}
+scalar_ops = {
+    id: x => x,
+    neg: x => -x,
+    add: (x, y) => x + y,
+    sub: (x, y) => x - y,
+    mul: (x, y) => x * y,
+    div: (x, y) => x / y,
+}
+
 tokens = [
     "ident", "number", "end", "eq", "lt", "gt",
     "minus", "plus", "times", "divide", "mod",
@@ -71,15 +98,17 @@ lexParser = (input) => {
     }
 }
 
-evalComplex = (s, variables) => {
+doEval = (s, variables, ops) => {
     variables = variables || {}
+    ops = ops || scalar_ops
+
     operand = () => {
         if (token.token === tokens.minus) {
             token = lex.getToken();
-            return -operand();
+            return ops.neg(operand());
         }
         if (token.token === tokens.number) {
-            const val = token.value;
+            const val = ops.id(token.value);
             token = lex.getToken();
             return val;
         }
@@ -109,9 +138,9 @@ evalComplex = (s, variables) => {
             const multop = token.token;
             token = lex.getToken();
             if (multop == tokens.times)
-                val *= operand();
+                val = ops.mul(val, operand());
             else if (multop == tokens.divide)
-                val /= operand();
+                val = ops.div(val, operand());
         }
         return val;
     }
@@ -122,9 +151,9 @@ evalComplex = (s, variables) => {
             const addop = token.token;
             token = lex.getToken();
             if (addop == tokens.plus)
-                val += factor();
+                val = ops.add(val, factor())
             else if (addop == tokens.minus)
-                val -= factor();
+                val = ops.sub(val, factor())
         }
         return val;
     }
@@ -138,7 +167,11 @@ evalComplex = (s, variables) => {
     return expression();
 }
 
+evalScalar = (s, variables) => doEval(s, variables, scalar_ops)
+evalComplex = (s, variables) => doEval(s, variables, complex_ops)
+
 module && (module.exports = {
     lexParser,
-    evalComplex
+    evalScalar,
+    evalComplex,
 });
