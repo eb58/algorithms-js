@@ -1,5 +1,7 @@
 const { evalComplex } = require('../src/complex');
 test('evalComplex', () => {
+    expect(evalComplex("5")).toBe(5)
+    expect(evalComplex("-55")).toBe(-55)
 
     expect(evalComplex("1+3")).toBe(4)
     expect(evalComplex("3*3")).toBe(9)
@@ -8,6 +10,8 @@ test('evalComplex', () => {
     expect(evalComplex("PI*3")).toBe(Math.PI * 3)
 
     // with variables
+    expect(evalComplex("a", { a: 3, b: 7 })).toBe(3)
+    expect(evalComplex("-a", { a: 3, b: 7 })).toBe(-3)
     expect(evalComplex("a+b", { a: 3, b: 7 })).toBe(10)
     expect(evalComplex("a*b", { a: 3, b: 7 })).toBe(21)
     expect(evalComplex("(a)+(b)", { a: 3, b: 7 })).toBe(10)
