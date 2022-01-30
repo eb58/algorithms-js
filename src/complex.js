@@ -44,6 +44,7 @@ mapCharToToken = {
 }
 
 const CONSTS = {
+    "I": complex(0,1),
     "PI": Math.PI,
     "E": Math.exp(1)
 };
