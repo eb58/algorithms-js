@@ -28,6 +28,8 @@ test('evalScalar', () => {
 
 test('evalComplex', () => {
 
+    expect(evalComplex("i*i")).toEqual(complex(-1,0))
+
     // with variables
     a = 3
     vars = { a: complex(3), b: complex(7) }

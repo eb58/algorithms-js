@@ -81,7 +81,7 @@ const ol = {
   // compare
   cmp: (x, y) => (x === y ? 0 : x < y ? -1 : +1),
   cmpNumbers: (x, y) => x - y,
-  comparer: (proj) => (x, y) => ol.cmp(proj(x), proj(y)),
+  comparer: (proj) => (x, y) => cmp(proj(x), proj(y)),
   comparerByKey: (key) => comparer(o => o[key]),
 
   //***************************************************** */
