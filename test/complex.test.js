@@ -28,7 +28,10 @@ test('evalScalar', () => {
 
 test('evalComplex', () => {
 
-    expect(evalComplex("i*i")).toEqual(complex(-1,0))
+    expect(evalComplex("i")).toEqual(complex(0,1))
+    expect(evalComplex("i*i")).toEqual(complex(-1))
+    expect(evalComplex("i*i*i")).toEqual(complex(0,-1))
+    expect(evalComplex("i*i*i*i")).toEqual(complex(1))
 
     // with variables
     a = 3
@@ -46,8 +49,8 @@ test('evalComplex', () => {
     expect(evalComplex("a*a", vars)).toEqual(complex(0,8))
     expect(evalComplex("5*a", vars)).toEqual(complex(10,10))
 
-    evalComplex("5p")
     expect(() => evalComplex("p+5", { a: 3, b: 7 })).toThrow("Unknow identifier <p>. Pos:1")
+    expect(() => evalComplex("p*5", {})).toThrow("Unknow identifier <p>. Pos:1")
 
 });
 

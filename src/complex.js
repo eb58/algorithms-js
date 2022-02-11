@@ -165,14 +165,20 @@ doEval = (s, variables, ops) => {
 
     const lex = lexParser(s);
     token = lex.getToken();
-    return expression();
+    const ret =  expression();
+    if( token != tokens.end) 
+    throw `Unexpected symbol <${token.name}>. Pos:${token.strpos}`
+    
+    if( ret.i === -0 ) ret.i = 0
+    if( ret.r === -0 ) ret.r = 0
+    
+    return ret;
 }
 
 evalScalar = (s, variables) => doEval(s, variables, scalar_ops)
 evalComplex = (s, variables) => doEval(s, variables, complex_ops)
 
 module && (module.exports = {
-    lexParser,
     evalScalar,
     evalComplex,
 });
