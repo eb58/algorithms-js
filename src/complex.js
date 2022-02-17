@@ -1,21 +1,17 @@
 complex = (r, i) => ({ r, i: (i || 0) })
-cneg = (c) => complex(-c.r, -c.i)
-cadd = (c1, c2) => complex(c1.r + c2.r, c1.i + c2.i)
-csub = (c1, c2) => complex(c1.r - c2.r, c1.i - c2.i)
-cmul = (c1, c2) => complex(c1.r * c2.r - c1.i * c2.i, c1.r * c2.i + c1.i * c2.r)
-cdiv = (c1, c2) => {
-    const x = c2.r * c2.r + c2.i * c2.i;
-    return complex((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x);
-}
 
 complex_ops = {
     id: x => complex(x, 0),
-    neg: cneg,
-    add: cadd,
-    sub: csub,
-    mul: cmul,
-    div: cdiv
+    neg: (c) => complex(-c.r, -c.i),
+    add: (c1, c2) => complex(c1.r + c2.r, c1.i + c2.i),
+    sub: (c1, c2) => complex(c1.r - c2.r, c1.i - c2.i),
+    mul: (c1, c2) => complex(c1.r * c2.r - c1.i * c2.i, c1.r * c2.i + c1.i * c2.r),
+    div: (c1, c2) => {
+      const x = c2.r * c2.r + c2.i * c2.i;
+      return complex((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x);
+    }
 }
+
 scalar_ops = {
     id: x => x,
     neg: x => -x,
