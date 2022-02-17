@@ -58,7 +58,7 @@ lexParser = (input) => {
         let name = "";
         while (strpos < s.length && qualifier(s[strpos]))
             name += s[strpos++];
-        return name
+        return name// To-Do rekursiv!!!
     }
 
     getIdentifier = () => ({
