@@ -29,7 +29,7 @@ tokens = [
     "ident", "number", "end", "eq", "lt", "gt",
     "minus", "plus", "times", "divide", "mod",
     "lparen", "rparen",
-].reduce((acc, s) => (acc[s] = s, acc), {})
+].reduce((acc, s) => ({...acc, [s]: s}))
 
 mapCharToToken = {
     '+': tokens.plus,
@@ -52,7 +52,7 @@ const CONSTS = {
 isLetter = (c) => c.match(/[_a-z]/i)
 isDigit = (c) => (c >= '0' && c <= '9')
 isNumberChar = (c) => isDigit(c) || c === '.'
-isIdentChar = (c) => c.match(/[_a-z]/i) || isDigit(c)
+isIdentifierChar = (c) => isLetter(c) || isDigit(c)
 isSpace = (c) => c === ' '
 
 lexParser = (input) => {
@@ -61,13 +61,13 @@ lexParser = (input) => {
     getIdentOrNumber = (s, qualifier) => {
         let name = "";
         while (strpos < s.length && qualifier(s[strpos]))
-            name += s.charAt(strpos++);
+            name += s[strpos++];
         return name
     }
 
     getIdentifier = () => ({
         token: tokens.ident,
-        name: getIdentOrNumber(input, isIdentChar),
+        name: getIdentOrNumber(input, isIdentifierChar),
         strpos,
     })
 
@@ -87,12 +87,10 @@ lexParser = (input) => {
                 return getIdentifier();
             if (isNumberChar(c))
                 return getNumber();
-            if (!mapCharToToken[c]) {
-                throw (`Char ${c} not allowed. Pos:${strpos} `);
-            }
-            strpos++;
+            if (!mapCharToToken[c]) 
+                throw (`Char ${c} not allowed. Pos:${strpos} `)
             return {
-                strpos,
+                ++strpos,
                 token: mapCharToToken[c]
             };
         }
@@ -164,10 +162,10 @@ doEval = (s, variables, ops) => {
     }
 
     const lex = lexParser(s);
-    token = lex.getToken();
+    let token = lex.getToken();
     const ret =  expression();
     if( token != tokens.end) 
-    throw `Unexpected symbol <${token.name}>. Pos:${token.strpos}`
+       throw `Unexpected symbol <${token.name}>. Pos:${token.strpos}`
     
     if( ret.i === -0 ) ret.i = 0
     if( ret.r === -0 ) ret.r = 0
