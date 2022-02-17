@@ -63,13 +63,13 @@ lexParser = (input) => {
 
     getIdentifier = () => ({
         token: tokens.ident,
-        name: getIdentOrNumber(input, isIdentifierChar),
+        name: getIdentOrNumber(isIdentifierChar),
         strpos,
     })
 
     getNumber = () => ({
         token: tokens.number,
-        value: parseFloat(getIdentOrNumber(input, isNumberChar)),
+        value: parseFloat(getIdentOrNumber(isNumberChar)),
         strpos,
     })
 
