@@ -1,7 +1,7 @@
 complex = (r, i) => ({ r, i: (i || 0) })
 
 complex_ops = {
-    id: x => complex(x, 0),
+    id: x => complex(x),
     neg: (c) => complex(-c.r, -c.i),
     add: (c1, c2) => complex(c1.r + c2.r, c1.i + c2.i),
     sub: (c1, c2) => complex(c1.r - c2.r, c1.i - c2.i),
