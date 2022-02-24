@@ -46,10 +46,10 @@ const CONSTS = {
 };
 
 isLetter = (c) => c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c === '_'
-isDigit = (c) => (c >= '0' && c <= '9')
+isDigit = (c) => c >= '0' && c <= '9'
 isNumberChar = (c) => isDigit(c) || c === '.'
 isIdentifierChar = (c) => isLetter(c) || isDigit(c)
-isSpace = (c) => c === ' '
+isSpace = (c) => c === ' ' || c === '\t' || c === '\n' || c === '\r'
 
 lexParser = (input) => {
     let strpos = 0;
@@ -76,7 +76,7 @@ lexParser = (input) => {
             const c = input[strpos];
             if (isLetter(c))
                 return getIdentifier();
-            if (isNumberChar(c))
+            if (isDigit(c))
                 return getNumber();
             if (!mapCharToToken[c])
                 throw (`Char ${c} not allowed. Pos:${strpos} `)
