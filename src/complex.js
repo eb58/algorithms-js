@@ -45,7 +45,7 @@ const CONSTS = {
     "E": Math.exp(1)
 };
 
-isLetter = (c) => c.match(/[_a-z]/i)
+isLetter = (c) => c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c === '_'
 isDigit = (c) => (c >= '0' && c <= '9')
 isNumberChar = (c) => isDigit(c) || c === '.'
 isIdentifierChar = (c) => isLetter(c) || isDigit(c)
@@ -54,22 +54,17 @@ isSpace = (c) => c === ' '
 lexParser = (input) => {
     let strpos = 0;
 
-    getIdentOrNumber = (s, qualifier) => {
-        let name = "";
-        while (strpos < s.length && qualifier(s[strpos]))
-            name += s[strpos++];
-        return name// To-Do rekursiv!!!
-    }
+    getIdentOrNumber = (qualifier) => qualifier(input[strpos]) ? input[strpos++] + getIdentOrNumber(qualifier) : ""
 
     getIdentifier = () => ({
         token: tokens.ident,
-        name: getIdentOrNumber(input, isIdentifierChar),
+        name: getIdentOrNumber(isIdentifierChar),
         strpos,
     })
 
     getNumber = () => ({
         token: tokens.number,
-        value: parseFloat(getIdentOrNumber(input, isNumberChar)),
+        value: parseFloat(getIdentOrNumber(isNumberChar)),
         strpos,
     })
 
