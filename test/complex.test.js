@@ -26,6 +26,7 @@ test('evalScalar', () => {
     expect(evalScalar("(a)+(b)", { a, b })).toBe(10)
 
     expect(() => evalScalar("p+5", { a, b })).toThrow("Unknow identifier <p>. Pos:1")
+    expect(() => evalScalar("(a+5", { a, b })).toThrow("Closing bracket not found!")
 })
 
 test('evalComplex', () => {

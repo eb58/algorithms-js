@@ -94,32 +94,32 @@ doEval = (s, variables, ops) => {
         if (token.token === tokens.minus) {
             return ops.neg(operand());
         }
+
         if (token.token === tokens.number) {
-            const val = ops.id(token.value);
-            token = lex.getToken();
-            return val;
+           return ops.id(token.value);
         }
+
         if (token.token === tokens.ident) {
             const val = CONSTS[token.name.toUpperCase()] || variables[token.name]
             if (!val)
                 throw `Unknow identifier <${token.name}>. Pos:${token.strpos}`
-            token = lex.getToken();
             return val;
         }
 
         if (token.token === tokens.lparen) {
             const val = expression();
             if (token.token != tokens.rparen) {
-                throw (`Closing bracket not found! Pos:${token.strpos} `);
+                throw (`Closing bracket not found!`);
             }
-            token = lex.getToken();
             return val;
         }
+        
         throw (`"Missing Operand or unknown Symbol detected" Pos:${token.strpos} `);
     }
 
     term = () => {
         const val = operand();
+        token = lex.getToken();
         return token.token == tokens.times
             ? ops.mul(val, term())
             : token.token == tokens.divide
