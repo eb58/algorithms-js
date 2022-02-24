@@ -22,9 +22,7 @@ scalar_ops = {
 }
 
 tokens = [
-    "ident", "number", "end", "eq", "lt", "gt",
-    "minus", "plus", "times", "divide", "mod",
-    "lparen", "rparen",
+    "ident", "number", "minus", "plus", "times", "divide", "lparen", "rparen", "end"
 ].reduce((acc, s) => ({ ...acc, [s]: s }))
 
 mapCharToToken = {
@@ -32,11 +30,8 @@ mapCharToToken = {
     '-': tokens.minus,
     '*': tokens.times,
     '/': tokens.divide,
-    '%': tokens.mod,
     '(': tokens.lparen,
     ')': tokens.rparen,
-    '<': tokens.lt,
-    '>': tokens.gt,
 }
 
 const CONSTS = {
@@ -91,10 +86,12 @@ lexParser = (input) => {
 doEval = (s, variables, ops) => {
     variables = variables || {}
     ops = ops || scalar_ops
+    let token
 
     operand = () => {
+        token = lex.getToken();
+
         if (token.token === tokens.minus) {
-            token = lex.getToken();
             return ops.neg(operand());
         }
         if (token.token === tokens.number) {
@@ -111,7 +108,6 @@ doEval = (s, variables, ops) => {
         }
 
         if (token.token === tokens.lparen) {
-            token = lex.getToken();
             const val = expression();
             if (token.token != tokens.rparen) {
                 throw (`Closing bracket not found! Pos:${token.strpos} `);
@@ -124,12 +120,10 @@ doEval = (s, variables, ops) => {
 
     term = () => {
         let val = operand();
-        while (token.token == tokens.times || token.token == tokens.divide || token.token == tokens.mod) {
-            const multop = token.token;
-            token = lex.getToken();
-            if (multop == tokens.times)
+        while (token.token == tokens.times || token.token == tokens.divide) {
+            if (token.token == tokens.times)
                 val = ops.mul(val, operand());
-            else if (multop == tokens.divide)
+            else if (token.token == tokens.divide)
                 val = ops.div(val, operand());
         }
         return val;
@@ -138,22 +132,17 @@ doEval = (s, variables, ops) => {
     factor = () => {
         let val = term();
         while (token.token == tokens.plus || token.token == tokens.minus) {
-            const addop = token.token;
-            token = lex.getToken();
-            if (addop == tokens.plus)
+            if (token.token == tokens.plus)
                 val = ops.add(val, factor())
-            else if (addop == tokens.minus)
+            else if (token.token == tokens.minus)
                 val = ops.sub(val, factor())
         }
         return val;
     }
 
-    expression = () => {
-        return factor();
-    }
+    expression = () => factor();
 
     const lex = lexParser(s);
-    let token = lex.getToken();
     const ret = expression();
     if (token != tokens.end)
         throw `Unexpected symbol <${token.name}>. Pos:${token.strpos}`
