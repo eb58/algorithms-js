@@ -7,8 +7,8 @@ complex_ops = {
     sub: (c1, c2) => complex(c1.r - c2.r, c1.i - c2.i),
     mul: (c1, c2) => complex(c1.r * c2.r - c1.i * c2.i, c1.r * c2.i + c1.i * c2.r),
     div: (c1, c2) => {
-      const x = c2.r * c2.r + c2.i * c2.i;
-      return complex((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x);
+        const x = c2.r * c2.r + c2.i * c2.i;
+        return complex((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x);
     }
 }
 
@@ -25,7 +25,7 @@ tokens = [
     "ident", "number", "end", "eq", "lt", "gt",
     "minus", "plus", "times", "divide", "mod",
     "lparen", "rparen",
-].reduce((acc, s) => ({...acc, [s]: s}))
+].reduce((acc, s) => ({ ...acc, [s]: s }))
 
 mapCharToToken = {
     '+': tokens.plus,
@@ -40,7 +40,7 @@ mapCharToToken = {
 }
 
 const CONSTS = {
-    "I": complex(0,1),
+    "I": complex(0, 1),
     "PI": Math.PI,
     "E": Math.exp(1)
 };
@@ -63,13 +63,13 @@ lexParser = (input) => {
 
     getIdentifier = () => ({
         token: tokens.ident,
-        name: getIdentOrNumber(isIdentifierChar),
+        name: getIdentOrNumber(input, isIdentifierChar),
         strpos,
     })
 
     getNumber = () => ({
         token: tokens.number,
-        value: parseFloat(getIdentOrNumber(isNumberChar)),
+        value: parseFloat(getIdentOrNumber(input, isNumberChar)),
         strpos,
     })
 
@@ -83,10 +83,10 @@ lexParser = (input) => {
                 return getIdentifier();
             if (isNumberChar(c))
                 return getNumber();
-            if (!mapCharToToken[c]) 
+            if (!mapCharToToken[c])
                 throw (`Char ${c} not allowed. Pos:${strpos} `)
             return {
-                ++strpos,
+                strpos: ++strpos,
                 token: mapCharToToken[c]
             };
         }
@@ -159,13 +159,13 @@ doEval = (s, variables, ops) => {
 
     const lex = lexParser(s);
     let token = lex.getToken();
-    const ret =  expression();
-    if( token != tokens.end) 
-       throw `Unexpected symbol <${token.name}>. Pos:${token.strpos}`
-    
-    if( ret.i === -0 ) ret.i = 0
-    if( ret.r === -0 ) ret.r = 0
-    
+    const ret = expression();
+    if (token != tokens.end)
+        throw `Unexpected symbol <${token.name}>. Pos:${token.strpos}`
+
+    if (ret.i === -0) ret.i = 0
+    if (ret.r === -0) ret.r = 0
+
     return ret;
 }
 
