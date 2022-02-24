@@ -1,14 +1,14 @@
-complex = (r, i) => ({ r, i: (i || 0) })
+C$ = (r, i) => ({ r, i: (i || 0) })
 
 complex_ops = {
-    id: x => complex(x),
-    neg: (c) => complex(-c.r, -c.i),
-    add: (c1, c2) => complex(c1.r + c2.r, c1.i + c2.i),
-    sub: (c1, c2) => complex(c1.r - c2.r, c1.i - c2.i),
-    mul: (c1, c2) => complex(c1.r * c2.r - c1.i * c2.i, c1.r * c2.i + c1.i * c2.r),
+    id: x => C$(x),
+    neg: (c) => C$(-c.r, -c.i),
+    add: (c1, c2) => C$(c1.r + c2.r, c1.i + c2.i),
+    sub: (c1, c2) => C$(c1.r - c2.r, c1.i - c2.i),
+    mul: (c1, c2) => C$(c1.r * c2.r - c1.i * c2.i, c1.r * c2.i + c1.i * c2.r),
     div: (c1, c2) => {
         const x = c2.r * c2.r + c2.i * c2.i;
-        return complex((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x);
+        return C$((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x);
     }
 }
 
@@ -35,7 +35,7 @@ mapCharToToken = {
 }
 
 const CONSTS = {
-    "I": complex(0, 1),
+    "I": C$(0, 1),
     "PI": Math.PI,
     "E": Math.exp(1)
 };
@@ -65,9 +65,9 @@ lexParser = (input) => {
 
     return {
         getToken: () => {
+            while (isSpace(input[strpos])) strpos++;
             if (strpos >= input.length) return tokens.end;
 
-            while (isSpace(input[strpos])) strpos++;
             const c = input[strpos];
             if (isLetter(c))
                 return getIdentifier();
@@ -119,38 +119,34 @@ doEval = (s, variables, ops) => {
     }
 
     term = () => {
-        let val = operand();
-        while (token.token == tokens.times || token.token == tokens.divide) {
-            if (token.token == tokens.times)
-                val = ops.mul(val, operand());
-            else if (token.token == tokens.divide)
-                val = ops.div(val, operand());
-        }
-        return val;
+        const val = operand();
+        return token.token == tokens.times
+            ? ops.mul(val, term())
+            : token.token == tokens.divide
+                ? ops.div(val, term())
+                : val;
     }
 
     factor = () => {
-        let val = term();
-        while (token.token == tokens.plus || token.token == tokens.minus) {
-            if (token.token == tokens.plus)
-                val = ops.add(val, factor())
-            else if (token.token == tokens.minus)
-                val = ops.sub(val, factor())
-        }
-        return val;
+        const val = term();
+        return token.token == tokens.plus
+            ? ops.add(val, factor())
+            : token.token == tokens.minus
+                ? ops.sub(val, factor())
+                : val;
     }
 
     expression = () => factor();
 
     const lex = lexParser(s);
-    const ret = expression();
+    const val = expression();
     if (token != tokens.end)
         throw `Unexpected symbol <${token.name}>. Pos:${token.strpos}`
 
-    if (ret.i === -0) ret.i = 0
-    if (ret.r === -0) ret.r = 0
+    if (val.i === -0) val.i = 0
+    if (val.r === -0) val.r = 0
 
-    return ret;
+    return val;
 }
 
 evalScalar = (s, variables) => doEval(s, variables, scalar_ops)
