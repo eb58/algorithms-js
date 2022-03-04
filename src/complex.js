@@ -88,55 +88,60 @@ doEval = (s, variables, ops) => {
     ops = ops || scalar_ops
     let token
 
-    operand = () => {
-        token = lex.getToken();
-
+    fac = () => {
         if (token.token === tokens.minus) {
-            return ops.neg(operand());
+            return ops.neg(factor());
         }
-
         if (token.token === tokens.number) {
-           return ops.id(token.value);
+            return ops.id(token.value);
         }
-
         if (token.token === tokens.ident) {
-            const val = CONSTS[token.name.toUpperCase()] || variables[token.name]
-            if (!val)
+            const ret = CONSTS[token.name.toUpperCase()] || variables[token.name]
+            if (ret === undefined)
                 throw `Unknow identifier <${token.name}>. Pos:${token.strpos}`
-            return val;
-        }
+            return ret
 
+        }
         if (token.token === tokens.lparen) {
-            const val = expression();
-            if (token.token != tokens.rparen) {
+            ret = expression();
+            if (token.token !== tokens.rparen) {
                 throw (`Closing bracket not found!`);
             }
-            return val;
+            return ret
         }
-        
-        throw (`"Missing Operand or unknown Symbol detected" Pos:${token.strpos} `);
-    }
 
-    term = () => {
-        const val = operand();
-        token = lex.getToken();
-        return token.token == tokens.times
-            ? ops.mul(val, term())
-            : token.token == tokens.divide
-                ? ops.div(val, term())
-                : val;
     }
 
     factor = () => {
-        const val = term();
-        return token.token == tokens.plus
-            ? ops.add(val, factor())
-            : token.token == tokens.minus
-                ? ops.sub(val, factor())
-                : val;
+        token = lex.getToken();
+        const ret = fac();
+        token = lex.getToken()
+        return ret;
     }
 
-    expression = () => factor();
+    term = () => {
+        let val = factor();
+        while (token.token == tokens.times || token.token == tokens.divide) {
+            if (token.token === tokens.times) {
+                val = ops.mul(val, term())
+            } else {
+                val = ops.div(val, term())
+            }
+        }
+        return val;
+    }
+
+    expression = () => {
+        let val = term();
+        while (token.token == tokens.plus || token.token == tokens.minus) {
+            if (token.token === tokens.plus) {
+                val = ops.add(val, term())
+            } else {
+                val = ops.sub(val, term())
+            }
+        }
+        return val
+    }
 
     const lex = lexParser(s);
     const val = expression();
@@ -156,3 +161,26 @@ module && (module.exports = {
     evalScalar,
     evalComplex,
 });
+
+
+// TESTS 
+isEqual = (a, b) => {
+    try {
+        doEval(a) !== b && console.log("ERROR", a, doEval(a))
+    }
+    catch (e) {
+        console.log("EXCEPTION", e, a)
+    }
+}
+
+isEqual("(1)", 1)
+isEqual(("1*2*3*4"), 24)
+isEqual(("1+3+5"), 9)
+isEqual(("3*3+5*5"), 34)
+isEqual("1", 1)
+isEqual("-1", -1)
+isEqual("(5+3)", 8)
+isEqual("(1*3)", 3)
+isEqual("1+3", 4)
+isEqual(("3*3"), 9)
+

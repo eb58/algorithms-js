@@ -6,11 +6,16 @@ test('evalScalar', () => {
     expect(evalScalar("-55")).toBe(-55)
 
     expect(evalScalar("1+3")).toBe(4)
+    expect(evalScalar("2*7+3")).toBe(17)
     expect(evalScalar("1+3+5")).toBe(9)
     expect(evalScalar("3*3")).toBe(9)
     expect(evalScalar("1*2*3*4")).toBe(24)
     expect(evalScalar("(1+1)*(3+3)")).toBe(12)
+    expect(evalScalar("(7+4*3+13)")).toBe(32)
     expect(evalScalar("(1+1)*(3*3)")).toBe(18)
+    expect(evalScalar("3*3+5*5")).toBe(34)
+    expect(evalScalar("3*(3+5)*5")).toBe(120)
+
     expect(evalScalar("3/5")).toBe(3 / 5)
     expect(evalScalar("PI*3")).toBe(Math.PI * 3)
     expect(evalScalar("pi*3")).toBe(Math.PI * 3)
@@ -54,7 +59,4 @@ test('evalComplex', () => {
 
     expect(() => evalComplex("p+5", { a: 3, b: 7 })).toThrow("Unknow identifier <p>. Pos:1")
     expect(() => evalComplex("p*5", {})).toThrow("Unknow identifier <p>. Pos:1")
-
 });
-
-

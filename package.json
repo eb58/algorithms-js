@@ -15,7 +15,7 @@
    "author": "eb",
    "contributors": [],
    "scripts": {
-      "start": "node main.js",
+      "start": "node src/complex.js",
       "test": "jest --watchAll",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "sudoku": "node src/sudoku/sudoku.js",
