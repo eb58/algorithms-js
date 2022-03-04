@@ -1,4 +1,5 @@
 C$ = (r, i) => ({ r, i: (i || 0) })
+feedx = (x, f) => f(x)
 
 complex_ops = {
     id: x => C$(x),
@@ -6,10 +7,7 @@ complex_ops = {
     add: (c1, c2) => C$(c1.r + c2.r, c1.i + c2.i),
     sub: (c1, c2) => C$(c1.r - c2.r, c1.i - c2.i),
     mul: (c1, c2) => C$(c1.r * c2.r - c1.i * c2.i, c1.r * c2.i + c1.i * c2.r),
-    div: (c1, c2) => {
-        const x = c2.r * c2.r + c2.i * c2.i;
-        return C$((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x);
-    }
+    div: (c1, c2) => feedx(c2.r * c2.r + c2.i * c2.i, (x) => C$((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x))
 }
 
 scalar_ops = {
@@ -19,6 +17,15 @@ scalar_ops = {
     sub: (x, y) => x - y,
     mul: (x, y) => x * y,
     div: (x, y) => x / y,
+}
+
+complex_string_ops = {
+    id: x => `${x}`,
+    neg: x => `-${x}`,
+    add: (x, y) => `complex_ops.add(${x}, ${y})`,
+    sub: (x, y) => `complex_ops.sub(${x}, ${y})`,
+    mul: (x, y) => `complex_ops.mul(${x}, ${y})`,
+    div: (x, y) => `complex_ops.div(${x}, ${y})`,
 }
 
 tokens = [
@@ -90,17 +97,17 @@ doEval = (s, variables, ops) => {
 
     operand = () => {
         const op = () => {
-            if (token.token === tokens.minus) {
+            if (token.token === tokens.minus)
                 return ops.neg(operand());
-            } else if (token.token === tokens.number) {
+            if (token.token === tokens.number)
                 return ops.id(token.value);
-            } else if (token.token === tokens.ident) {
-                const ret = CONSTS[token.name.toUpperCase()] || variables[token.name]
+            if (token.token === tokens.ident) {
+                const ret = CONSTS[token.name.toUpperCase()] || variables[token.name]  || token.name
                 if (ret === undefined)
                     throw `Unknow identifier <${token.name}>. Pos:${token.strpos}`
-                return ret
-
-            } else if (token.token === tokens.lparen) {
+                return(ret)
+            }
+            if (token.token === tokens.lparen) {
                 const ret = expression();
                 if (token.token !== tokens.rparen) {
                     throw (`Closing bracket not found!. Pos:${token.strpos}`);
@@ -170,7 +177,13 @@ isEqual = (a, b) => {
     }
 }
 
-isEqual("1+", 8)
+// genFct = (s) => eval('(a,b,c) => ' + doEval(s, {}, complex_string_ops))
+// const f = genFct("a*(b-c)")
+// const v = f(C$(3), C$(5), C$(1))
+
+// genFct = (s) => eval('(a) => ' + doEval(s, {}, complex_string_ops))
+// const z = genFct("I*a")(C$(0,1))
+
 isEqual("(1)", 1)
 isEqual(("1*2*3*4"), 24)
 isEqual(("1+3+5"), 9)
