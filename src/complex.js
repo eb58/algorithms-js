@@ -23,7 +23,7 @@ scalar_ops = {
 
 tokens = [
     "ident", "number", "minus", "plus", "times", "divide", "lparen", "rparen", "end"
-].reduce((acc, s) => ({ ...acc, [s]: s }),{})
+].reduce((acc, s) => ({ ...acc, [s]: s }), {})
 
 mapCharToToken = {
     '+': tokens.plus,
@@ -88,40 +88,36 @@ doEval = (s, variables, ops) => {
     ops = ops || scalar_ops
     let token
 
-    fac = () => {
-        if (token.token === tokens.minus) {
-            return ops.neg(factor());
-        }
-        if (token.token === tokens.number) {
-            return ops.id(token.value);
-        }
-        if (token.token === tokens.ident) {
-            const ret = CONSTS[token.name.toUpperCase()] || variables[token.name]
-            if (ret === undefined)
-                throw `Unknow identifier <${token.name}>. Pos:${token.strpos}`
-            return ret
+    operand = () => {
+        const op = () => {
+            if (token.token === tokens.minus) {
+                return ops.neg(operand());
+            } else if (token.token === tokens.number) {
+                return ops.id(token.value);
+            } else if (token.token === tokens.ident) {
+                const ret = CONSTS[token.name.toUpperCase()] || variables[token.name]
+                if (ret === undefined)
+                    throw `Unknow identifier <${token.name}>. Pos:${token.strpos}`
+                return ret
 
-        }
-        if (token.token === tokens.lparen) {
-            ret = expression();
-            if (token.token !== tokens.rparen) {
-                throw (`Closing bracket not found!. Pos:${token.strpos}`);
+            } else if (token.token === tokens.lparen) {
+                const ret = expression();
+                if (token.token !== tokens.rparen) {
+                    throw (`Closing bracket not found!. Pos:${token.strpos}`);
+                }
+                return ret
             }
-            return ret
+            throw (`Operand expected.`);
         }
-        throw (`Operand expected.`);
 
-    }
-
-    factor = () => {
         token = lex.getToken();
-        const ret = fac();
+        const ret = op();
         token = lex.getToken()
         return ret;
     }
 
     term = () => {
-        let val = factor();
+        let val = operand();
         while (token.token == tokens.times || token.token == tokens.divide) {
             if (token.token === tokens.times) {
                 val = ops.mul(val, term())
@@ -174,7 +170,7 @@ isEqual = (a, b) => {
     }
 }
 
-isEqual("1+",8) 
+isEqual("1+", 8)
 isEqual("(1)", 1)
 isEqual(("1*2*3*4"), 24)
 isEqual(("1+3+5"), 9)
@@ -185,4 +181,3 @@ isEqual("(5+3)", 8)
 isEqual("(1*3)", 3)
 isEqual("1+3", 4)
 isEqual(("3*3"), 9)
-
