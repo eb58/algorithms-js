@@ -4,8 +4,11 @@ test('evalScalar', () => {
 
     expect(evalScalar("5")).toBe(5)
     expect(evalScalar("-55")).toBe(-55)
+    expect(evalScalar(" 5 ")).toBe(5)
+    expect(evalScalar("( 5 )")).toBe(5)
 
     expect(evalScalar("1+3")).toBe(4)
+    expect(evalScalar("1+3+5")).toBe(9)
     expect(evalScalar("2*7+3")).toBe(17)
     expect(evalScalar("1+3+5")).toBe(9)
     expect(evalScalar("3*3")).toBe(9)
@@ -29,16 +32,24 @@ test('evalScalar', () => {
     expect(evalScalar("a+b", { a, b })).toBe(10)
     expect(evalScalar("a*b", { a, b })).toBe(21)
     expect(evalScalar("(a)+(b)", { a, b })).toBe(10)
+})
 
-    expect(() => evalScalar("p+5", { a, b })).toThrow("Unknow identifier <p>. Pos:1")
-    expect(() => evalScalar("(a+5", { a, b })).toThrow("Closing bracket not found!")
+test('Exceptions', () => {
+    expect(() => evalScalar("p+5")).toThrow("Unknow identifier <p>. Pos:1")
+    expect(() => evalScalar("(1+5")).toThrow("Closing bracket not found!")
+    expect(() => evalScalar("1+")).toThrow("Operand expected.")
+    expect(() => evalScalar("%1+")).toThrow("Char % not allowed. Pos:0")
+    expect(() => evalScalar("1+3 sa")).toThrow("Unexpected symbol <sa>. Pos:6")
+
+    expect(() => evalComplex("p+5")).toThrow("Unknow identifier <p>. Pos:1")
+    expect(() => evalComplex("p*5")).toThrow("Unknow identifier <p>. Pos:1")
 })
 
 test('evalComplex', () => {
 
-    expect(evalComplex("i")).toEqual(C$(0,1))
+    expect(evalComplex("i")).toEqual(C$(0, 1))
     expect(evalComplex("i*i")).toEqual(C$(-1))
-    expect(evalComplex("i*i*i")).toEqual(C$(0,-1))
+    expect(evalComplex("i*i*i")).toEqual(C$(0, -1))
     expect(evalComplex("i*i*i*i")).toEqual(C$(1))
 
     // with variables
@@ -51,12 +62,9 @@ test('evalComplex', () => {
     expect(evalComplex("(a)+(b)", vars)).toEqual(C$(10))
 
 
-    vars = { a: C$(2,2), b: C$(3,0) }
-    expect(evalComplex("a", vars)).toEqual(C$(2,2))
-    expect(evalComplex("a+b", vars)).toEqual(C$(5,2))
-    expect(evalComplex("a*a", vars)).toEqual(C$(0,8))
-    expect(evalComplex("5*a", vars)).toEqual(C$(10,10))
-
-    expect(() => evalComplex("p+5", { a: 3, b: 7 })).toThrow("Unknow identifier <p>. Pos:1")
-    expect(() => evalComplex("p*5", {})).toThrow("Unknow identifier <p>. Pos:1")
+    vars = { a: C$(2, 2), b: C$(3, 0) }
+    expect(evalComplex("a", vars)).toEqual(C$(2, 2))
+    expect(evalComplex("a+b", vars)).toEqual(C$(5, 2))
+    expect(evalComplex("a*a", vars)).toEqual(C$(0, 8))
+    expect(evalComplex("5*a", vars)).toEqual(C$(10, 10))
 });

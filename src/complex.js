@@ -23,7 +23,7 @@ scalar_ops = {
 
 tokens = [
     "ident", "number", "minus", "plus", "times", "divide", "lparen", "rparen", "end"
-].reduce((acc, s) => ({ ...acc, [s]: s }))
+].reduce((acc, s) => ({ ...acc, [s]: s }),{})
 
 mapCharToToken = {
     '+': tokens.plus,
@@ -74,7 +74,7 @@ lexParser = (input) => {
             if (isDigit(c))
                 return getNumber();
             if (!mapCharToToken[c])
-                throw (`Char ${c} not allowed. Pos:${strpos} `)
+                throw (`Char ${c} not allowed. Pos:${strpos}`)
             return {
                 strpos: ++strpos,
                 token: mapCharToToken[c]
@@ -105,10 +105,11 @@ doEval = (s, variables, ops) => {
         if (token.token === tokens.lparen) {
             ret = expression();
             if (token.token !== tokens.rparen) {
-                throw (`Closing bracket not found!`);
+                throw (`Closing bracket not found!. Pos:${token.strpos}`);
             }
             return ret
         }
+        throw (`Operand expected.`);
 
     }
 
@@ -163,7 +164,7 @@ module && (module.exports = {
 });
 
 
-// TESTS 
+// TESTS for Debugging
 isEqual = (a, b) => {
     try {
         doEval(a) !== b && console.log("ERROR", a, doEval(a))
@@ -173,6 +174,7 @@ isEqual = (a, b) => {
     }
 }
 
+isEqual("1+",8) 
 isEqual("(1)", 1)
 isEqual(("1*2*3*4"), 24)
 isEqual(("1+3+5"), 9)
