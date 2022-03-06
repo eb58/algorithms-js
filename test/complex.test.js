@@ -1,24 +1,24 @@
 const { evalComplex, evalScalar } = require('../src/complex');
 
 test('Exceptions', () => {
-//     expect(() => evalScalar("p+5")).toThrow("Unknow identifier <p>. Pos:1")
+    expect(() => evalScalar("p+5")).toThrow("Unknow identifier <p>. Pos:1")
     expect(() => evalScalar("(1+5")).toThrow("Closing bracket not found!")
     expect(() => evalScalar("1+")).toThrow("Operand expected.")
     expect(() => evalScalar("%1+")).toThrow("Char % not allowed. Pos:0")
     expect(() => evalScalar("1+3 sa")).toThrow("Unexpected symbol <sa>. Pos:6")
 
-    // expect(() => evalComplex("p+5")).toThrow("Unknow identifier <p>. Pos:1")
-    // expect(() => evalComplex("p*5")).toThrow("Unknow identifier <p>. Pos:1")
+    expect(() => evalComplex("p+5")).toThrow("Unknow identifier <p>. Pos:1")
+    expect(() => evalComplex("p*5")).toThrow("Unknow identifier <p>. Pos:1")
 })
-
-
 
 test('evalScalar', () => {
 
     expect(evalScalar("5")).toBe(5)
-    expect(evalScalar("-55")).toBe(-55)
+    expect(evalScalar("-5")).toBe(-5)
+    expect(evalScalar("--5")).toBe(5)
     expect(evalScalar(" 5 ")).toBe(5)
     expect(evalScalar("( 5 )")).toBe(5)
+    expect(evalScalar("-( 5 )")).toBe(-5)
 
     expect(evalScalar("1+3")).toBe(4)
     expect(evalScalar("1+3+5")).toBe(9)

@@ -102,10 +102,13 @@ doEval = (s, variables, ops) => {
             if (token.token === tokens.number)
                 return ops.id(token.value);
             if (token.token === tokens.ident) {
-                const ret = CONSTS[token.name.toUpperCase()] || variables[token.name]  || token.name
+                let ret = CONSTS[token.name.toUpperCase()] || variables[token.name] 
+                if( ret === undefined && ops === complex_string_ops)    {
+                    ret = token.name
+                }       
                 if (ret === undefined)
                     throw `Unknow identifier <${token.name}>. Pos:${token.strpos}`
-                return(ret)
+                return ret
             }
             if (token.token === tokens.lparen) {
                 const ret = expression();
@@ -125,24 +128,20 @@ doEval = (s, variables, ops) => {
 
     term = () => {
         let val = operand();
-        while (token.token == tokens.times || token.token == tokens.divide) {
-            if (token.token === tokens.times) {
-                val = ops.mul(val, term())
-            } else {
-                val = ops.div(val, term())
-            }
+        if (token.token === tokens.times) {
+            return ops.mul(val, term())
+        } else if (token.token === tokens.divide) {
+            return ops.div(val, term())
         }
         return val;
     }
 
     expression = () => {
         let val = term();
-        while (token.token == tokens.plus || token.token == tokens.minus) {
-            if (token.token === tokens.plus) {
-                val = ops.add(val, term())
-            } else {
-                val = ops.sub(val, term())
-            }
+        if (token.token === tokens.plus) {
+            return ops.add(val, expression())
+        } else if (token.token === tokens.minus) {
+            return ops.sub(val, expression())
         }
         return val
     }
@@ -177,12 +176,17 @@ isEqual = (a, b) => {
     }
 }
 
-// genFct = (s) => eval('(a,b,c) => ' + doEval(s, {}, complex_string_ops))
-// const f = genFct("a*(b-c)")
-// const v = f(C$(3), C$(5), C$(1))
+genFct = (s) => eval('(a,b,c) => ' + doEval(s, {}, complex_string_ops))
 
-// genFct = (s) => eval('(a) => ' + doEval(s, {}, complex_string_ops))
-// const z = genFct("I*a")(C$(0,1))
+const f = genFct("a*(b-c)")
+const v = f(C$(3), C$(5), C$(1))
+console.log( "AAA", v  )
+
+const I = C$(0,1);
+console.log( "BBB", genFct("a*b")(I,I) )
+console.log( "CCC", genFct("a+b")(I,I) )
+// console.log( "DDD", genFct("i*i")() )
+ // const z = genFct("I*a")(C$(0,1))
 
 isEqual("(1)", 1)
 isEqual(("1*2*3*4"), 24)
