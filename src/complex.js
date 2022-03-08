@@ -1,7 +1,8 @@
-C$ = (r, i) => ({ r, i: i || 0 })
+C$ = (r, i) => (typeof r === 'number' ? { r, i: i || 0 } : r)
 feedx = (x, f) => f(x)
+uniq = (xs) => Array.from(new Set(xs))
 
-complex_ops = {
+cops = {
   id: (x) => C$(x),
   neg: (c) => C$(-c.r, -c.i),
   add: (c1, c2) => C$(c1.r + c2.r, c1.i + c2.i),
@@ -10,7 +11,7 @@ complex_ops = {
   div: (c1, c2) => feedx(c2.r * c2.r + c2.i * c2.i, (x) => C$((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x)),
 }
 
-scalar_ops = {
+sops = {
   id: (x) => x,
   neg: (x) => -x,
   add: (x, y) => x + y,
@@ -19,13 +20,13 @@ scalar_ops = {
   div: (x, y) => x / y,
 }
 
-complex_string_ops = {
-  id: (x) => `${x}`,
-  neg: (x) => `-${x}`,
-  add: (x, y) => `complex_ops.add(${x}, ${y})`,
-  sub: (x, y) => `complex_ops.sub(${x}, ${y})`,
-  mul: (x, y) => `complex_ops.mul(${x}, ${y})`,
-  div: (x, y) => `complex_ops.div(${x}, ${y})`,
+csops = {
+  id: (x) => `C$(${x})`,
+  neg: (x) => `C$(-${x})`,
+  add: (x, y) => `cops.add(C$(${x}), C$(${y}))`,
+  sub: (x, y) => `cops.sub(C$(${x}), C$(${y}))`,
+  mul: (x, y) => `cops.mul(C$(${x}), C$(${y}))`,
+  div: (x, y) => `cops.div(C$(${x}), C$(${y}))`,
 }
 
 tokens = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'lparen', 'rparen', 'end'].reduce(
@@ -33,30 +34,23 @@ tokens = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'lparen', 'rpar
   {}
 )
 
-mapCharToToken = {
-  '+': tokens.plus,
-  '-': tokens.minus,
-  '*': tokens.times,
-  '/': tokens.divide,
-  '(': tokens.lparen,
-  ')': tokens.rparen,
-}
-
-const CONSTS = {
-  I: C$(0, 1),
-  PI: Math.PI,
-  E: Math.exp(1),
-}
-
-isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_'
-isDigit = (c) => c >= '0' && c <= '9'
-isNumberChar = (c) => isDigit(c) || c === '.'
-isIdentifierChar = (c) => isLetter(c) || isDigit(c)
-isSpace = (c) => c === ' ' || c === '\t' || c === '\n' || c === '\r'
-
 lexParser = (input) => {
+  mapCharToToken = {
+    '+': tokens.plus,
+    '-': tokens.minus,
+    '*': tokens.times,
+    '/': tokens.divide,
+    '(': tokens.lparen,
+    ')': tokens.rparen,
+  }
+
   let strpos = 0
 
+  isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_'
+  isDigit = (c) => c >= '0' && c <= '9'
+  isNumberChar = (c) => isDigit(c) || c === '.'
+  isIdentifierChar = (c) => isLetter(c) || isDigit(c)
+  isSpace = (c) => c === ' ' || c === '\t' || c === '\n' || c === '\r'
   getIdentOrNumber = (qualifier) => (qualifier(input[strpos]) ? input[strpos++] + getIdentOrNumber(qualifier) : '')
 
   getIdentifier = () => ({
@@ -89,9 +83,16 @@ lexParser = (input) => {
 }
 
 doEval = (s, variables, ops) => {
+  const CONSTS = {
+    I: ops === csops ? 'C$(0, 1)' : C$(0, 1),
+    PI: Math.PI,
+    E: Math.exp(1),
+  }
+
   variables = variables || {}
-  ops = ops || scalar_ops
+  ops = ops || sops
   let token
+  let params = []
 
   operand = () => {
     const op = () => {
@@ -99,8 +100,9 @@ doEval = (s, variables, ops) => {
       if (token.token === tokens.number) return ops.id(token.value)
       if (token.token === tokens.ident) {
         let ret = CONSTS[token.name.toUpperCase()] || variables[token.name]
-        if (ret === undefined && ops === complex_string_ops) {
+        if (ret === undefined && ops === csops) {
           ret = token.name
+          params = uniq([...params, token.name])
         }
         if (ret === undefined) throw `Unknow identifier <${token.name}>. Pos:${token.strpos}`
         return ret
@@ -145,49 +147,47 @@ doEval = (s, variables, ops) => {
   const val = expression()
   if (token != tokens.end) throw `Unexpected symbol <${token.name}>. Pos:${token.strpos}`
 
-  if (val.i === -0) val.i = 0
-  if (val.r === -0) val.r = 0
+  if (ops === csops) {
+    console.log(val)
+    return eval(`(${params.join(',')}) => ${val}`)
+  } else if (ops === cops) {
+    if (val.i === -0) val.i = 0
+    if (val.r === -0) val.r = 0
+  }
 
   return val
 }
 
-evalScalar = (s, variables) => doEval(s, variables, scalar_ops)
-evalComplex = (s, variables) => doEval(s, variables, complex_ops)
+evalScalar = (s, variables) => doEval(s, variables, sops)
+evalComplex = (s, variables) => doEval(s, variables, cops)
+complexFunction = (s) => doEval(s, {}, csops)
+
+f = complexFunction('2*a')
+a = C$(3, 1)
+console.log('xxx', f(a))
+
+f = complexFunction('a*a')
+v = f(C$(3, 1))
+console.log('AAA', v)
+
+f = complexFunction('a*(b-c)')
+v = f(C$(3), C$(5), C$(1))
+console.log('AAA', v)
+
+const I = C$(0, 1)
+console.log('BBB', complexFunction('a*b')(I, I))
+console.log('CCC', complexFunction('a+b')(I, I))
+console.log('DDD', complexFunction('i*i')())
+// const z = complexFunction("I*a")(C$(0,1))
+
+// const I = C$(0, 1)
+// console.log('BBB', complexFunction('a*b')(I, I))
+// console.log('CCC', complexFunction('a+b')(I, I))
+// const z = genFct("I*a")(C$(0,1))
 
 module &&
   (module.exports = {
     evalScalar,
     evalComplex,
+    complexFunction,
   })
-
-// TESTS for Debugging
-isEqual = (a, b) => {
-  try {
-    doEval(a) !== b && console.log('ERROR', a, doEval(a))
-  } catch (e) {
-    console.log('EXCEPTION', e, a)
-  }
-}
-
-genFct = (s) => eval('(a,b,c) => ' + doEval(s, {}, complex_string_ops))
-
-const f = genFct('a*(b-c)')
-const v = f(C$(3), C$(5), C$(1))
-console.log('AAA', v)
-
-const I = C$(0, 1)
-console.log('BBB', genFct('a*b')(I, I))
-console.log('CCC', genFct('a+b')(I, I))
-// console.log( "DDD", genFct("i*i")() )
-// const z = genFct("I*a")(C$(0,1))
-
-isEqual('(1)', 1)
-isEqual('1*2*3*4', 24)
-isEqual('1+3+5', 9)
-isEqual('3*3+5*5', 34)
-isEqual('1', 1)
-isEqual('-1', -1)
-isEqual('(5+3)', 8)
-isEqual('(1*3)', 3)
-isEqual('1+3', 4)
-isEqual('3*3', 9)
