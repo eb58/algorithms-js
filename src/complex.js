@@ -148,7 +148,7 @@ doEval = (s, variables, ops) => {
   if (token != tokens.end) throw `Unexpected symbol <${token.name}>. Pos:${token.strpos}`
 
   if (ops === csops) {
-    console.log(val)
+    //console.log(val)
     return eval(`(${params.join(',')}) => ${val}`)
   } else if (ops === cops) {
     if (val.i === -0) val.i = 0
@@ -161,29 +161,6 @@ doEval = (s, variables, ops) => {
 evalScalar = (s, variables) => doEval(s, variables, sops)
 evalComplex = (s, variables) => doEval(s, variables, cops)
 complexFunction = (s) => doEval(s, {}, csops)
-
-f = complexFunction('2*a')
-a = C$(3, 1)
-console.log('xxx', f(a))
-
-f = complexFunction('a*a')
-v = f(C$(3, 1))
-console.log('AAA', v)
-
-f = complexFunction('a*(b-c)')
-v = f(C$(3), C$(5), C$(1))
-console.log('AAA', v)
-
-const I = C$(0, 1)
-console.log('BBB', complexFunction('a*b')(I, I))
-console.log('CCC', complexFunction('a+b')(I, I))
-console.log('DDD', complexFunction('i*i')())
-// const z = complexFunction("I*a")(C$(0,1))
-
-// const I = C$(0, 1)
-// console.log('BBB', complexFunction('a*b')(I, I))
-// console.log('CCC', complexFunction('a+b')(I, I))
-// const z = genFct("I*a")(C$(0,1))
 
 module &&
   (module.exports = {
