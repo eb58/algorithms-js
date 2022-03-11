@@ -95,7 +95,15 @@ const doEval = (s, variables, ops) => {
 
   const operand = () => {
     const op = () => {
-      if (token.token === tokens.minus) return ops.neg(operand())
+      if (token.token === tokens.minus) {
+        token = lex.getToken()
+        return ops.neg(op())
+      }
+      if (token.token === tokens.plus) {
+        token = lex.getToken()
+        return ops.id(op())
+      }
+      if (token.token === tokens.plus) return ops.id(operand())
       if (token.token === tokens.number) return ops.id(token.value)
       if (token.token === tokens.ident) {
         let ret = CONSTS[token.name.toUpperCase()] || variables[token.name]
@@ -150,6 +158,7 @@ const doEval = (s, variables, ops) => {
     val = eval(params.length > 0 ? `(${params.join(',')}) => ${val}` : val)
   }
 
+  if (val === -0) val = 0
   if (val.i === -0) val.i = 0
   if (val.r === -0) val.r = 0
 
