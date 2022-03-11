@@ -12,12 +12,20 @@ test('exceptions', () => {
 })
 
 test('evalScalar', () => {
+  expect(evalScalar('0')).toBe(0)
+  expect(evalScalar('+0')).toBe(0)
+  expect(evalScalar('-0')).toBe(0)
+
   expect(evalScalar('5')).toBe(5)
+  expect(evalScalar('+5')).toBe(5)
   expect(evalScalar('-5')).toBe(-5)
   expect(evalScalar('--5')).toBe(5)
   expect(evalScalar(' 5 ')).toBe(5)
   expect(evalScalar('( 5 )')).toBe(5)
   expect(evalScalar('-( 5 )')).toBe(-5)
+  expect(evalScalar('5*-3')).toBe(-15)
+  expect(evalScalar('-5*3')).toBe(-15)
+  expect(evalScalar('--5*-3')).toBe(-15)
 
   expect(evalScalar('1+3')).toBe(4)
   expect(evalScalar('1+3+5')).toBe(9)
@@ -47,6 +55,7 @@ test('evalScalar', () => {
 })
 
 test('evalComplex', () => {
+  expect(C$('+i')).toEqual(C$(0, 1))
   expect(C$('i')).toEqual(C$(0, 1))
   expect(C$('i*i')).toEqual(C$(-1))
   expect(C$('i*i*i')).toEqual(C$(0, -1))
@@ -60,7 +69,7 @@ test('evalComplex', () => {
   expect(C$('3*(1+i)')).toEqual(C$(3, 3))
   expect(C$('2*(1+i)*2')).toEqual(C$(4, 4))
   expect(C$('(1+i)*5')).toEqual(C$(5, 5))
-  expect(C$('PI*5')).toEqual(C$(5*Math.PI))
+  expect(C$('PI*5')).toEqual(C$(5 * Math.PI))
 
   // with variables
   vars = { a: C$(3), b: C$(7) }
@@ -92,5 +101,9 @@ test('complexFunction', () => {
   expect(C$('a*a')(3)).toEqual(C$(9, 0))
 
   expect(C$('2*a')(C$('3+i'))).toEqual(C$(6, 2))
-  expect(C$('z1+z2')(C$(1),I)).toEqual(C$(1, 1))
+  expect(C$('z1+z2')(C$(1), I)).toEqual(C$(1, 1))
+
+  //const g = C$('z*z*(z-1)/(z+1)')
+  // const a = C$('(z+1)*-i')
+  // const f = C$('-i*(z+1)*(z+1)*(z*z*z*z)')
 })
