@@ -1,8 +1,7 @@
-C$ = (r, i) => (typeof r === 'number' ? { r, i: i || 0 } : r)
-feedx = (x, f) => f(x)
-uniq = (xs) => Array.from(new Set(xs))
+const feedx = (x, f) => f(x)
+const uniq = (xs) => Array.from(new Set(xs))
 
-cops = {
+const cops = {
   id: (x) => C$(x),
   neg: (c) => C$(-c.r, -c.i),
   add: (c1, c2) => C$(c1.r + c2.r, c1.i + c2.i),
@@ -11,7 +10,7 @@ cops = {
   div: (c1, c2) => feedx(c2.r * c2.r + c2.i * c2.i, (x) => C$((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x)),
 }
 
-sops = {
+const sops = {
   id: (x) => x,
   neg: (x) => -x,
   add: (x, y) => x + y,
@@ -20,22 +19,24 @@ sops = {
   div: (x, y) => x / y,
 }
 
-csops = {
+const csops = {
   id: (x) => `C$(${x})`,
-  neg: (x) => `C$(-${x})`,
+  neg: (x) => `C$(${-x})`,
   add: (x, y) => `cops.add(C$(${x}), C$(${y}))`,
   sub: (x, y) => `cops.sub(C$(${x}), C$(${y}))`,
   mul: (x, y) => `cops.mul(C$(${x}), C$(${y}))`,
   div: (x, y) => `cops.div(C$(${x}), C$(${y}))`,
 }
 
-tokens = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'lparen', 'rparen', 'end'].reduce(
+const tokens = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'lparen', 'rparen', 'end'].reduce(
   (acc, s) => ({ ...acc, [s]: s }),
   {}
 )
 
 lexParser = (input) => {
-  mapCharToToken = {
+  let strpos = 0
+
+  const mapCharToToken = {
     '+': tokens.plus,
     '-': tokens.minus,
     '*': tokens.times,
@@ -44,22 +45,20 @@ lexParser = (input) => {
     ')': tokens.rparen,
   }
 
-  let strpos = 0
+  const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_'
+  const isDigit = (c) => c >= '0' && c <= '9'
+  const isNumberChar = (c) => isDigit(c) || c === '.'
+  const isIdentifierChar = (c) => isLetter(c) || isDigit(c)
+  const isSpace = (c) => c === ' ' || c === '\t' || c === '\n' || c === '\r'
+  const getIdentOrNumber = (qualifier) => (qualifier(input[strpos]) ? input[strpos++] + getIdentOrNumber(qualifier) : '')
 
-  isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_'
-  isDigit = (c) => c >= '0' && c <= '9'
-  isNumberChar = (c) => isDigit(c) || c === '.'
-  isIdentifierChar = (c) => isLetter(c) || isDigit(c)
-  isSpace = (c) => c === ' ' || c === '\t' || c === '\n' || c === '\r'
-  getIdentOrNumber = (qualifier) => (qualifier(input[strpos]) ? input[strpos++] + getIdentOrNumber(qualifier) : '')
-
-  getIdentifier = () => ({
+  const getIdentifier = () => ({
     token: tokens.ident,
     name: getIdentOrNumber(isIdentifierChar),
     strpos,
   })
 
-  getNumber = () => ({
+  const getNumber = () => ({
     token: tokens.number,
     value: parseFloat(getIdentOrNumber(isNumberChar)),
     strpos,
@@ -82,7 +81,7 @@ lexParser = (input) => {
   }
 }
 
-doEval = (s, variables, ops) => {
+const doEval = (s, variables, ops) => {
   const CONSTS = {
     I: ops === csops ? 'C$(0, 1)' : C$(0, 1),
     PI: Math.PI,
@@ -94,7 +93,7 @@ doEval = (s, variables, ops) => {
   let token
   let params = []
 
-  operand = () => {
+  const operand = () => {
     const op = () => {
       if (token.token === tokens.minus) return ops.neg(operand())
       if (token.token === tokens.number) return ops.id(token.value)
@@ -123,7 +122,7 @@ doEval = (s, variables, ops) => {
     return ret
   }
 
-  term = () => {
+  const term = () => {
     let val = operand()
     if (token.token === tokens.times) {
       return ops.mul(val, term())
@@ -133,7 +132,7 @@ doEval = (s, variables, ops) => {
     return val
   }
 
-  expression = () => {
+  const expression = () => {
     let val = term()
     if (token.token === tokens.plus) {
       return ops.add(val, expression())
@@ -144,16 +143,15 @@ doEval = (s, variables, ops) => {
   }
 
   const lex = lexParser(s)
-  const val = expression()
+  let val = expression()
   if (token != tokens.end) throw `Unexpected symbol <${token.name}>. Pos:${token.strpos}`
 
   if (ops === csops) {
-    //console.log(val)
-    return eval(`(${params.join(',')}) => ${val}`)
-  } else if (ops === cops) {
-    if (val.i === -0) val.i = 0
-    if (val.r === -0) val.r = 0
+    val = eval(params.length > 0 ? `(${params.join(',')}) => ${val}` : val)
   }
+
+  if (val.i === -0) val.i = 0
+  if (val.r === -0) val.r = 0
 
   return val
 }
@@ -162,9 +160,17 @@ evalScalar = (s, variables) => doEval(s, variables, sops)
 evalComplex = (s, variables) => doEval(s, variables, cops)
 complexFunction = (s) => doEval(s, {}, csops)
 
+C$ = (r, i) =>
+  typeof r === 'string' && typeof i === 'object'
+    ? evalComplex(r, i)
+    : typeof r === 'string'
+    ? complexFunction(r)
+    : typeof r === 'number'
+    ? { r, i: i || 0 }
+    : r
+
 module &&
   (module.exports = {
     evalScalar,
     evalComplex,
-    complexFunction,
   })
