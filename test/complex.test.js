@@ -44,14 +44,28 @@ test('evalScalar', () => {
   expect(evalScalar('pi*3')).toBe(Math.PI * 3)
   expect(evalScalar('E*3')).toBe(Math.exp(1) * 3)
 
+  expect(evalScalar('1/2')).toBe(0.5)
+  expect(evalScalar('0.5')).toBe(0.5)
+  expect(evalScalar('0.5 * 3')).toBe(1.5)
+
   // with variables
   const [a, b] = [3, 7]
-  const vars = { a, b }
+  vars = { a, b }
   expect(evalScalar('a', vars)).toBe(3)
   expect(evalScalar('-a', vars)).toBe(-3)
   expect(evalScalar('a+b', vars)).toBe(10)
   expect(evalScalar('a*b', vars)).toBe(21)
   expect(evalScalar('(a)+(b)', vars)).toBe(10)
+
+  // with variables and functions
+  vars = { a, b, f: (x) => x * x }
+  expect(evalScalar('f(7)', vars)).toBe(49)
+  expect(evalScalar('f(5)', vars)).toBe(25)
+  expect(evalScalar('f(5)*f(5)', vars)).toBe(625)
+
+  expect(evalScalar('f(a)', vars)).toBe(9)
+  expect(evalScalar('f(b)', vars)).toBe(49)
+  expect(evalScalar('10+f(b)', vars)).toBe(59)
 })
 
 test('evalComplex', () => {
@@ -101,7 +115,16 @@ test('complexFunction', () => {
   expect(C$('a*a')(3)).toEqual(C$(9, 0))
 
   expect(C$('2*a')(C$('3+i'))).toEqual(C$(6, 2))
-  expect(C$('z1+z2')(C$(1), I)).toEqual(C$(1, 1))
+  expect(C$('z1+z2')(C$(1), I)).toEqual(C$(1, 1)) 
+
+
+  const csqr = C$('z*z');
+  const x = C$("2*I")
+  expect(csqr(I)).toEqual(C$(-1)) 
+  expect(csqr(1)).toEqual(C$(1)) 
+  expect(csqr(2)).toEqual(C$(4)) 
+  expect(csqr(x)).toEqual(C$(-4)) 
+
 
   //const g = C$('z*z*(z-1)/(z+1)')
   // const a = C$('(z+1)*-i')

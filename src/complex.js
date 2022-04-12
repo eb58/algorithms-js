@@ -1,5 +1,5 @@
-const feedx = (x, f) => f(x)
-const uniq = (xs) => Array.from(new Set(xs))
+feedx = (x, f) => f(x)
+uniq = (xs) => Array.from(new Set(xs))
 
 const cops = {
   id: (x) => C$(x),
@@ -110,6 +110,10 @@ const doEval = (s, variables, ops) => {
         if (ret === undefined && ops === csops) {
           ret = token.name
           params = uniq([...params, token.name])
+        }
+        if (typeof ret === 'function') {
+          token = lex.getToken()
+          return ret(expression())
         }
         if (ret === undefined) throw `Unknow identifier <${token.name}>. Pos:${token.strpos}`
         return ret
