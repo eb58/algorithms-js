@@ -14,11 +14,14 @@ const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {})
 
 const feedx = (x, f) => f(x)
 const call = (f, ...args) => f(...args)
+const swap = (x, y) => [y, x]
 
 // predicates
 const eq = (x, y) => x === y
 const lt = (x, y) => x < y
+const lte = (x, y) => x <= y
 const gt = (x, y) => x > y
+const gte = (x, y) => x >= y
 const odd = (x) => x % 2 !== 0
 const even = (x) => x % 2 === 0
 const ininterval = (x, a, b) => a <= x && x <= b
@@ -38,14 +41,8 @@ const and = (f, g) => (x) => f(x) && g(x)
 const or = (f, g) => (x) => f(x) || g(x)
 const xor = (f, g) => (x) => !!(f(x) ^ g(x))
 const comb = (f, g) => (x) => f(g(x))
-const every =
-  (...fs) =>
-  (x) =>
-    fs.every((f) => f(x))
-const some =
-  (...fs) =>
-  (x) =>
-    fs.some((f) => f(x))
+const every = (...fs) => (x) => fs.every((f) => f(x))
+const some = (...fs) => (x) => fs.some((f) => f(x))
 
 // compare
 const cmp = (x, y) => (x === y ? 0 : x < y ? -1 : +1)
@@ -71,6 +68,9 @@ const sum = (xs) => xs.reduce((acc, x) => acc + x, 0)
 const without = (xs, x) => xs.filter((y) => x !== y)
 const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx)
 const sort = (xs, cmp) => (xs.sort(cmp), xs)
+const shuffle = (xs) => (xs.forEach((x, i) => { const j = Math.floor(Math.random() * xs.length); xs[i] = xs[j]; xs[j] = x }), xs)
+const flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flatten(o) : o), [])
+
 
 // examples
 // zipped  = zip([1,2,3], [4,5,6])  // -> [[1,4],[2,5],[3,6]]
@@ -135,7 +135,8 @@ const array = (xs) => ({
   tap: (f) => (f(xs), xs),
   largerThan: (a) => xs.filter((x) => x > a),
   smallerThan: (a) => xs.filter((x) => x < a),
-  shuffle: (a) => range(a.length).map,
+  shuffle: () => shuffle(xs),
+  flatten: () => flatten(xs)
 })
 
 const bitset = {
@@ -193,18 +194,10 @@ const bitset = {
   },
 }
 
-shuffle = (xs) => {
-  let count = xs.length
-  while (count) {
-    const randomnumber = (Math.random() * count--) | 0
-    const temp = xs[count]
-    xs[count] = xs[randomnumber]
-    xs[randomnumber] = temp
-  }
-}
+
 
 // ***********************************************************
-// Some other stuff - mostly so caled bracket functions
+// Some other stuff - mostly so called bracket functions
 // ***********************************************************
 
 // usage: log(() => callSomeComplicatedFunction(2, 4, 6))
@@ -290,8 +283,7 @@ logtor = (f) => {
     return ret
   }
 }
-
-// experimentell !!!
+// experimentell end !!!
 
 const ol = {
   id,
@@ -318,7 +310,9 @@ const ol = {
   call,
   eq,
   lt,
+  lte,
   gt,
+  gte,
   odd,
   even,
   ininterval,
@@ -327,6 +321,7 @@ const ol = {
   or,
   and,
   xor,
+  comb,
   every,
   some,
   gtPred,
@@ -338,6 +333,9 @@ const ol = {
   comparerByKey,
   cmpNumbers,
   sort,
+  uniq,
+  flatten,
+  shuffle
 }
 
 module.exports = {
@@ -348,8 +346,3 @@ module.exports = {
   bitset,
 }
 
-// swap
-swap = (x, y) => [y, x]
-// let [x,y] = [11,12]
-// [x,y] = swap (x,y)
-flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flatten(o) : o), [])
