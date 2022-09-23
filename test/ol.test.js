@@ -1,14 +1,14 @@
 const { ol, num, interval, array } = require('../src/ol');
 const { id, sqr, abs, cube, fac, fib, range, rangeFilled,
   randomArray, randomInRange, randomIntArray, randomIntInRange,
-  cmp, 
-  leapyear, odd, even, 
+  cmp,
+  leapyear, odd, even,
   not, or, and, xor, comb, every, some,
-  ininterval, add2obj, sum,
-  without, withoutIndex
+  ininterval, add2obj, groupBy, sum,
+  without, withoutIndex, sort, uniq, flatten, shuffle
 } = ol;
 
-test('testset simple', () => {
+test('simple', () => {
 
   expect(id('a')).toEqual('a');
   expect(id(3)).toEqual(3);
@@ -26,7 +26,7 @@ test('testset simple', () => {
 
 });
 
-test('testset faculty', () => {
+test('faculty', () => {
   expect(fac(0)).toEqual(1);
   expect(fac(1)).toEqual(1);
   expect(fac(2)).toEqual(2);
@@ -34,7 +34,7 @@ test('testset faculty', () => {
   expect(fac(4)).toEqual(24);
 });
 
-test('testset randomInRange', () => {
+test('randomInRange', () => {
   const res = {};
   for (let i = 0; i < 1000; i++) {
     const x = Math.floor(randomInRange(1, 6));
@@ -45,7 +45,7 @@ test('testset randomInRange', () => {
   //console.log(res);  
 });
 
-test('testset randomIntInRange', () => {
+test('randomIntInRange', () => {
   const res = {};
   for (let i = 0; i < 1000; i++) {
     const x = randomIntInRange(1, 6);
@@ -56,7 +56,7 @@ test('testset randomIntInRange', () => {
   //console.log(res);  
 });
 
-test('testset fibonacci', () => {
+test('fibonacci', () => {
   expect(fib(1)).toEqual(1);
   expect(fib(2)).toEqual(1);
   expect(fib(3)).toEqual(2);
@@ -65,14 +65,14 @@ test('testset fibonacci', () => {
   expect(fib(6)).toEqual(8);
 });
 
-test('testset odd & even', () => {
+test('odd & even', () => {
   expect(odd(3)).toBe(true);
   expect(odd(4)).toBe(false);
   expect(even(3)).toBe(false);
   expect(even(4)).toBe(true);
 });
 
-test('testset ininterval', () => {
+test('ininterval', () => {
   expect(ininterval(3, 3, 4)).toEqual(true);
   expect(ininterval(3.5, 4, 6)).toEqual(false);
   expect(ininterval(0, 0, 1)).toBe(true);
@@ -82,7 +82,7 @@ test('testset ininterval', () => {
   expect(ininterval(-0.1, 0, 1)).toBe(false);
 });
 
-test('testset leapyear', () => {
+test('leapyear', () => {
   expect(leapyear(1800)).toBe(false);
   expect(leapyear(1900)).toBe(false);
   expect(leapyear(2000)).toBe(true);
@@ -92,7 +92,7 @@ test('testset leapyear', () => {
   expect(leapyear(2008)).toBe(true);
 });
 
-test('testset combine predicates', () => {
+test('combine predicates', () => {
   expect(not(leapyear)(1800)).toBe(true);
   expect(not(not(even))(2)).toBe(true);
   expect(or(leapyear, odd)(1804)).toBe(true);
@@ -108,7 +108,7 @@ test('testset combine predicates', () => {
 
 
 
-test('testset cmp', () => {
+test('cmp', () => {
   expect(cmp(1, 1)).toBe(0);
   expect(cmp(1, 2)).toBe(-1);
   expect(cmp(2, 1)).toBe(+1);
@@ -117,35 +117,35 @@ test('testset cmp', () => {
   expect(cmp('b', 'a')).toBe(+1);
 });
 
-test('testset range', () => {
+test('range', () => {
   expect(range(0)).toEqual([]);
   expect(range(1)).toEqual([0]);
   expect(range(2)).toEqual([0, 1]);
   expect(range(3)).toEqual([0, 1, 2]);
 });
 
-test('testset rangeFilled', () => {
+test('rangeFilled', () => {
   expect(rangeFilled(0, 'a')).toEqual([]);
   expect(rangeFilled(1, 'a')).toEqual(['a']);
   expect(rangeFilled(2, 1)).toEqual([1, 1]);
   expect(rangeFilled(3, 10)).toEqual([10, 10, 10]);
 });
 
-test('testset randomArray', () => {
+test('randomArray', () => {
   const arr = randomArray(100, 1, 2);
   // console.log(arr)
   expect(arr.every(x => ininterval(x, 1, 2))).toBe(true);
 });
 
-test('testset randomIntArray', () => {
+test('randomIntArray', () => {
   const arr = randomIntArray(100, 1, 3);
-  const grps = array(arr).groupBy(id);
-  // console.log(grps)
   expect(arr.every(x => x === 1 || x === 2 || x === 3)).toBe(true);
-  expect(Object.keys(grps).every(x => grps[x].length > 10)).toBe(true);
+
+  const groups = array(arr).groupBy(id);
+  expect(Object.keys(groups).every(x => groups[x].length > 10)).toBe(true);
 });
 
-test('testset sum of arrays', () => {
+test('sum of arrays', () => {
   expect(sum([])).toBe(0);
   expect(sum([10])).toBe(10);
   expect(sum([10, 20, 30])).toBe(60);
@@ -153,30 +153,49 @@ test('testset sum of arrays', () => {
   expect(sum(interval(1, 100).range())).toBe(5050);
 });
 
-test('testset without', () => {
+test('without', () => {
   expect(without([], 2)).toEqual([]);
   expect(without([3], 2)).toEqual([3]);
   expect(without([1, 2, 3], 2)).toEqual([1, 3]);
   expect(without([1, 2, 3, 4], 2)).toEqual([1, 3, 4]);
 });
 
-test('testset withoutIndex', () => {
+test('withoutIndex', () => {
   expect(withoutIndex([], 2)).toEqual([]);
   expect(withoutIndex([3], 0)).toEqual([]);
   expect(withoutIndex([1, 2, 3], 2)).toEqual([1, 2]);
   expect(withoutIndex([1, 2, 3, 4], 2)).toEqual([1, 2, 4]);
 });
 
-test('testset add2obj', () => {
+test('add2obj', () => {
   const o = {};
   expect(add2obj(o, 'key', 1)).toEqual({ 'key': [1] });
   expect(add2obj(o, 'key', 2)).toEqual({ 'key': [1, 2] });
   expect(add2obj({ 'a': undefined }, 'a', 1)).toEqual({ 'a': [1] });
 });
 
+test('shuffle & sort', () => {
+  const xs = range(10)
+  const ys = shuffle(xs);
+  expect(xs).toEqual(sort(ys));
+});
+
+test('groupBy', () => {
+  const xs = [1, 2, 3, 4, 5, 6];
+  const groups = groupBy(xs, odd)
+  expect(groups).toEqual({ true: [1, 3, 5], false: [2, 4, 6] });
+});
+
+test('flatten', () => {
+  expect(flatten([1, 2, 3, 4, 5, 6, [1]])).toEqual([1, 2, 3, 4, 5, 6, 1]);
+  expect(flatten([[1, [2]], 3, 4, 5, 6, [1]])).toEqual([1, 2, 3, 4, 5, 6, 1]);
+  expect(uniq(sort(flatten([[1, [2]], 3, 4, 5, 6, [1]])))).toEqual([1, 2, 3, 4, 5, 6]);
+});
+
+
 // Wrappers
 {
-  test('testset num', () => {
+  test('num', () => {
     expect(num(0).sqr()).toBe(0);
     expect(num(1).sqr()).toBe(1);
     expect(num(2).sqr()).toBe(4);
@@ -197,7 +216,7 @@ test('testset add2obj', () => {
     expect(num(3).ininterval(1, 2)).toBe(false);
   });
 
-  test('testset interval', () => {
+  test('interval', () => {
     expect(interval(1, 2).range()).toEqual([1, 2]);
     expect(interval(0, 10).range()).toEqual([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
@@ -221,7 +240,7 @@ test('testset add2obj', () => {
     expect(interval(0, 10).dec(0)).toBe(0);
   });
 
-  test('testset arraywrapper', () => {
+  test('arraywrapper', () => {
     expect(array([1, 2, 3]).sum()).toBe(6);
 
     expect(array(['a', 'a', 'b', 'b']).uniq()).toEqual(['a', 'b']);
