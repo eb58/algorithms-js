@@ -1,17 +1,18 @@
-const id = (x) => x
+// numerical functions
 const abs = (x) => (x >= 0 ? x : -x)
-const sqr = (x) => x ** 2
-const cube = (x) => x ** 3
-const fac = (x) => range(x).reduce((acc, n) => acc * (n + 1), 1)
-const fib = (x) => (x <= 2 ? 1 : fib(x - 1) + fib(x - 2))
-const gcd = (a, b) => (a % b === 0 ? b : gcd(b, a % b))
 const add = (a, b) => a + b
 const inc = (x) => x + 1
 const dec = (x) => x - 1
+const mul = (a, b) => a * b
+const sqr = (x) => x ** 2
+const cube = (x) => x ** 3
 
-const add2obj = (o, k, v) => ((o[k] = [...(o[k] || []), v]), o)
-const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {})
+const gcd = (a, b) => (a % b === 0 ? b : gcd(b, a % b))
+const fac = (x) => prod(range(x).map(inc))
+const fib = (x) => (x <= 2 ? 1 : fib(x - 1) + fib(x - 2))
 
+// technical functions
+const id = (x) => x
 const feedx = (x, f) => f(x)
 const call = (f, ...args) => f(...args)
 const swap = (x, y) => [y, x]
@@ -40,9 +41,9 @@ const not = (f) => (x) => !f(x)
 const and = (f, g) => (x) => f(x) && g(x)
 const or = (f, g) => (x) => f(x) || g(x)
 const xor = (f, g) => (x) => !!(f(x) ^ g(x))
-const comb = (f, g) => (x) => f(g(x))
 const every = (...fs) => (x) => fs.every((f) => f(x))
 const some = (...fs) => (x) => fs.some((f) => f(x))
+const comb = (f, g) => (x) => f(g(x))
 
 // compare
 const cmp = (x, y) => (x === y ? 0 : x < y ? -1 : +1)
@@ -64,13 +65,15 @@ const randomInRange = (min, max) => Math.random() * (max - min) + min
 const randomIntInRange = (min, max) => Math.floor(randomInRange(min, max + 1))
 const randomArray = (n, min, max) => range(n).map(() => randomInRange(min, max))
 const randomIntArray = (n, min, max) => range(n).map(() => randomIntInRange(min, max))
-const sum = (xs) => xs.reduce((acc, x) => acc + x, 0)
+const sum = (xs) => xs.reduce(add, 0)
+const prod = (xs) => xs.reduce(mul,1)
 const without = (xs, x) => xs.filter((y) => x !== y)
 const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx)
 const sort = (xs, cmp) => (xs.sort(cmp), xs)
 const shuffle = (xs) => (xs.forEach((x, i) => { const j = Math.floor(Math.random() * xs.length); xs[i] = xs[j]; xs[j] = x }), xs)
 const flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flatten(o) : o), [])
-
+const add2obj = (o, k, v) => ((o[k] = [...(o[k] || []), v]), o)
+const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {})
 
 // examples
 // zipped  = zip([1,2,3], [4,5,6])  // -> [[1,4],[2,5],[3,6]]
@@ -78,10 +81,10 @@ const flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flat
 // men   = [{name:'hugo', age:36 }, {name:'hans', age:37 }]
 // women = [{name:'anna', age:35 }, {name:'lena', age:27 }]
 // married = zip(men, women, (a,b) => ({ 'husband': a, 'wife': b }) )
-const zip = (xs, ys, f) => xs.map((x, i) => (f ? f(xs[i], ys[i]) : [xs[i], ys[i]]))
+const zip = (xs, ys, f = id) => xs.map((x, i) => (f ? f(x, ys[i]) : [x, ys[i]]))
 
-// uniq doesn't work on referenztypes. can we fix this easily?
 const uniq = (xs) => Array.from(new Set(xs))
+const uniqBy = (xs, proj) => Object.values(xs.reduce((a, v) => ({...a,[proj(v)]:v}), {}))
 
 const clone = (o) => JSON.parse(JSON.stringify(o))
 
@@ -138,6 +141,11 @@ const array = (xs) => ({
   shuffle: () => shuffle(xs),
   flatten: () => flatten(xs)
 })
+
+// vector functions
+const vadd = (v1,v2) => zip(v1,v2,add)
+const vsqrdist = (v1,v2) => zip(v1,v2,(x,y) => (x-y)**2)
+const vdist = (v1,v2) => Math.sqrt(vsqrdist(v1,v2))
 
 const bitset = {
   MAX: 32,
@@ -335,6 +343,7 @@ const ol = {
   cmpNumbers,
   sort,
   uniq,
+  uniqBy,
   flatten,
   shuffle
 }

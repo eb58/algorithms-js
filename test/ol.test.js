@@ -5,7 +5,7 @@ const { id, sqr, abs, cube, fac, fib, range, rangeFilled,
   leapyear, odd, even,
   not, or, and, xor, comb, every, some,
   ininterval, add2obj, groupBy, sum,
-  without, withoutIndex, sort, uniq, flatten, shuffle
+  without, withoutIndex, sort, uniq, uniqBy, flatten, shuffle
 } = ol;
 
 test('simple', () => {
@@ -161,7 +161,7 @@ test('without', () => {
 });
 
 test('withoutIndex', () => {
-  expect(withoutIndex([], 2)).toEqual([]);
+  expect(withoutIndex([], 2)).toEqual([]); 
   expect(withoutIndex([3], 0)).toEqual([]);
   expect(withoutIndex([1, 2, 3], 2)).toEqual([1, 2]);
   expect(withoutIndex([1, 2, 3, 4], 2)).toEqual([1, 2, 4]);
@@ -184,6 +184,15 @@ test('groupBy', () => {
   const xs = [1, 2, 3, 4, 5, 6];
   const groups = groupBy(xs, odd)
   expect(groups).toEqual({ true: [1, 3, 5], false: [2, 4, 6] });
+});
+
+test('uniq', () => {
+  expect(uniq( [1, 2, 2], id)).toEqual([1, 2]);
+});
+
+test('uniqBy', () => {
+  expect(uniqBy( [1, 2, 2], id)).toEqual([1, 2]);
+  expect(uniqBy( [{id:1}, {id:2}, {id:2}], x=>x.id)).toEqual([{id:1}, {id:2}]);
 });
 
 test('flatten', () => {
@@ -264,7 +273,6 @@ test('flatten', () => {
     expect(array([]).min()).toEqual(undefined);
     expect(array([1]).min()).toEqual(1);
     expect(array([1, 2]).min()).toEqual(1);
-
 
   })
 }
