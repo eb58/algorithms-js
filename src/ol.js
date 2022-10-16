@@ -131,6 +131,7 @@ const array = (xs) => ({
   groupBy: (proj) => groupBy(xs, proj),
   uniq: () => uniq(xs),
   unite: (ys) => uniq([...xs, ...ys]),
+  uniqBy: (proj) => uniqBy(xs,proj),
   xor: (ys) => [...xs, ...ys].filter((x) => !(xs.includes(x) && ys.includes(x))),
   intersect: (ys) => xs.filter((x) => ys.includes(x)),
   subtract: (ys) => xs.filter((x) => !ys.includes(x)),
