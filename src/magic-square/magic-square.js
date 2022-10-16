@@ -2,13 +2,14 @@ const comb = require('../combinations').comb1
 const perm = require('../perm').perm4
 const range = require('../ol').ol.range
 const sum = require('../ol').ol.sum
+const array = require('../ol').array
 
 const magicSquare = (N, idxNotForNumberOne) => {
   let res = []
 
   const AllAvailableNumbers = range(N * N).map((x) => x + 1)
   const MN = sum(AllAvailableNumbers) / N // MN -> Magic Number
-  const AllGoodCombinations = comb(AllAvailableNumbers, N, (xs) => sum(xs) === MN)
+  const AllGoodCombinations = comb(AllAvailableNumbers, N, (xs) => sum(xs) === MN).map(c => (c.perms = perm(c), c))
   const setRow = (square, row, perm) => row.forEach((x, idx) => (square[x] = perm[idx]))
   const numberOneIsNotInUpperLeft = (xs) => idxNotForNumberOne.some((x) => xs[x] === 1)
 
@@ -32,7 +33,7 @@ const magicSquare = (N, idxNotForNumberOne) => {
     combsBS.forEach((combi) => {
       const newAvailableNumbers = availableNumbers.filter((x) => !combi.includes(x))
       const newGoodCombinations = goodCombinations.filter((combi) => combi.every(x => newAvailableNumbers.includes(x)))
-      const perms = perm(combi)
+      const perms =  perm(combi)
       perms.forEach((perm) => {
         setRow(square, rowDef.row, perm)
         combineToMagicSquare(square.slice(), newAvailableNumbers, newGoodCombinations, rowsDef, i + 1)
@@ -64,6 +65,7 @@ magic3x3Solver = () => {
   ])
 }
 
+
 magic4x4Solver1 = () => {
   const magic4x4 = magicSquare(4, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
   const MN = magic4x4.MN
@@ -84,15 +86,12 @@ magic4x4Solver1 = () => {
 magic4x4Solver2 = () => {
   const magic4x4 = magicSquare(4, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
   const MN = magic4x4.MN
-  const chk = (avn, s1, s2) => s1 != s2 && avn.includes(MN - s1) && avn.includes(MN - s2)
-  const check = (xs, sq, avn, x1, x2, y1, y2) =>
-    chk(avn, xs[0] + sq[x1] + sq[x2], xs[1] + sq[y1] + sq[y2]) || chk(avn, xs[1] + sq[x1] + sq[x2], xs[0] + sq[y1] + sq[y2])
   return magic4x4.solve([
     { row: [0, 1, 2, 3] }, // first row
     { row: [4, 5, 6, 7] }, // second row
     { row: [8, 9, 10, 11] }, // third row
-    { row: [12], restriction: (xs, sq, avn) => sq[0] + sq[4] + sq[8] + xs[0] === MN && sq[3] + sq[6] + sq[9] + xs[0] === MN },
-    { row: [16], restriction: (xs, sq, avn) => sq[3] + sq[7] + sq[11] + xs[0] === MN && sq[3] + sq[6] + sq[9] + xs[0] === MN },
+    { row: [12], restriction: (xs, sq) => sq[0] + sq[4] + sq[8] + xs[0] === MN && sq[3] + sq[6] + sq[9] + xs[0] === MN },
+    { row: [16], restriction: (xs, sq) => sq[3] + sq[7] + sq[11] + xs[0] === MN && sq[3] + sq[6] + sq[9] + xs[0] === MN },
     { row: [13], restriction: (xs, sq) => xs[0] + sq[1] + sq[5] + sq[9] === MN },
     { row: [14], restriction: (xs, sq) => xs[0] + sq[2] + sq[6] + sq[10] === MN },
   ])
