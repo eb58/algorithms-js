@@ -7,8 +7,8 @@ const magicSquare = (N, idxNotForNumberOne) => {
   let res = []
 
   const AllAvailableNumbers = range(N * N).map((x) => x + 1)
-  const MN = AllAvailableNumbers.reduce((acc, x) => acc + x, 0) / N
-  const AllGoodCombinations = comb(AllAvailableNumbers, N, (xs) => sum(xs) === MN).map(bitset.fromArray)
+  const MN = sum(AllAvailableNumbers) / N // MN -> Magic Number
+  const AllGoodCombinations = comb(AllAvailableNumbers, N, (xs) => sum(xs) === MN)
   const setRow = (square, row, perm) => row.forEach((x, idx) => (square[x] = perm[idx]))
   const numberOneIsNotInUpperLeft = (xs) => idxNotForNumberOne.some((x) => xs[x] === 1)
 
@@ -30,8 +30,8 @@ const magicSquare = (N, idxNotForNumberOne) => {
         : comb(availableNumbers, rowDef.row.length, predicate)
 
     combsBS.forEach((combi) => {
-      const newAvailableNumbers = bitset.diff(availableNumbers, combi)
-      const newGoodCombinations = goodCombinations.filter((bs) => bitset.isSubset(bs, newAvailableNumbers))
+      const newAvailableNumbers = availableNumbers.filter((x) => !combi.includes(x))
+      const newGoodCombinations = goodCombinations.filter((combi) => combi.every(x => newAvailableNumbers.includes(x)))
       const perms = perm(combi)
       perms.forEach((perm) => {
         setRow(square, rowDef.row, perm)
@@ -45,14 +45,14 @@ const magicSquare = (N, idxNotForNumberOne) => {
     solve: (rowsDef) => {
       const square = range(N * N).map(() => 0)
       res = []
-      combineToMagicSquare(square, bitset.fromArray(AllAvailableNumbers), AllGoodCombinations, rowsDef, 0)
+      combineToMagicSquare(square, AllAvailableNumbers, AllGoodCombinations, rowsDef, 0)
       return res
     },
   }
 }
 
 magic3x3Solver = () => {
-  magic3x3 = magicSquare(3, [2, 3, 4, 5, 6, 7, 8])
+  magic3x3 = magicSquare(3, [1, 2, 3, 4, 5, 6, 7, 8])
   const MN = magic3x3.MN
   return magic3x3.solve([
     { row: [0, 4, 8] }, // diag
@@ -64,12 +64,11 @@ magic3x3Solver = () => {
   ])
 }
 
-magic4x4Solver = () => {
-  const chk = (avn, s1, s2) => s1 != s2 && bitset.includes(avn, MN - s1) && bitset.includes(avn, MN - s2)
-  const check = (xs, sq, avn, x1, x2, y1, y2) =>
-    chk(avn, xs[0] + sq[x1] + sq[x2], xs[1] + sq[y1] + sq[y2]) || chk(avn, xs[1] + sq[x1] + sq[x2], xs[0] + sq[y1] + sq[y2])
+magic4x4Solver1 = () => {
   const magic4x4 = magicSquare(4, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
   const MN = magic4x4.MN
+  const chk = (avn, s1, s2) => s1 != s2 && avn.includes(MN - s1) && avn.includes(MN - s2)
+  const check = (xs, sq, avn, x1, x2, y1, y2) => chk(avn, xs[0] + sq[x1] + sq[x2], xs[1] + sq[y1] + sq[y2]) || chk(avn, xs[1] + sq[x1] + sq[x2], xs[0] + sq[y1] + sq[y2])
   return magic4x4.solve([
     { row: [3, 6, 9, 12] }, // diag2
     { row: [0, 5, 10, 15] }, // diag1
@@ -85,7 +84,7 @@ magic4x4Solver = () => {
 magic4x4Solver2 = () => {
   const magic4x4 = magicSquare(4, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
   const MN = magic4x4.MN
-  const chk = (avn, s1, s2) => s1 != s2 && bitset.includes(avn, MN - s1) && bitset.includes(avn, MN - s2)
+  const chk = (avn, s1, s2) => s1 != s2 && avn.includes(MN - s1) && avn.includes(MN - s2)
   const check = (xs, sq, avn, x1, x2, y1, y2) =>
     chk(avn, xs[0] + sq[x1] + sq[x2], xs[1] + sq[y1] + sq[y2]) || chk(avn, xs[1] + sq[x1] + sq[x2], xs[0] + sq[y1] + sq[y2])
   return magic4x4.solve([
@@ -99,8 +98,9 @@ magic4x4Solver2 = () => {
   ])
 }
 
+magic4x4Solver1()
 module.exports = {
   magic3x3Solver,
-  magic4x4Solver,
+  magic4x4Solver1,
   magic4x4Solver2,
 }
