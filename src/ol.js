@@ -75,12 +75,12 @@ const flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flat
 const add2obj = (o, k, v) => ((o[k] = [...(o[k] || []), v]), o)
 const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {})
 
-// examples
-// zipped  = zip([1,2,3], [4,5,6])  // -> [[1,4],[2,5],[3,6]]
-// sums    = zip([1,2,3], [4,5,6], (a,b)=>a+b) // -> [5,7,9]
-// men   = [{name:'hugo', age:36 }, {name:'hans', age:37 }]
-// women = [{name:'anna', age:35 }, {name:'lena', age:27 }]
-// married = zip(men, women, (a,b) => ({ 'husband': a, 'wife': b }) )
+// zip examples
+// zip([1,2,3], [4,5,6])  // -> [[1,4],[2,5],[3,6]]
+// zip([1,2,3], [4,5,6], add ) // -> [5,7,9]
+//    men   = [{name:'hugo', age:36 }, {name:'hans', age:37 }]
+//    women = [{name:'anna', age:35 }, {name:'lena', age:27 }]
+// zip(men, women, (a,b) => ({ 'husband': a, 'wife': b }) ) // -> [{"husband":"hugo","wife":"anna"}, {"husband":"hans","wife":"lena"}]
 const zip = (xs, ys, f = id) => xs.map((x, i) => (f ? f(x, ys[i]) : [x, ys[i]]))
 
 const uniq = (xs) => Array.from(new Set(xs))
