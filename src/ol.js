@@ -13,7 +13,7 @@ const fib = (x) => (x <= 2 ? 1 : fib(x - 1) + fib(x - 2))
 
 // technical functions
 const id = (x) => x
-const feedx = (x, f) => f(x)
+const feedX = (x, f) => f(x)
 const call = (f, ...args) => f(...args)
 const swap = (x, y) => [y, x]
 
@@ -25,8 +25,8 @@ const gt = (x, y) => x > y
 const gte = (x, y) => x >= y
 const odd = (x) => x % 2 !== 0
 const even = (x) => x % 2 === 0
-const ininterval = (x, a, b) => a <= x && x <= b
-const leapyear = (x) => (x % 4 === 0 && x % 100 !== 0) || x % 400 === 0
+const isInInterval = (x, a, b) => a <= x && x <= b
+const isLeapYear = (x) => (x % 4 === 0 && x % 100 !== 0) || x % 400 === 0
 
 // generate predicates
 // usage: [1,2,3,4,5].filter(gtPred(3)) // -> [4,5]
@@ -113,7 +113,7 @@ const num = (x) => ({
   abs: () => abs(x),
   sqr: () => sqr(x),
   cube: () => cube(x),
-  ininterval: (a, b) => ininterval(x, a, b),
+  isInInterval: (a, b) => isInInterval(x, a, b),
 })
 
 const array = (xs) => ({
@@ -315,8 +315,7 @@ const ol = {
   randomIntArray,
   randomInRange,
   randomIntInRange,
-  cmp,
-  feedx,
+  feedX,
   call,
   eq,
   lt,
@@ -325,8 +324,8 @@ const ol = {
   gte,
   odd,
   even,
-  ininterval,
-  leapyear,
+  isInInterval,
+  isLeapYear,
   not,
   or,
   and,

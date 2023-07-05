@@ -1,15 +1,42 @@
 const { ol, num, interval, array } = require('../src/ol');
-const { id, sqr, abs, cube, fac, fib, range, rangeFilled,
-  randomArray, randomInRange, randomIntArray, randomIntInRange,
+const {
+  id,
+  sqr,
+  abs,
+  cube,
+  fac,
+  fib,
+  range,
+  rangeFilled,
+  randomArray,
+  randomInRange,
+  randomIntArray,
+  randomIntInRange,
   cmp,
-  leapyear, odd, even,
-  not, or, and, xor, comb, every, some,
-  ininterval, add2obj, groupBy, sum,
-  without, withoutIndex, sort, uniq, uniqBy, flatten, shuffle
+  isLeapYear,
+  odd,
+  even,
+  not,
+  or,
+  and,
+  xor,
+  comb,
+  every,
+  some,
+  isInInterval,
+  add2obj,
+  groupBy,
+  sum,
+  without,
+  withoutIndex,
+  sort,
+  uniq,
+  uniqBy,
+  flatten,
+  shuffle,
 } = ol;
 
 test('simple', () => {
-
   expect(id('a')).toEqual('a');
   expect(id(3)).toEqual(3);
 
@@ -23,7 +50,6 @@ test('simple', () => {
   expect(cube(1)).toEqual(1);
   expect(cube(2)).toEqual(8);
   expect(cube(3)).toEqual(27);
-
 });
 
 test('faculty', () => {
@@ -42,7 +68,7 @@ test('randomInRange', () => {
     expect(x).toBeGreaterThanOrEqual(1);
     expect(x).toBeLessThanOrEqual(6);
   }
-  //console.log(res);  
+  //console.log(res);
 });
 
 test('randomIntInRange', () => {
@@ -53,7 +79,7 @@ test('randomIntInRange', () => {
     expect(x).toBeGreaterThanOrEqual(1);
     expect(x).toBeLessThanOrEqual(6);
   }
-  //console.log(res);  
+  //console.log(res);
 });
 
 test('fibonacci', () => {
@@ -72,41 +98,39 @@ test('odd & even', () => {
   expect(even(4)).toBe(true);
 });
 
-test('ininterval', () => {
-  expect(ininterval(3, 3, 4)).toEqual(true);
-  expect(ininterval(3.5, 4, 6)).toEqual(false);
-  expect(ininterval(0, 0, 1)).toBe(true);
-  expect(ininterval(1, 0, 1)).toBe(true);
-  expect(ininterval(0.5, 0, 1)).toBe(true);
-  expect(ininterval(1.1, 0, 1)).toBe(false);
-  expect(ininterval(-0.1, 0, 1)).toBe(false);
+test('isInInterval', () => {
+  expect(isInInterval(3, 3, 4)).toEqual(true);
+  expect(isInInterval(3.5, 4, 6)).toEqual(false);
+  expect(isInInterval(0, 0, 1)).toBe(true);
+  expect(isInInterval(1, 0, 1)).toBe(true);
+  expect(isInInterval(0.5, 0, 1)).toBe(true);
+  expect(isInInterval(1.1, 0, 1)).toBe(false);
+  expect(isInInterval(-0.1, 0, 1)).toBe(false);
 });
 
-test('leapyear', () => {
-  expect(leapyear(1800)).toBe(false);
-  expect(leapyear(1900)).toBe(false);
-  expect(leapyear(2000)).toBe(true);
-  expect(leapyear(2001)).toBe(false);
-  expect(leapyear(2004)).toBe(true);
-  expect(leapyear(2005)).toBe(false);
-  expect(leapyear(2008)).toBe(true);
+test('isLeapYear', () => {
+  expect(isLeapYear(1800)).toBe(false);
+  expect(isLeapYear(1900)).toBe(false);
+  expect(isLeapYear(2000)).toBe(true);
+  expect(isLeapYear(2001)).toBe(false);
+  expect(isLeapYear(2004)).toBe(true);
+  expect(isLeapYear(2005)).toBe(false);
+  expect(isLeapYear(2008)).toBe(true);
 });
 
 test('combine predicates', () => {
-  expect(not(leapyear)(1800)).toBe(true);
+  expect(not(isLeapYear)(1800)).toBe(true);
   expect(not(not(even))(2)).toBe(true);
-  expect(or(leapyear, odd)(1804)).toBe(true);
-  expect(or(leapyear, odd)(1801)).toBe(true);
+  expect(or(isLeapYear, odd)(1804)).toBe(true);
+  expect(or(isLeapYear, odd)(1801)).toBe(true);
   expect(and(even, odd)(1804)).toBe(false);
-  expect(and(even, leapyear)(1804)).toBe(true);
+  expect(and(even, isLeapYear)(1804)).toBe(true);
   expect(xor(even, odd)(54)).toBe(true);
-  expect(every(leapyear, even)(1804)).toBe(true);
-  expect(every(leapyear, even)(1800)).toBe(false);
-  expect(some(leapyear, even)(1804)).toBe(true);
-  expect(some(leapyear, even)(1800)).toBe(true);
+  expect(every(isLeapYear, even)(1804)).toBe(true);
+  expect(every(isLeapYear, even)(1800)).toBe(false);
+  expect(some(isLeapYear, even)(1804)).toBe(true);
+  expect(some(isLeapYear, even)(1800)).toBe(true);
 });
-
-
 
 test('cmp', () => {
   expect(cmp(1, 1)).toBe(0);
@@ -134,15 +158,15 @@ test('rangeFilled', () => {
 test('randomArray', () => {
   const arr = randomArray(100, 1, 2);
   // console.log(arr)
-  expect(arr.every(x => ininterval(x, 1, 2))).toBe(true);
+  expect(arr.every((x) => isInInterval(x, 1, 2))).toBe(true);
 });
 
 test('randomIntArray', () => {
   const arr = randomIntArray(100, 1, 3);
-  expect(arr.every(x => x === 1 || x === 2 || x === 3)).toBe(true);
+  expect(arr.every((x) => x === 1 || x === 2 || x === 3)).toBe(true);
 
   const groups = array(arr).groupBy(id);
-  expect(Object.keys(groups).every(x => groups[x].length > 10)).toBe(true);
+  expect(Object.keys(groups).every((x) => groups[x].length > 10)).toBe(true);
 });
 
 test('sum of arrays', () => {
@@ -161,7 +185,7 @@ test('without', () => {
 });
 
 test('withoutIndex', () => {
-  expect(withoutIndex([], 2)).toEqual([]); 
+  expect(withoutIndex([], 2)).toEqual([]);
   expect(withoutIndex([3], 0)).toEqual([]);
   expect(withoutIndex([1, 2, 3], 2)).toEqual([1, 2]);
   expect(withoutIndex([1, 2, 3, 4], 2)).toEqual([1, 2, 4]);
@@ -169,30 +193,30 @@ test('withoutIndex', () => {
 
 test('add2obj', () => {
   const o = {};
-  expect(add2obj(o, 'key', 1)).toEqual({ 'key': [1] });
-  expect(add2obj(o, 'key', 2)).toEqual({ 'key': [1, 2] });
-  expect(add2obj({ 'a': undefined }, 'a', 1)).toEqual({ 'a': [1] });
+  expect(add2obj(o, 'key', 1)).toEqual({ key: [1] });
+  expect(add2obj(o, 'key', 2)).toEqual({ key: [1, 2] });
+  expect(add2obj({ a: undefined }, 'a', 1)).toEqual({ a: [1] });
 });
 
 test('shuffle & sort', () => {
-  const xs = range(10)
+  const xs = range(10);
   const ys = shuffle(xs);
   expect(xs).toEqual(sort(ys));
 });
 
 test('groupBy', () => {
   const xs = [1, 2, 3, 4, 5, 6];
-  const groups = groupBy(xs, odd)
+  const groups = groupBy(xs, odd);
   expect(groups).toEqual({ true: [1, 3, 5], false: [2, 4, 6] });
 });
 
 test('uniq', () => {
-  expect(uniq( [1, 2, 2], id)).toEqual([1, 2]);
+  expect(uniq([1, 2, 2], id)).toEqual([1, 2]);
 });
 
 test('uniqBy', () => {
-  expect(uniqBy( [1, 2, 2], id)).toEqual([1, 2]);
-  expect(uniqBy( [{id:1}, {id:2}, {id:2}], x=>x.id)).toEqual([{id:1}, {id:2}]);
+  expect(uniqBy([1, 2, 2], id)).toEqual([1, 2]);
+  expect(uniqBy([{ id: 1 }, { id: 2 }, { id: 2 }], (x) => x.id)).toEqual([{ id: 1 }, { id: 2 }]);
 });
 
 test('flatten', () => {
@@ -200,7 +224,6 @@ test('flatten', () => {
   expect(flatten([[1, [2]], 3, 4, 5, 6, [1]])).toEqual([1, 2, 3, 4, 5, 6, 1]);
   expect(uniq(sort(flatten([[1, [2]], 3, 4, 5, 6, [1]])))).toEqual([1, 2, 3, 4, 5, 6]);
 });
-
 
 // Wrappers
 {
@@ -217,12 +240,12 @@ test('flatten', () => {
     expect(num(1).abs()).toBe(1);
     expect(num(-1).abs()).toBe(1);
 
-    expect(num(2).ininterval(2, 3)).toBe(true);
-    expect(num(2).ininterval(2, 4)).toBe(true);
-    expect(num(3).ininterval(2, 3)).toBe(true);
-    expect(num(3).ininterval(2, 4)).toBe(true);
-    expect(num(2).ininterval(3, 4)).toBe(false);
-    expect(num(3).ininterval(1, 2)).toBe(false);
+    expect(num(2).isInInterval(2, 3)).toBe(true);
+    expect(num(2).isInInterval(2, 4)).toBe(true);
+    expect(num(3).isInInterval(2, 3)).toBe(true);
+    expect(num(3).isInInterval(2, 4)).toBe(true);
+    expect(num(2).isInInterval(3, 4)).toBe(false);
+    expect(num(3).isInInterval(1, 2)).toBe(false);
   });
 
   test('interval', () => {
@@ -249,7 +272,7 @@ test('flatten', () => {
     expect(interval(0, 10).dec(0)).toBe(0);
   });
 
-  test('arraywrapper', () => {
+  test('array wrapper', () => {
     expect(array([1, 2, 3]).sum()).toBe(6);
 
     expect(array(['a', 'a', 'b', 'b']).uniq()).toEqual(['a', 'b']);
@@ -273,6 +296,5 @@ test('flatten', () => {
     expect(array([]).min()).toEqual(undefined);
     expect(array([1]).min()).toEqual(1);
     expect(array([1, 2]).min()).toEqual(1);
-
-  })
+  });
 }
