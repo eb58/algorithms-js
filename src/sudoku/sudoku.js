@@ -22,7 +22,7 @@ const solve1 = (fld) => feedX(
 const solve2 = (fld) => {
   const candidatesForField = RANGE81.map((idx) => fld[idx] <= 0 ? candidates(fld, idx) : undefined)
   const idx = candidatesForField.reduce((bestIdx, c, idx) => c && (bestIdx === -100 || c.length < candidatesForField[bestIdx].length) ? idx : bestIdx, -100)
-  return idx < 0 ? fld : candidatesForField[bestIdx].reduce((x, val) => x || solve2(fld.with(idx, val)), null)
+  return idx < 0 ? fld : candidatesForField[idx].reduce((res, val) => res || solve2(fld.with(idx, val)), null)
 }
 
 const solve3 = (() => {
