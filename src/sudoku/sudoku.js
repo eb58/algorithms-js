@@ -20,40 +20,9 @@ const solve1 = (fld) => feedX(
 )
 
 const solve2 = (fld) => {
-  const findIndexOfBestCandidates = (candsForAll) =>
-    candsForAll.reduce((bestIdx, c, idx) => c && (bestIdx === -1 || c.length < candsForAll[bestIdx].length) ? idx : bestIdx, -1)
-
-  const findBestCandidates = (candsForAll) => {
-    const idx = findIndexOfBestCandidates(candsForAll)
-    return idx < 0 ? null : { idx, values: candsForAll[idx] }
-  }
-
-  const findCandidatesForField = (fld) => {
-    const candsForAll = []
-    for (let idx = 0; idx < 81; idx++)
-      if (fld[idx] === 0) {
-        const cands = candidates(fld, idx)
-        candsForAll[idx] = cands
-        if (candsForAll[idx].length === 1) {
-          const res = []
-          res[idx] = cands
-          return res
-        }
-      }
-    return candsForAll
-  }
-
-  const solv = (fld) => {
-    if (idxOfFirstEmptyCell(fld) < 0) {
-      return (res = [...fld])
-    }
-    const bestCands = findBestCandidates(findCandidatesForField(fld))
-    bestCands && bestCands.values.forEach((val) => solv(fld.with(bestCands.idx, val)))
-  }
-
-  let res
-  solv(fld)
-  return res
+  const candidatesForField = RANGE81.map((idx) => fld[idx] <= 0 ? candidates(fld, idx) : undefined)
+  const bestIdx = candidatesForField.reduce((bestIdx, c, idx) => c && (bestIdx === -100 || c.length < candidatesForField[bestIdx].length) ? idx : bestIdx, -100)
+  return bestIdx < 0 ? fld : candidatesForField[bestIdx].reduce((x, val) => x || solve2(fld.with(bestIdx, val)), null)
 }
 
 const solve3 = (() => {
