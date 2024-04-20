@@ -20,15 +20,15 @@ const solve1 = (fld) => feedX(
 )
 
 const solve2 = (fld) => {
-  const candidatesForField = RANGE81.map((idx) => fld[idx] <= 0 ? candidates(fld, idx) : undefined)
+  const candidatesForField = RANGE81.map(idx => fld[idx] <= 0 ? candidates(fld, idx) : undefined)
   const idx = candidatesForField.reduce((bestIdx, c, idx) => c && (bestIdx === -100 || c.length < candidatesForField[bestIdx].length) ? idx : bestIdx, -100)
   return idx < 0 ? fld : candidatesForField[idx].reduce((res, val) => res || solve2(fld.with(idx, val)), null)
 }
 
 const solve3 = (() => {
-  const COORDROW = RANGE81.map((n) => row(n))
-  const COORDCOL = RANGE81.map((n) => col(n))
-  const COORDBLK = RANGE81.map((n) => block(n))
+  const COORDROW = RANGE81.map( row )
+  const COORDCOL = RANGE81.map( col )
+  const COORDBLK = RANGE81.map( block )
   const CELLSINROW = RANGE81.reduce((acc, n) => (acc[COORDROW[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
   const CELLSINCOL = RANGE81.reduce((acc, n) => (acc[COORDCOL[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
   const CELLSINBLK = RANGE81.reduce((acc, n) => (acc[COORDBLK[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
