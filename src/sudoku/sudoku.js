@@ -1,4 +1,6 @@
 const range = (n) => [...Array(n).keys()]
+const feedX = (x, f) => f(x)
+
 const col = (x) => x % 9
 const row = (x) => Math.floor(x / 9)
 const block = (x) => Math.floor(col(x) / 3) * 3 + Math.floor(row(x) / 3)
@@ -12,13 +14,12 @@ const candidates = (fld, idx) => RANGE1_9.filter((val) => isCandidate(fld, idx, 
 const idxOfFirstEmptyCell = (fld) => fld.findIndex((x) => x === 0)
 const CONNECTIONSETS = RANGE81.map(connectionSet)
 
-const solve1 = (fld) => {
-  const idx = idxOfFirstEmptyCell(fld)
-  return idx < 0 ? fld : candidates(fld, idx).reduce((res, val) => res || solve1(fld.with(idx, val)))
-}
+const solve1 = (fld) => feedX(
+  idxOfFirstEmptyCell(fld),
+  (idx) => idx < 0 ? fld : candidates(fld, idx).reduce((res, val) => res || solve1(fld.with(idx, val)), null)
+)
 
 const solve2 = (fld) => {
-  const set = (fld, idx, val) => fld.with(idx, val)
   const findIndexOfBestCandidates = (candsForAll) =>
     candsForAll.reduce((bestIdx, c, idx) => c && (bestIdx === -1 || c.length < candsForAll[bestIdx].length) ? idx : bestIdx, -1)
 
@@ -47,7 +48,7 @@ const solve2 = (fld) => {
       return (res = [...fld])
     }
     const bestCands = findBestCandidates(findCandidatesForField(fld))
-    bestCands && bestCands.values.forEach((val) => solv(set(fld, bestCands.idx, val)))
+    bestCands && bestCands.values.forEach((val) => solv(fld.with(bestCands.idx, val)))
   }
 
   let res
@@ -114,11 +115,11 @@ const solve3 = (() => {
           const cells = CELLS[n]
           let cnt = 0,
             idx = -1
-          for (let i = 0; i < cells.length; i++) {
-            const x = m.cand[cells[i]]
+          for (const element of cells) {
+            const x = m.cand[element]
             if (x && x.vals & mask) {
               if (++cnt > 1) break
-              idx = cells[i]
+              idx = element
             }
           }
           if (cnt === 1) {
