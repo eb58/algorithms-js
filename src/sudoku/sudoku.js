@@ -13,33 +13,14 @@ const idxOfFirstEmptyCell = (fld) => fld.findIndex((x) => x === 0)
 const CONNECTIONSETS = RANGE81.map(connectionSet)
 
 const solve1 = (fld) => {
-  const solv = (fld) => {
-    const idx = idxOfFirstEmptyCell(fld)
-    return idx < 0
-      ? (res = [...fld])
-      : candidates(fld, idx).forEach((val) => {
-          fld[idx] = val
-          solv(fld)
-          fld[idx] = 0
-        })
-  }
-  let res
-  solv(fld)
-  return res
+  const idx = idxOfFirstEmptyCell(fld)
+  return idx < 0 ? fld : candidates(fld, idx).reduce((res, val) => res || solve1(fld.with(idx, val)))
 }
 
 const solve2 = (fld) => {
-  const set = (fld, idx, val) => {
-    const cpy = [...fld]
-    cpy[idx] = val
-    return cpy
-  }
-
-  const findIndexOfBestCandidates = (candsForAll) => {
-    return candsForAll.reduce((bestIdx, c, idx) => {
-      return c && (bestIdx === -1 || c.length < candsForAll[bestIdx].length) ? idx : bestIdx
-    }, -1)
-  }
+  const set = (fld, idx, val) => fld.with(idx, val)
+  const findIndexOfBestCandidates = (candsForAll) =>
+    candsForAll.reduce((bestIdx, c, idx) => c && (bestIdx === -1 || c.length < candsForAll[bestIdx].length) ? idx : bestIdx, -1)
 
   const findBestCandidates = (candsForAll) => {
     const idx = findIndexOfBestCandidates(candsForAll)
