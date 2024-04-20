@@ -5,13 +5,13 @@ const col = (x) => x % 9
 const row = (x) => Math.floor(x / 9)
 const block = (x) => Math.floor(col(x) / 3) * 3 + Math.floor(row(x) / 3)
 const RANGE81 = range(9 * 9)
-const RANGE1_9 = range(9).map((x) => x + 1)
+const RANGE1_9 = range(9).map(x => x + 1)
 
 const inSameConnectionSet = (x, y) => row(x) === row(y) || col(x) === col(y) || block(x) === block(y)
 const connectionSet = (x) => RANGE81.reduce((acc, y) => (inSameConnectionSet(x, y) ? [...acc, y] : acc), [])
-const isCandidate = (fld, idx, val) => !CONNECTIONSETS[idx].some((y) => fld[y] === val)
-const candidates = (fld, idx) => RANGE1_9.filter((val) => isCandidate(fld, idx, val))
-const idxOfFirstEmptyCell = (fld) => fld.findIndex((x) => x === 0)
+const isCandidate = (fld, idx, val) => !CONNECTIONSETS[idx].some(y => fld[y] === val)
+const candidates = (fld, idx) => RANGE1_9.filter(val => isCandidate(fld, idx, val))
+const idxOfFirstEmptyCell = (fld) => fld.findIndex(x => x === 0)
 const CONNECTIONSETS = RANGE81.map(connectionSet)
 
 const solve1 = (fld) => feedX(
@@ -20,9 +20,9 @@ const solve1 = (fld) => feedX(
 )
 
 const solve2 = (fld) => {
-  const candidatesForField = RANGE81.map((idx) => fld[idx] <= 0 ? candidates(fld, idx) : undefined)
-  const bestIdx = candidatesForField.reduce((bestIdx, c, idx) => c && (bestIdx === -100 || c.length < candidatesForField[bestIdx].length) ? idx : bestIdx, -100)
-  return bestIdx < 0 ? fld : candidatesForField[bestIdx].reduce((x, val) => x || solve2(fld.with(bestIdx, val)), null)
+  const candidatesForField = RANGE81.map(idx => fld[idx] <= 0 ? candidates(fld, idx) : undefined)
+  const idx = candidatesForField.reduce((bestIdx, c, idx) => c && (bestIdx === -100 || c.length < candidatesForField[bestIdx].length) ? idx : bestIdx, -100)
+  return idx < 0 ? fld : candidatesForField[idx].reduce((res, val) => res || solve2(fld.with(idx, val)), null)
 }
 
 const solve3 = (fld) => {
@@ -36,9 +36,9 @@ const solve3 = (fld) => {
 }
 
 const solve4 = (() => {
-  const COORDROW = RANGE81.map((n) => row(n))
-  const COORDCOL = RANGE81.map((n) => col(n))
-  const COORDBLK = RANGE81.map((n) => block(n))
+  const COORDROW = RANGE81.map( row )
+  const COORDCOL = RANGE81.map( col )
+  const COORDBLK = RANGE81.map( block )
   const CELLSINROW = RANGE81.reduce((acc, n) => (acc[COORDROW[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
   const CELLSINCOL = RANGE81.reduce((acc, n) => (acc[COORDCOL[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
   const CELLSINBLK = RANGE81.reduce((acc, n) => (acc[COORDBLK[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
