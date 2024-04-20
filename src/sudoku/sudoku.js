@@ -25,7 +25,17 @@ const solve2 = (fld) => {
   return bestIdx < 0 ? fld : candidatesForField[bestIdx].reduce((x, val) => x || solve2(fld.with(bestIdx, val)), null)
 }
 
-const solve3 = (() => {
+const solve3 = (fld) => {
+  const candidatesForField = RANGE81.map((idx) => fld[idx] <= 0 ? candidates(fld, idx) : undefined)
+  const x = candidatesForField.reduce((acc, v, idx) => !v || v.length !== 1 ? acc : { ...acc, [idx]: v }, {})
+  console.log("AAA", fld)
+  if (Object.keys(x).length > 0) console.log("CCC", x)
+  const bestIdx = candidatesForField.reduce((bestIdx, c, idx) => c && (bestIdx === -100 || c.length < candidatesForField[bestIdx].length) ? idx : bestIdx, -100)
+  // candidatesForField.filter( c => c?.length === 1).forEach( c => console.log( "AAA", c, fld, bestIdx, candidatesForField.filter(c => !!c && c.length ===1) ) )
+  return bestIdx < 0 ? fld : candidatesForField[bestIdx].reduce((x, val) => x || solve2(fld.with(bestIdx, val)), null)
+}
+
+const solve4 = (() => {
   const COORDROW = RANGE81.map((n) => row(n))
   const COORDCOL = RANGE81.map((n) => col(n))
   const COORDBLK = RANGE81.map((n) => block(n))
@@ -50,11 +60,7 @@ const solve3 = (() => {
     model.fld[idx] = 0
   }
 
-  const countBits = (bs) => {
-    let cnt = 0
-    for (let v = 1; v <= 9; v++) bs & (1 << v) ? cnt++ : 0
-    return cnt
-  }
+  const countBits = (bs) => RANGE1_9.reduce((cnt, v) => cnt + (bs & (1 << v) ? 1 : 0), 0)
 
   const getCandidates = (model, idx) => {
     const candidatesAsBitset = ~(model.usedInRow[COORDROW[idx]] | model.usedInCol[COORDCOL[idx]] | model.usedInBlk[COORDBLK[idx]])
@@ -76,30 +82,29 @@ const solve3 = (() => {
     return bestCell
   }
 
-  const findHiddenNaked = (m) => {
-    const findHN = (m, CELLS) => {
-      for (let v = 1; v <= 9; v++) {
-        const mask = 1 << v
-        for (let n = 0; n < 9; n++) {
-          const cells = CELLS[n]
-          let cnt = 0,
-            idx = -1
-          for (const element of cells) {
-            const x = m.cand[element]
-            if (x && x.vals & mask) {
-              if (++cnt > 1) break
-              idx = element
-            }
-          }
-          if (cnt === 1) {
-            return { idx, cand: { cnt: 1, vals: mask } }
+  const findHN = (m, CELLS) => {
+    for (let v = 1; v <= 9; v++) {
+      const mask = 1 << v
+      for (let n = 0; n < 9; n++) {
+        const cells = CELLS[n]
+        let cnt = 0,
+          idx = -1
+        for (const element of cells) {
+          const x = m.cand[element]
+          if (x && x.vals & mask) {
+            if (++cnt > 1) break
+            idx = element
           }
         }
+        if (cnt === 1) {
+          return { idx, cand: { cnt: 1, vals: mask } }
+        }
       }
-      return null
     }
-    return findHN(m, CELLSINBLK) || findHN(m, CELLSINROW) || findHN(m, CELLSINCOL)
+    return null
   }
+
+  const findHiddenNaked = (m) => findHN(m, CELLSINBLK) || findHN(m, CELLSINROW) || findHN(m, CELLSINCOL)
 
   const solve = (fld) => {
     const model = {
@@ -138,4 +143,8 @@ const solve3 = (() => {
   return solve
 })()
 
-module.exports = { solve1, solve2, solve3 }
+const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
+const mysolve = xs => solve3(conv2Arr(xs)).join('');
+mysolve('.914.7..8.74.3.....8..2.9...2..4...6...2..5..8..5....1.37.1..5241...93..6.8......')
+
+module.exports = { solve1, solve2, solve3, solve4 }
