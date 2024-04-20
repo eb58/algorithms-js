@@ -1,3 +1,8 @@
 node_modules
 .history
 nbproject/private/private.xml
+/.idea/algorithms-js.iml
+/.idea/checkstyle-idea.xml
+/.idea/misc.xml
+/.idea/modules.xml
+/.idea/vcs.xml
