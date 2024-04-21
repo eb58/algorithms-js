@@ -1,6 +1,12 @@
 const range = (n) => [...Array(n).keys()]
 const feedX = (x, f) => f(x)
 
+const dumpField = (fld) => console.log(fld.reduce((acc, x, idx) => acc + (x === 0 ? " " : x) + ((idx + 1) % 9 === 0 ? "\n" : " "), ""))
+const checkField = (fld) => {
+  //   RANGE1_9.reduce( (acc, val)=> )
+  RANGE81
+}
+
 const col = (x) => x % 9
 const row = (x) => Math.floor(x / 9)
 const block = (x) => Math.floor(col(x) / 3) * 3 + Math.floor(row(x) / 3)
@@ -10,9 +16,19 @@ const RANGE1_9 = range(9).map(x => x + 1)
 const inSameConnectionSet = (x, y) => row(x) === row(y) || col(x) === col(y) || block(x) === block(y)
 const connectionSet = (x) => RANGE81.reduce((acc, y) => (inSameConnectionSet(x, y) ? [...acc, y] : acc), [])
 const isCandidate = (fld, idx, val) => !CONNECTIONSETS[idx].some(y => fld[y] === val)
-const candidates = (fld, idx) => RANGE1_9.filter(val => isCandidate(fld, idx, val))
+const candidates = (fld, idx) => fld[idx] == 0 ? RANGE1_9.filter(val => isCandidate(fld, idx, val)) : undefined
 const idxOfFirstEmptyCell = (fld) => fld.findIndex(x => x === 0)
 const CONNECTIONSETS = RANGE81.map(connectionSet)
+const COORDROW = RANGE81.map(row)
+const COORDCOL = RANGE81.map(col)
+const COORDBLK = RANGE81.map(block)
+const CELLSINROW = RANGE81.reduce((acc, n) => (acc[COORDROW[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
+const CELLSINCOL = RANGE81.reduce((acc, n) => (acc[COORDCOL[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
+const CELLSINBLK = RANGE81.reduce((acc, n) => (acc[COORDBLK[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
+
+// console.log( "CELLSINROW", CELLSINROW );
+// console.log( "CELLSINCOL", CELLSINCOL );
+// console.log( "CELLSINBLK", CELLSINBLK );
 
 const solve1 = (fld) => feedX(
   idxOfFirstEmptyCell(fld),
@@ -20,29 +36,21 @@ const solve1 = (fld) => feedX(
 )
 
 const solve2 = (fld) => {
-  const candidatesForField = RANGE81.map(idx => fld[idx] <= 0 ? candidates(fld, idx) : undefined)
-  const idx = candidatesForField.reduce((bestIdx, c, idx) => c && (bestIdx === -100 || c.length < candidatesForField[bestIdx].length) ? idx : bestIdx, -100)
-  return idx < 0 ? fld : candidatesForField[idx].reduce((res, val) => res || solve2(fld.with(idx, val)), null)
+  const candidatesForField = RANGE81.map(idx => candidates(fld, idx))
+  const bestIdx = candidatesForField.reduce((res, c, idx) => c && (res === -100 || c.length < candidatesForField[res].length) ? idx : res, -100)
+  return bestIdx < 0 ? fld : candidatesForField[bestIdx].reduce((res, val) => res || solve2(fld.with(bestIdx, val)), null)
 }
 
 const solve3 = (fld) => {
-  const candidatesForField = RANGE81.map((idx) => fld[idx] <= 0 ? candidates(fld, idx) : undefined)
-  const x = candidatesForField.reduce((acc, v, idx) => !v || v.length !== 1 ? acc : { ...acc, [idx]: v }, {})
-  console.log("AAA", fld)
-  if (Object.keys(x).length > 0) console.log("CCC", x)
+  const candidatesForField = RANGE81.map((idx) => candidates(fld, idx))
   const bestIdx = candidatesForField.reduce((bestIdx, c, idx) => c && (bestIdx === -100 || c.length < candidatesForField[bestIdx].length) ? idx : bestIdx, -100)
-  // candidatesForField.filter( c => c?.length === 1).forEach( c => console.log( "AAA", c, fld, bestIdx, candidatesForField.filter(c => !!c && c.length ===1) ) )
-  return bestIdx < 0 ? fld : candidatesForField[bestIdx].reduce((x, val) => x || solve2(fld.with(bestIdx, val)), null)
+  // range(9).forEach(blockNumber => range(9).forEach(val))
+
+
+  return bestIdx < 0 ? fld : candidatesForField[bestIdx].reduce((x, val) => x || solve3(fld.with(bestIdx, val)), null)
 }
 
 const solve4 = (() => {
-  const COORDROW = RANGE81.map( row )
-  const COORDCOL = RANGE81.map( col )
-  const COORDBLK = RANGE81.map( block )
-  const CELLSINROW = RANGE81.reduce((acc, n) => (acc[COORDROW[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
-  const CELLSINCOL = RANGE81.reduce((acc, n) => (acc[COORDCOL[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
-  const CELLSINBLK = RANGE81.reduce((acc, n) => (acc[COORDBLK[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
-
   const setVal = (model, idx, val) => {
     model.usedInRow[COORDROW[idx]] |= 1 << val
     model.usedInCol[COORDCOL[idx]] |= 1 << val
@@ -142,9 +150,5 @@ const solve4 = (() => {
   }
   return solve
 })()
-
-const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
-const mysolve = xs => solve3(conv2Arr(xs)).join('');
-mysolve('.914.7..8.74.3.....8..2.9...2..4...6...2..5..8..5....1.37.1..5241...93..6.8......')
 
 module.exports = { solve1, solve2, solve3, solve4 }
