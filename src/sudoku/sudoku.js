@@ -19,16 +19,6 @@ const isCandidate = (fld, idx, val) => !CONNECTIONSETS[idx].some(y => fld[y] ===
 const candidates = (fld, idx) => fld[idx] == 0 ? RANGE1_9.filter(val => isCandidate(fld, idx, val)) : undefined
 const idxOfFirstEmptyCell = (fld) => fld.findIndex(x => x === 0)
 const CONNECTIONSETS = RANGE81.map(connectionSet)
-const COORDROW = RANGE81.map(row)
-const COORDCOL = RANGE81.map(col)
-const COORDBLK = RANGE81.map(block)
-const CELLSINROW = RANGE81.reduce((acc, n) => (acc[COORDROW[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
-const CELLSINCOL = RANGE81.reduce((acc, n) => (acc[COORDCOL[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
-const CELLSINBLK = RANGE81.reduce((acc, n) => (acc[COORDBLK[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
-
-// console.log( "CELLSINROW", CELLSINROW );
-// console.log( "CELLSINCOL", CELLSINCOL );
-// console.log( "CELLSINBLK", CELLSINBLK );
 
 const solve1 = (fld) => feedX(
   idxOfFirstEmptyCell(fld),
@@ -44,13 +34,43 @@ const solve2 = (fld) => {
 const solve3 = (fld) => {
   const candidatesForField = RANGE81.map((idx) => candidates(fld, idx))
   const bestIdx = candidatesForField.reduce((bestIdx, c, idx) => c && (bestIdx === -100 || c.length < candidatesForField[bestIdx].length) ? idx : bestIdx, -100)
-  // range(9).forEach(blockNumber => range(9).forEach(val))
 
+  if (bestIdx < 0) return fld;
 
-  return bestIdx < 0 ? fld : candidatesForField[bestIdx].reduce((x, val) => x || solve3(fld.with(bestIdx, val)), null)
+  if (candidatesForField[bestIdx].length === 1) {
+    return solve3(fld.with(bestIdx, candidatesForField[bestIdx][0]))
+  }
+
+  // // find hidden naked for blocks  :-( -> das macht es nur langsamer!!!
+  // const res = range(9).reduce((res, blockNumber) => {
+  //   if( res ) return res;
+  //   const counter = range(9).map(() => 0)
+  //   CELLSINBLK[blockNumber].forEach(cell => range(9).forEach(digit => counter[digit] += candidatesForField[cell]?.includes(digit + 1) ? 1 : 0))
+  //   const x = counter.findIndex(x => x === 1)
+  //   const cell = CELLSINBLK[blockNumber].find(cellIdx => candidatesForField[cellIdx]?.includes(x + 1))
+  //   if (cell >= 0) {
+  //     const val = x + 1
+  //     // console.log("AAAAAAAA", blockNumber, val, cell, counter, candidatesForField[cell])
+  //     return res || { cell, val }
+  //   }
+  // }, null)
+
+  if (res) {
+    // console.log( "XXXX", res )
+    return solve3(fld.with(res.cell, res.val))
+  }
+
+  return candidatesForField[bestIdx].reduce((x, val) => x || solve3(fld.with(bestIdx, val)), null)
 }
 
 const solve4 = (() => {
+  const COORDROW = RANGE81.map(row)
+  const COORDCOL = RANGE81.map(col)
+  const COORDBLK = RANGE81.map(block)
+  const CELLSINROW = RANGE81.reduce((acc, n) => (acc[COORDROW[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
+  const CELLSINCOL = RANGE81.reduce((acc, n) => (acc[COORDCOL[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
+  const CELLSINBLK = RANGE81.reduce((acc, n) => (acc[COORDBLK[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
+
   const setVal = (model, idx, val) => {
     model.usedInRow[COORDROW[idx]] |= 1 << val
     model.usedInCol[COORDCOL[idx]] |= 1 << val
