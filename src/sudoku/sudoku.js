@@ -20,8 +20,6 @@ const CELLSINROW = RANGE81.reduce((acc, n) => (acc[COORDROW[n]].push(n), acc), [
 const CELLSINCOL = RANGE81.reduce((acc, n) => (acc[COORDCOL[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
 const CELLSINBLK = RANGE81.reduce((acc, n) => (acc[COORDBLK[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
 
-
-
 const isCandidate = (fld, idx, val) => CONNECTIONSETS[idx].every(n => fld[n] !== val)
 const candidates = (fld, idx) => fld[idx] == 0 ? RANGE1_9.filter(val => isCandidate(fld, idx, val)) : undefined
 const idxOfFirstEmptyCell = (fld) => fld.findIndex(x => x === 0)
@@ -33,10 +31,20 @@ const solve1 = (fld) => feedX(
 
 const solve2 = (fld) => {
   const candidatesForField = [];
-  RANGE81.some(idx => { const cands = candidates(fld, idx); candidatesForField.push(cands); return cands?.length === 1 })
+  RANGE81.some(idx => (candidatesForField[idx] = candidates(fld, idx), candidatesForField[idx]?.length === 1))
   const bestIdx = candidatesForField.reduce((res, c, idx) => c && (res === -100 || c.length < candidatesForField[res].length) ? idx : res, -100)
   return bestIdx < 0 ? fld : candidatesForField[bestIdx].reduce((res, val) => res || solve2(fld.with(bestIdx, val)), null)
 }
+
+// const solve2x = (fld) => {
+//   const bestCell = RANGE81.reduce((res, idx) => {
+//     if (res?.cands.length === 1) return res
+//     const cands = candidates(fld, idx)
+//     if (!cands) return res
+//     return res?.cands.length <= cands.length ? res : { idx, cands }
+//   }, null)
+//   return !bestCell ? fld : bestCell.cands?.reduce((res, val) => res || solve2(fld.with(bestCell.idx, val)), null)
+// }
 
 const solve3 = (fld) => {
   const candidatesForField = RANGE81.map((idx) => candidates(fld, idx))
