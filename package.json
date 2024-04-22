@@ -17,6 +17,7 @@
    "scripts": {
       "start": "node src/complex.js",
       "test": "jest --watchAll",
+      "test-sudoku": "jest --watchAll sudoku",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "sudoku": "node src/sudoku/sudoku.js"
    },
