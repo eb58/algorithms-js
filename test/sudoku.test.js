@@ -1,9 +1,11 @@
-const { solve1, solve2, solve3, solve4 } = require('../src/sudoku/sudoku');
+const { solve1, solve2, solve3 } = require('../src/sudoku/sudoku');
+const { solveKudoku } = require('../src/sudoku/kudoku');
+const { dlxSudoku } = require('../src/sudoku/dlx_sudoku');
 const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
-const mysolve = xs => solve2(conv2Arr(xs)).join('');
+const mysolve = xs => solveKudoku(conv2Arr(xs)).join('');
 
-test('sudoku easy ones', () => {
-    expect(mysolve('.914.7..8.74.3.....8..2.9...2..4...6...2..5..8..5....1.37.1..5241...93..6.8......')).toEqual('591467238274938165386125974125743896769281543843596721937814652412659387658372419');
+test('sudoku easy ones short', () => {
+    expect(mysolve('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...')).toEqual('381745629472396158659218473196583742734962581825174936948637215267851394513429867');
 });
 
 test('sudoku easy ones', () => {
