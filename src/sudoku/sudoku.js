@@ -1,23 +1,4 @@
-const range = (n) => [...Array(n).keys()]
-const feedX = (x, f) => f(x)
-
-const fieldString = (fld) => fld.reduce((acc, x, idx) => acc + (x === 0 ? " " : x) + ((idx + 1) % 9 === 0 ? "\n" : " "), "")
-
-const RANGE81 = range(9 * 9)
-const RANGE1_9 = range(9).map(x => x + 1)
-
-const col = (x) => x % 9
-const row = (x) => Math.floor(x / 9)
-const block = (x) => Math.floor(col(x) / 3) * 3 + Math.floor(row(x) / 3)
-const isCandidate = (fld, idx, val) => CONNECTIONSETS[idx].every(n => fld[n] !== val)
-const candidates = (fld, idx) => fld[idx] == 0 ? RANGE1_9.filter(val => isCandidate(fld, idx, val)) : undefined
-const idxOfFirstEmptyCell = (fld) => fld.findIndex(x => x === 0)
-
-const CONNECTIONSETS = (() => {
-  const inSameConnectionSet = (x, y) => row(x) === row(y) || col(x) === col(y) || block(x) === block(y)
-  const connectionSet = (x) => RANGE81.reduce((acc, y) => (inSameConnectionSet(x, y) ? [...acc, y] : acc), [])
-  return RANGE81.map(connectionSet)
-})()
+const { RANGE1_9, RANGE81, row, col, block, feedX, idxOfFirstEmptyCell, candidates } = require('./sudokuUtils');
 
 const solve1 = (fld) => feedX( // ~55 sec for hard ones
   idxOfFirstEmptyCell(fld),
@@ -25,10 +6,10 @@ const solve1 = (fld) => feedX( // ~55 sec for hard ones
 )
 
 const solve2 = (fld) => { // ~1500 ms for hard ones
-  const candidatesForField = [];
-  RANGE81.some(idx => (candidatesForField[idx] = candidates(fld, idx), candidatesForField[idx]?.length === 1))
-  const bestIdx = candidatesForField.reduce((res, c, idx) => c && (res === -100 || c.length < candidatesForField[res].length) ? idx : res, -100)
-  return bestIdx < 0 ? fld : candidatesForField[bestIdx].reduce((res, val) => res || solve2(fld.with(bestIdx, val)), null)
+  const candidatesForCells = [];
+  RANGE81.some(idx => (candidatesForCells[idx] = candidates(fld, idx), candidatesForCells[idx]?.length === 1))
+  const bestIdx = candidatesForCells.reduce((res, c, idx) => c && (res === -100 || c.length < candidatesForCells[res].length) ? idx : res, -100)
+  return bestIdx < 0 ? fld : candidatesForCells[bestIdx].reduce((res, val) => res || solve2(fld.with(bestIdx, val)), null)
 }
 
 //********************************* Solve 3 *******************************/
@@ -82,7 +63,7 @@ const getBestCell = (model) => {
   return bestIdx >= 0 ? { idx: bestIdx, cands: model.cands[bestIdx] } : null
 }
 
-const findHS = (m) => { // find hidden single
+const findHS = (m) => { // find hidden single - without this: ~500 ms for the hard ones
   for (let v = 1; v <= 9; v++) {
     const val = 1 << v
     for (let n = 0; n < 9; n++) {
@@ -100,10 +81,10 @@ const findHS = (m) => { // find hidden single
   return null
 }
 
-const solve3 = (fld) => { // ~200ms for hard ones
+const solve3 = (fld) => { // ~200 ms for hard ones
   const solve = (m) => {
     let bestCell = getBestCell(m)
-    if(bestCell?.cands.cnt === 0  ) return
+    if (bestCell?.cands.cnt === 0) return
     bestCell = bestCell?.cands.cnt === 1 ? bestCell : findHS(m) || bestCell
     for (let i = 1; i <= 9; i++) {
       if (bestCell?.cands.vals & (1 << i)) {
