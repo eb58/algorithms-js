@@ -81,6 +81,6 @@ function sd_solve(R, C, _s) {
 }
 
 const e = sd_genmat()
-solveSudoku = (s) => sd_solve(e[0], e[1], s)
+solveKudoku = (s) => sd_solve(e[0], e[1], s.join(""))
 
-module.exports = { solveSudoku }
+module.exports = { solveKudoku }

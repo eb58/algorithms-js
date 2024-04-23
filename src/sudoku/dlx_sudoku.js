@@ -157,12 +157,12 @@ function solve_sudoku(grid) {
 }
 
 const dlxSudoku = (s) => {
-    const fld = s.split("").reduce((r,e,i)=>(i%9?r[r.length-1].push(e):r.push([e]))&&r,[])
-    solve_sudoku( fld )
+    const fld = s.reduce((r, e, i) => (i % 9 ? r[r.length - 1].push(e) : r.push([e])) && r, [])
+    solve_sudoku(fld)
     return String(fld).split(",")
 }
 
-// console.log("AA", dlxSudoku('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...'))
+// console.log( dlxSudoku('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...'))
 
 module.exports = { dlxSudoku }
 

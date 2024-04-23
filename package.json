@@ -19,7 +19,7 @@
       "test": "jest --watchAll",
       "test-sudoku": "jest --watchAll sudoku",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
-      "sudoku": "node src/sudoku/sudoku.js"
+      "sudoku": "node src/sudoku/dlx_sudoku.js"
    },
    "dependencies": {},
    "devDependencies": {
