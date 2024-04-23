@@ -35,8 +35,6 @@ const solve2 = (fld) => { // ~1500 ms for hard ones
 const COORDROW = RANGE81.map(row)
 const COORDCOL = RANGE81.map(col)
 const COORDBLK = RANGE81.map(block)
-const CELLSINROW = RANGE81.reduce((acc, n) => (acc[COORDROW[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
-const CELLSINCOL = RANGE81.reduce((acc, n) => (acc[COORDCOL[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
 const CELLSINBLK = RANGE81.reduce((acc, n) => (acc[COORDBLK[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
 
 const setVal = (model, idx, val) => {
@@ -84,19 +82,19 @@ const getBestCell = (model) => {
   return bestIdx >= 0 ? { idx: bestIdx, cands: model.cands[bestIdx] } : null
 }
 
-const findHN = (m, CELLS) => { // find hidden naked
+const findHS = (m) => { // find hidden single
   for (let v = 1; v <= 9; v++) {
-    const vals = 1 << v
+    const val = 1 << v
     for (let n = 0; n < 9; n++) {
       let cnt = 0, idx = -1
-      for (const cell of CELLS[n]) {
+      for (const cell of CELLSINBLK[n]) {
         const cands = m.cands[cell]
-        if (cands?.vals & vals) {
+        if (cands?.vals & val) {
           if (++cnt > 1) break
           idx = cell
         }
       }
-      if (cnt === 1) return { idx, cands: { cnt, vals } }
+      if (cnt === 1) return { idx, cands: { cnt: 1, vals: val } }
     }
   }
   return null
@@ -105,7 +103,8 @@ const findHN = (m, CELLS) => { // find hidden naked
 const solve3 = (fld) => { // ~200ms for hard ones
   const solve = (m) => {
     let bestCell = getBestCell(m)
-    bestCell = bestCell?.cands.cnt <= 1 ? bestCell : findHN(m, CELLSINBLK) || findHN(m, CELLSINROW) || findHN(m, CELLSINCOL) || bestCell
+    if(bestCell?.cands.cnt === 0  ) return
+    bestCell = bestCell?.cands.cnt === 1 ? bestCell : findHS(m) || bestCell
     for (let i = 1; i <= 9; i++) {
       if (bestCell?.cands.vals & (1 << i)) {
         setVal(m, bestCell.idx, i)
@@ -126,42 +125,43 @@ const solve3 = (fld) => { // ~200ms for hard ones
 }
 
 //********************************************************************************* */
-
-const solveExperiment1 = (fld) => {
-  const candidatesForField = RANGE81.map((idx) => candidates(fld, idx))
-  const bestIdx = candidatesForField.reduce((bestIdx, c, idx) => c && (bestIdx === -100 || c.length < candidatesForField[bestIdx].length) ? idx : bestIdx, -100)
-
-  if (bestIdx < 0) return fld;
-
-  if (candidatesForField[bestIdx].length === 1) {
-    return solveExperiment1(fld.with(bestIdx, candidatesForField[bestIdx][0]))
+const solveExperiment1 = (fld) => { // interessanterweise bringt die Suche nach hidden single fast keinen Performancegewinn
+  const findHS = (candidatesForField) => { // find hidden single
+    for (let blockNumber = 0; blockNumber < 9; blockNumber++) {
+      for (let val = 1; val <= 9; val++) {
+        let cnt = 0, idx = -1
+        for (const cell of CELLSINBLK[blockNumber]) {
+          const cands = candidatesForField[cell] || []
+          if (cands.includes(val)) {
+            if (++cnt > 1) break
+            idx = cell
+          }
+        }
+        if (cnt === 1) return { idx, val }
+      }
+    }
   }
 
-  // // find hidden naked for blocks  :-( -> das macht es nur langsamer!!!
-  // const res = range(9).reduce((res, blockNumber) => {
-  //   if( res ) return res;
-  //   const counter = range(9).map(() => 0)
-  //   CELLSINBLK[blockNumber].forEach(cell => range(9).forEach(digit => counter[digit] += candidatesForField[cell]?.includes(digit + 1) ? 1 : 0))
-  //   const x = counter.findIndex(x => x === 1)
-  //   const cell = CELLSINBLK[blockNumber].find(cellIdx => candidatesForField[cellIdx]?.includes(x + 1))
-  //   if (cell >= 0) {
-  //     const val = x + 1
-  //     // console.log("AAAAAAAA", blockNumber, val, cell, counter, candidatesForField[cell])
-  //     return res || { cell, val }
-  //   }
-  // }, null)
-  // if (res) {
-  //   // console.log( "XXXX", res )
-  //   return solve3(fld.with(res.cell, res.val))
-  // }
+  const candidatesForField = [];
+  RANGE81.some(idx => (candidatesForField[idx] = candidates(fld, idx), candidatesForField[idx]?.length === 1))
+  const bestIdx = candidatesForField.reduce((res, c, idx) => c && (res === -100 || c.length < candidatesForField[res].length) ? idx : res, -100)
+  if (bestIdx < 0) return fld;
 
-  return candidatesForField[bestIdx].reduce((x, val) => x || solveExperiment1(fld.with(bestIdx, val)), null)
+  if (candidatesForField[bestIdx].length === 1)  // naked single
+    return solveExperiment1(fld.with(bestIdx, candidatesForField[bestIdx][0]))
+
+  const bestCell = 0 // findHS(candidatesForField)
+  return bestCell
+    ? solveExperiment1(fld.with(bestCell.idx, bestCell.val))
+    : candidatesForField[bestIdx].reduce((x, val) => x || solveExperiment1(fld.with(bestIdx, val)), null)
 }
 
+const solvexx = (fld) => { // ~1500 ms for hard ones
+}
 
 const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
-const mysolve = xs => solve3(conv2Arr(xs)).join('');
+const mysolve = xs => solveExperiment1(conv2Arr(xs)).join('');
 // mysolve('.914.7..8.74.3.....8..2.9...2..4...6...2..5..8..5....1.37.1..5241...93..6.8......')
 
 mysolve('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...')
-module.exports = { solve1, solve2, solve3 }
+module.exports = { solve1, solve2, solve3, solveExperiment1 }
