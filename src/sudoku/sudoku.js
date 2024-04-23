@@ -19,20 +19,19 @@ const CONNECTIONSETS = (() => {
   return RANGE81.map(connectionSet)
 })()
 
-const solve1 = (fld) => feedX(
+const solve1 = (fld) => feedX( // ~55 sec for hard ones
   idxOfFirstEmptyCell(fld),
   (idx) => idx < 0 ? fld : candidates(fld, idx).reduce((res, val) => res || solve1(fld.with(idx, val)), null)
 )
 
-const solve2 = (fld) => { // ~1500ms for hard ones
+const solve2 = (fld) => { // ~1500 ms for hard ones
   const candidatesForField = [];
   RANGE81.some(idx => (candidatesForField[idx] = candidates(fld, idx), candidatesForField[idx]?.length === 1))
   const bestIdx = candidatesForField.reduce((res, c, idx) => c && (res === -100 || c.length < candidatesForField[res].length) ? idx : res, -100)
   return bestIdx < 0 ? fld : candidatesForField[bestIdx].reduce((res, val) => res || solve2(fld.with(bestIdx, val)), null)
 }
 
-
-//********************************* */
+//********************************* Solve 3 *******************************/
 const COORDROW = RANGE81.map(row)
 const COORDCOL = RANGE81.map(col)
 const COORDBLK = RANGE81.map(block)
@@ -58,13 +57,13 @@ const unsetVal = (model, idx) => {
   model.fld[idx] = 0
   return model
 }
+
 const countBits = (bs) => RANGE1_9.reduce((cnt, v) => cnt + (bs & (1 << v) ? 1 : 0), 0)
 
 const getCandidates = (model, idx) => {
   const candidatesAsBitset = ~(model.usedInRow[COORDROW[idx]] | model.usedInCol[COORDCOL[idx]] | model.usedInBlk[COORDBLK[idx]])
   return { cnt: countBits(candidatesAsBitset), vals: candidatesAsBitset }
 }
-
 
 const getBestCell = (model) => {
   model.cands = []
@@ -103,14 +102,10 @@ const findHN = (m, CELLS) => { // find hidden naked
   return null
 }
 
-const solve3 = (fld) => {
-
+const solve3 = (fld) => { // ~200ms for hard ones
   const solve = (m) => {
     let bestCell = getBestCell(m)
     bestCell = bestCell?.cands.cnt <= 1 ? bestCell : findHN(m, CELLSINBLK) || findHN(m, CELLSINROW) || findHN(m, CELLSINCOL) || bestCell
-
-    // console.log(fieldString(fld), m)
-
     for (let i = 1; i <= 9; i++) {
       if (bestCell?.cands.vals & (1 << i)) {
         setVal(m, bestCell.idx, i)
@@ -127,11 +122,8 @@ const solve3 = (fld) => {
     usedInCol: [],
     usedInBlk: [],
   })
-  // console.log( model )
-
   return solve(model)
 }
-
 
 //********************************************************************************* */
 
