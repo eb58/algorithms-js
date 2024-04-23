@@ -1,18 +1,5 @@
-const { RANGE1_9, RANGE81, row, col, block, feedX, idxOfFirstEmptyCell, candidates } = require('./sudokuUtils');
+const { RANGE1_9, RANGE81, row, col, block, candidates } = require('./sudokuUtils');
 
-const solve1 = (fld) => feedX( // ~55 sec for hard ones
-  idxOfFirstEmptyCell(fld),
-  (idx) => idx < 0 ? fld : candidates(fld, idx).reduce((res, val) => res || solve1(fld.with(idx, val)), null)
-)
-
-const solve2 = (fld) => { // ~1500 ms for hard ones
-  const candidatesForCells = [];
-  RANGE81.some(idx => (candidatesForCells[idx] = candidates(fld, idx), candidatesForCells[idx]?.length === 1))
-  const bestIdx = candidatesForCells.reduce((res, c, idx) => c && (res === -100 || c.length < candidatesForCells[res].length) ? idx : res, -100)
-  return bestIdx < 0 ? fld : candidatesForCells[bestIdx].reduce((res, val) => res || solve2(fld.with(bestIdx, val)), null)
-}
-
-//********************************* Solve 3 *******************************/
 const COORDROW = RANGE81.map(row)
 const COORDCOL = RANGE81.map(col)
 const COORDBLK = RANGE81.map(block)
@@ -105,8 +92,8 @@ const solve3 = (fld) => { // ~200 ms for hard ones
   return solve(model)
 }
 
-//********************************************************************************* */
-const solveExperiment1 = (fld) => { // interessanterweise bringt die Suche nach hidden single fast keinen Performancegewinn
+/****************************************************************** */
+const solveExperiment1 = (fld) => { // interessanterweise bringt die Suche nach hidden single fast keinen Performancegewinn gegenüber solve2
   const findHS = (candidatesForField) => { // find hidden single
     for (let blockNumber = 0; blockNumber < 9; blockNumber++) {
       for (let val = 1; val <= 9; val++) {
@@ -137,12 +124,4 @@ const solveExperiment1 = (fld) => { // interessanterweise bringt die Suche nach 
     : candidatesForField[bestIdx].reduce((x, val) => x || solveExperiment1(fld.with(bestIdx, val)), null)
 }
 
-const solvexx = (fld) => { // ~1500 ms for hard ones
-}
-
-const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
-const mysolve = xs => solveExperiment1(conv2Arr(xs)).join('');
-// mysolve('.914.7..8.74.3.....8..2.9...2..4...6...2..5..8..5....1.37.1..5241...93..6.8......')
-
-mysolve('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...')
-module.exports = { solve1, solve2, solve3, solveExperiment1 }
+module.exports = { solve3 }
