@@ -34,6 +34,7 @@ const {
   uniqBy,
   flatten,
   shuffle,
+  vadd,
 } = ol;
 
 test('simple', () => {
@@ -137,6 +138,10 @@ test('cmp', () => {
   expect(cmp('a', 'a')).toBe(0);
   expect(cmp('a', 'b')).toBe(-1);
   expect(cmp('b', 'a')).toBe(+1);
+});
+
+test('vector functions', () => {
+  expect(vadd([1,3],  [1,7])).toEqual([2,10]);
 });
 
 test('range', () => {
