@@ -21,10 +21,11 @@
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "sudoku": "node src/sudoku/dlx_sudoku.js"
    },
-   "dependencies": {},
+   "dependencies": {
+      "@algorithm.ts/dlx": "^4.0.0"
+   },
    "devDependencies": {
-      "jest": "27.3.1",
-      "jest-util": "^27.3.1",
-      "prettier": "2.5.1"
+      "jest": "29.7.0",
+      "prettier": "3.2.5"
    }
 }
