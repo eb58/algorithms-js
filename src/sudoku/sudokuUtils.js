@@ -1,7 +1,7 @@
 const range = (n) => [...Array(n).keys()]
 const feedX = (x, f) => f(x)
 
-const fieldString = (fld) => fld.reduce((acc, x, idx) => acc + (x === 0 ? " " : x) + ((idx + 1) % 9 === 0 ? "\n" : " "), "")
+const gridString = (grid) => grid.reduce((acc, x, idx) => acc + (x === 0 ? " " : x) + ((idx + 1) % 9 === 0 ? "\n" : " "), "")
 
 const RANGE81 = range(9 * 9)
 const RANGE1_9 = range(9).map(x => x + 1)
@@ -9,9 +9,9 @@ const RANGE1_9 = range(9).map(x => x + 1)
 const col = (x) => x % 9
 const row = (x) => Math.floor(x / 9)
 const block = (x) => Math.floor(col(x) / 3) * 3 + Math.floor(row(x) / 3)
-const isCandidate = (fld, idx, val) => CONNECTIONSETS[idx].every(n => fld[n] !== val)
-const candidates = (fld, idx) => fld[idx] == 0 ? RANGE1_9.filter(val => isCandidate(fld, idx, val)) : undefined
-const idxOfFirstEmptyCell = (fld) => fld.findIndex(x => x === 0)
+const isCandidate = (grid, idx, val) => CONNECTIONSETS[idx].every(n => grid[n] !== val)
+const candidates = (grid, idx) => grid[idx] == 0 ? RANGE1_9.filter(val => isCandidate(grid, idx, val)) : undefined
+const idxOfFirstEmptyCell = (grid) => grid.findIndex(x => x === 0)
 
 const CONNECTIONSETS = (() => {
   const inSameConnectionSet = (x, y) => row(x) === row(y) || col(x) === col(y) || block(x) === block(y)

@@ -10,17 +10,17 @@ const setVal = (model, idx, val) => {
   model.usedInCol[COORDCOL[idx]] |= 1 << val
   model.usedInBlk[COORDBLK[idx]] |= 1 << val
   model.cnt += val === 0 ? 0 : 1
-  model.fld[idx] = val
+  model.grid[idx] = val
   return model
 }
 
 const unsetVal = (model, idx) => {
-  const val = model.fld[idx]
+  const val = model.grid[idx]
   model.usedInRow[COORDROW[idx]] &= ~(1 << val)
   model.usedInCol[COORDCOL[idx]] &= ~(1 << val)
   model.usedInBlk[COORDBLK[idx]] &= ~(1 << val)
   model.cnt--
-  model.fld[idx] = 0
+  model.grid[idx] = 0
   return model
 }
 
@@ -33,9 +33,9 @@ const getCandidates = (model, idx) => {
 
 const getBestCell = (model) => {
   model.cands = []
-  const fld = model.fld
+  const grid = model.grid
   for (let idx = 0; idx < 81; idx++) {
-    if (fld[idx] > 0) continue;
+    if (grid[idx] > 0) continue;
     const cands = getCandidates(model, idx)
     if (cands.cnt === 1) return { idx, cands }
     model.cands[idx] = cands
@@ -43,7 +43,7 @@ const getBestCell = (model) => {
 
   let bestIdx = -1
   for (let idx = 0; idx < 81; idx++) {
-    if (fld[idx] > 0) continue;
+    if (grid[idx] > 0) continue;
     if (model.cands[idx] && bestIdx < 0) bestIdx = idx
     if (model.cands[idx].cnt < model.cands[bestIdx].cnt) bestIdx = idx
   }
@@ -68,7 +68,7 @@ const findHS = (m) => { // find hidden single - without this: ~500 ms for the ha
   return null
 }
 
-const solve3 = (fld) => { // ~200 ms for hard ones
+const solve3 = (grid) => { // ~200 ms for hard ones
   const solve = (m) => {
     let bestCell = getBestCell(m)
     if (bestCell?.cands.cnt === 0) return
@@ -77,14 +77,14 @@ const solve3 = (fld) => { // ~200 ms for hard ones
       if (bestCell?.cands.vals & (1 << i)) {
         setVal(m, bestCell.idx, i)
         solve(m)
-        if (m.cnt === 81) return m.fld
+        if (m.cnt === 81) return m.grid
         unsetVal(m, bestCell.idx)
       }
     }
   }
-  const model = fld.reduce((m, val, idx) => setVal(m, idx, val), {
+  const model = grid.reduce((m, val, idx) => setVal(m, idx, val), {
     cnt: 0,
-    fld,
+    grid,
     usedInRow: [],
     usedInCol: [],
     usedInBlk: [],
@@ -93,7 +93,7 @@ const solve3 = (fld) => { // ~200 ms for hard ones
 }
 
 /****************************************************************** */
-const solveExperiment1 = (fld) => { // interessanterweise bringt die Suche nach hidden single fast keinen Performancegewinn gegenüber solve2
+const solveExperiment1 = (grid) => { // interessanterweise bringt die Suche nach hidden single fast keinen Performancegewinn gegenüber solve2
   const findHS = (candidatesForField) => { // find hidden single
     for (let blockNumber = 0; blockNumber < 9; blockNumber++) {
       for (let val = 1; val <= 9; val++) {
@@ -111,17 +111,17 @@ const solveExperiment1 = (fld) => { // interessanterweise bringt die Suche nach 
   }
 
   const candidatesForField = [];
-  RANGE81.some(idx => (candidatesForField[idx] = candidates(fld, idx), candidatesForField[idx]?.length === 1))
+  RANGE81.some(idx => (candidatesForField[idx] = candidates(grid, idx), candidatesForField[idx]?.length === 1))
   const bestIdx = candidatesForField.reduce((res, c, idx) => c && (res === -100 || c.length < candidatesForField[res].length) ? idx : res, -100)
-  if (bestIdx < 0) return fld;
+  if (bestIdx < 0) return grid;
 
   if (candidatesForField[bestIdx].length === 1)  // naked single
-    return solveExperiment1(fld.with(bestIdx, candidatesForField[bestIdx][0]))
+    return solveExperiment1(grid.with(bestIdx, candidatesForField[bestIdx][0]))
 
   const bestCell = 0 // findHS(candidatesForField)
   return bestCell
-    ? solveExperiment1(fld.with(bestCell.idx, bestCell.val))
-    : candidatesForField[bestIdx].reduce((x, val) => x || solveExperiment1(fld.with(bestIdx, val)), null)
+    ? solveExperiment1(grid.with(bestCell.idx, bestCell.val))
+    : candidatesForField[bestIdx].reduce((x, val) => x || solveExperiment1(grid.with(bestIdx, val)), null)
 }
 
 module.exports = { solve3 }
