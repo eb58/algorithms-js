@@ -31,7 +31,9 @@ const isLeapYear = (x) => (x % 4 === 0 && x % 100 !== 0) || x % 400 === 0
 // generate predicates
 // usage: [1,2,3,4,5].filter(gtPred(3)) // -> [4,5]
 const gtPred = (x) => (y) => y > x
+const gtePred = (x) => (y) => y >= x
 const ltPred = (x) => (y) => y < x
+const ltePred = (x) => (y) => y <= x
 
 // combine predicates
 // const { not, and, or, gtPred } = ol;
@@ -243,7 +245,9 @@ const ol = {
   every,
   some,
   gtPred,
+  gtePred,
   ltPred,
+  ltePred,
   add2obj,
   groupBy,
   cmp,
@@ -254,7 +258,8 @@ const ol = {
   uniq,
   uniqBy,
   flatten,
-  shuffle
+  shuffle,
+  vadd
 }
 
 module.exports = {
