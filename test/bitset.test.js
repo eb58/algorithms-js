@@ -29,5 +29,7 @@ test('bitset', () => {
     expect(bitset.contains(bs1, 2)).toBe(true);
     expect(bitset.contains(bs1, 12)).toBe(false);
 
+    expect(bitset.sum(bs)).toBe(23);
+
 
 });
