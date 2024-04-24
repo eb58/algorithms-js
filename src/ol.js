@@ -158,7 +158,8 @@ const bitset = {
     const res = []
     let i = 0
     while (bs) {
-      if (bs & 1) res.push(i++)
+      if (bs & 1) res.push(i)
+      i++;
       bs >>= 1
     }
     return res
