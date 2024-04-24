@@ -68,7 +68,6 @@ test('randomInRange', () => {
     expect(x).toBeGreaterThanOrEqual(1);
     expect(x).toBeLessThanOrEqual(6);
   }
-  //console.log(res);
 });
 
 test('randomIntInRange', () => {
@@ -79,7 +78,6 @@ test('randomIntInRange', () => {
     expect(x).toBeGreaterThanOrEqual(1);
     expect(x).toBeLessThanOrEqual(6);
   }
-  //console.log(res);
 });
 
 test('fibonacci', () => {

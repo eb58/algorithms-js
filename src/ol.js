@@ -47,9 +47,9 @@ const comb = (f, g) => (x) => f(g(x))
 
 // compare
 const cmp = (x, y) => (x === y ? 0 : x < y ? -1 : +1)
+const cmpNumbers = (x, y) => x - y
 const comparer = (proj) => (x, y) => cmp(proj(x), proj(y))
 const comparerByKey = (key) => comparer((o) => o[key])
-const cmpNumbers = (x, y) => x - y
 
 // arrays
 //
@@ -66,7 +66,8 @@ const randomIntInRange = (min, max) => Math.floor(randomInRange(min, max + 1))
 const randomArray = (n, min, max) => range(n).map(() => randomInRange(min, max))
 const randomIntArray = (n, min, max) => range(n).map(() => randomIntInRange(min, max))
 const sum = (xs) => xs.reduce(add, 0)
-const prod = (xs) => xs.reduce(mul,1)
+const prod = (xs) => xs.reduce(mul, 1)
+const patch = (xs, idx, val ) => xs.with(idx,val)
 const without = (xs, x) => xs.filter((y) => x !== y)
 const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx)
 const sort = (xs, cmp) => (xs.sort(cmp), xs)
@@ -84,7 +85,7 @@ const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {})
 const zip = (xs, ys, f = id) => xs.map((x, i) => (f ? f(x, ys[i]) : [x, ys[i]]))
 
 const uniq = (xs) => Array.from(new Set(xs))
-const uniqBy = (xs, proj) => Object.values(xs.reduce((a, v) => ({...a,[proj(v)]:v}), {}))
+const uniqBy = (xs, proj) => Object.values(xs.reduce((a, v) => ({ ...a, [proj(v)]: v }), {}))
 
 const clone = (o) => JSON.parse(JSON.stringify(o))
 
@@ -131,7 +132,7 @@ const array = (xs) => ({
   groupBy: (proj) => groupBy(xs, proj),
   uniq: () => uniq(xs),
   unite: (ys) => uniq([...xs, ...ys]),
-  uniqBy: (proj) => uniqBy(xs,proj),
+  uniqBy: (proj) => uniqBy(xs, proj),
   xor: (ys) => [...xs, ...ys].filter((x) => !(xs.includes(x) && ys.includes(x))),
   intersect: (ys) => xs.filter((x) => ys.includes(x)),
   subtract: (ys) => xs.filter((x) => !ys.includes(x)),
@@ -144,9 +145,9 @@ const array = (xs) => ({
 })
 
 // vector functions
-const vadd = (v1,v2) => zip(v1,v2,add)
-const vsqrdist = (v1,v2) => zip(v1,v2,(x,y) => (x-y)**2)
-const vdist = (v1,v2) => Math.sqrt(vsqrdist(v1,v2))
+const vadd = (v1, v2) => zip(v1, v2, add)
+const vsqrdist = (v1, v2) => zip(v1, v2, (x, y) => (x - y) ** 2)
+const vdist = (v1, v2) => Math.sqrt(vsqrdist(v1, v2))
 
 const bitset = {
   MAX: 32,
@@ -155,22 +156,22 @@ const bitset = {
     const res = []
     let i = 0
     while (bs) {
-      if (bs & 1) res.push(i)
-      i++
+      if (bs & 1) res.push(i++)
       bs >>= 1
     }
     return res
   },
-  add: (bs, v) => bs | (1 << v),
-  rm: (bs, v) => bs & ~(1 << v),
-  set: (bs, n, v) => bs | ((v ? 1 : 0) << n),
-  isEmpty: (bs) => bs === 0,
   size: (bs) => {
     let count = 0
     while (bs) bs & 1 ? count++ : 0, (bs >>= 1)
     return count
   },
-  sum: (bs) => array(bitset.toArray(bs).sum()),
+
+  add: (bs, v) => bs | (1 << v),
+  rm: (bs, v) => bs & ~(1 << v),
+  set: (bs, n, v) => bs | ((v ? 1 : 0) << n),
+  isEmpty: (bs) => bs === 0,
+  sum: (bs) => bitset.toArray(bs).reduce(add, 0),
   union: (bs1, bs2) => bs1 | bs2,
   intersection: (bs1, bs2) => bs1 & bs2,
   diff: (bs1, bs2) => bs1 & ~bs2,
@@ -179,23 +180,23 @@ const bitset = {
   has: (bs, v) => !!(bs & (1 << v)),
   includes: (bs, v) => !!(bs & (1 << v)),
   contains: (bs, n) => !!(bs & (1 << n)),
-  slice: (S, n) => {
+  slice: (bs, n) => {
     let res = 0
     let i = 0
     let cnt = 0
     while (i <= bitset.MAX && cnt < n) {
-      if (S & (1 << i)) cnt++
+      if (bs & (1 << i)) cnt++
       i++
     }
     for (let j = i; j < bitset.MAX; j++) {
-      res |= S & (1 << j)
+      res |= bs & (1 << j)
     }
     return res
   },
-  at: (S, n) => {
+  at: (bs, n) => {
     let i = (cnt = 0)
     while (i <= bitset.MAX && cnt <= n) {
-      if (S & (1 << i)) cnt++
+      if (bs & (1 << i)) cnt++
       i++
     }
     if (i === 0 || i > bitset.MAX) throw 'Wrong index ' + n
@@ -203,6 +204,66 @@ const bitset = {
   },
 }
 
+const ol = {
+  id,
+  abs,
+  sqr,
+  cube,
+  fac,
+  fib,
+  gcd,
+  add,
+  sum,
+  inc,
+  dec,
+  without,
+  withoutIndex,
+  range,
+  rangeFilled,
+  randomArray,
+  randomIntArray,
+  randomInRange,
+  randomIntInRange,
+  feedX,
+  call,
+  eq,
+  lt,
+  lte,
+  gt,
+  gte,
+  odd,
+  even,
+  isInInterval,
+  isLeapYear,
+  not,
+  or,
+  and,
+  xor,
+  comb,
+  every,
+  some,
+  gtPred,
+  ltPred,
+  add2obj,
+  groupBy,
+  cmp,
+  comparer,
+  comparerByKey,
+  cmpNumbers,
+  sort,
+  uniq,
+  uniqBy,
+  flatten,
+  shuffle
+}
+
+module.exports = {
+  ol,
+  num,
+  interval,
+  array,
+  bitset,
+}
 
 
 // ***********************************************************
@@ -294,65 +355,3 @@ logtor = (f) => {
 }
 
 // experimentell end !!!
-
-const ol = {
-  id,
-  abs,
-  sqr,
-  cube,
-  fac,
-  fib,
-  gcd,
-  add,
-  sum,
-  inc,
-  dec,
-  without,
-  withoutIndex,
-  range,
-  rangeFilled,
-  randomArray,
-  randomIntArray,
-  randomInRange,
-  randomIntInRange,
-  feedX,
-  call,
-  eq,
-  lt,
-  lte,
-  gt,
-  gte,
-  odd,
-  even,
-  isInInterval,
-  isLeapYear,
-  not,
-  or,
-  and,
-  xor,
-  comb,
-  every,
-  some,
-  gtPred,
-  ltPred,
-  add2obj,
-  groupBy,
-  cmp,
-  comparer,
-  comparerByKey,
-  cmpNumbers,
-  sort,
-  uniq,
-  uniqBy,
-  flatten,
-  shuffle
-}
-
-module.exports = {
-  ol,
-  num,
-  interval,
-  array,
-  bitset,
-}
-
