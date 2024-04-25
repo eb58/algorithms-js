@@ -22,6 +22,8 @@ const CONNECTIONSETS = (() => {
 module.exports = {
   RANGE1_9,
   RANGE81,
+  CONNECTIONSETS,
+  gridString,
   range,
   feedX,
   row, col, block,
