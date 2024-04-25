@@ -1,3 +1,4 @@
+
 // numerical functions
 const abs = (x) => (x >= 0 ? x : -x)
 const add = (a, b) => a + b
@@ -267,7 +268,9 @@ const ol = {
   uniqBy,
   flatten,
   shuffle,
-  vadd
+  vadd,
+  min, 
+  max
 }
 
 module.exports = {
