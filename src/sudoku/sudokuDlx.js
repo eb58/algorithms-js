@@ -157,11 +157,13 @@ function solve_sudoku(grid) {
 }
 
 const solveDlx = (s) => {
-    const fld = s.reduce((r, e, i) => (i % 9 ? r[r.length - 1].push(e) : r.push([e])) && r, [])
+    const fld = reshape(s, 9);
     solve_sudoku(fld)
     return String(fld).split(",")
 }
 
-// console.log( sudokuDlx('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...'))
+// console.log( solveDlx('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...'))
+const reshape = (xs, dim) => xs.reduce((r, e, i) => (i % dim ? r[r.length - 1].push(e) : r.push([e])) && r, [])
+
 
 module.exports = solveDlx

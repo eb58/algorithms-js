@@ -7,6 +7,7 @@ const {
   fac,
   fib,
   range,
+  reshape,
   rangeFilled,
   randomArray,
   randomInRange,
@@ -149,6 +150,10 @@ test('range', () => {
   expect(range(1)).toEqual([0]);
   expect(range(2)).toEqual([0, 1]);
   expect(range(3)).toEqual([0, 1, 2]);
+});
+
+test('reshape', () => {
+  expect(reshape([1,2,3,4],2)).toEqual([[1,2],[3,4]]);
 });
 
 test('rangeFilled', () => {
