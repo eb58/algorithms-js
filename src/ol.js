@@ -60,6 +60,10 @@ const comparerByKey = (key) => comparer((o) => o[key])
 // range(5).map(()=>0) // [0,0,0,0,0]
 const range = (n) => [...Array(n).keys()]
 
+// reshape( [1,2,3,4], 2 ) ->  [[1,2],[3,4]]
+const reshape = (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, [])
+
+
 // rangeFilled(3, 0)   // [0, 0, 0]
 const rangeFilled = (n, val) => range(n).map(() => val)
 
@@ -224,6 +228,7 @@ const ol = {
   without,
   withoutIndex,
   range,
+  reshape,
   rangeFilled,
   randomArray,
   randomIntArray,
