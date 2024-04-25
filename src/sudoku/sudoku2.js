@@ -2,12 +2,15 @@ const { CONNECTIONSETS, RANGE81, candidates, print_board } = require('./sudokuUt
 const  min = require('../ol').ol.min;
 
 const solve2a = (grid) => { // ~1300 ms for hard ones
-    const solv = (grid, empyCells) => {
+    const solv = (grid, emptyCells) => {
+        if (emptyCells.length === 0)
+            return grid
+
         const candidatesForCells = [];
-        empyCells.some(idx => (candidatesForCells[idx] = candidates(grid, idx), candidatesForCells[idx]?.length === 1))
+        emptyCells.some(idx => (candidatesForCells[idx] = candidates(grid, idx), candidatesForCells[idx].length === 1))
         const bestIdx = candidatesForCells.reduce((res, c, idx) => c && (res === -100 || c.length < candidatesForCells[res].length) ? idx : res, -100)
-        const empty = empyCells.filter(x => x !== bestIdx)
-        return bestIdx < 0 ? grid : candidatesForCells[bestIdx].reduce((res, val) => res || solv(grid.with(bestIdx, val), empty), null)
+        const newEmptyCells = emptyCells.filter(x => x !== bestIdx)
+        return bestIdx < 0 ? grid : candidatesForCells[bestIdx].reduce((res, val) => res || solv(grid.with(bestIdx, val), newEmptyCells), null)
     }
     return solv(grid, RANGE81.filter(x => grid[x] === 0))
 }
@@ -37,6 +40,5 @@ const solve2b = (grid) => { // ~800-900 ms for hard ones
     }
     return solv(grid, RANGE81.filter(cellIdx => grid[cellIdx] === 0))
 }
-
 
 module.exports = solve2b
