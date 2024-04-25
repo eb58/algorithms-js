@@ -1,9 +1,11 @@
-const { solve1, solve2 } = require('../src/sudoku/sudokuSimple');
-const { solve3 } = require('../src/sudoku/sudoku');
-const { solveKudoku } = require('../src/sudoku/kudoku');   // ~60 ms for hard ones
-const { solveDlx } = require('../src/sudoku/sudokuDlx'); // ~160 ms for hard ones
+const solve1 = require('../src/sudoku/sudoku1'); // ~55000 ms for hard ones
+const solve2 = require('../src/sudoku/sudoku2'); // ~1500 ms for hard ones
+const solve3 = require('../src/sudoku/sudoku3'); //  ~200 ms for hard ones
+const solveKudoku = require('../src/sudoku/sudokuKudoku');   // ~60 ms for hard ones
+const solveDlx = require('../src/sudoku/sudokuDlx'); // ~160 ms for hard ones
+
 const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
-const mysolve = xs => solve3(conv2Arr(xs)).join('');
+const mysolve = xs => solveKudoku(conv2Arr(xs)).join('');
 
 test('sudoku easy ones short', () => {
     expect(mysolve('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...')).toEqual('381745629472396158659218473196583742734962581825174936948637215267851394513429867');

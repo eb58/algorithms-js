@@ -1,4 +1,4 @@
-const { RANGE1_9, RANGE81, row, col, block, candidates } = require('./sudokuUtils');
+const { RANGE1_9, RANGE81, row, col, block } = require('./sudokuUtils');
 
 const COORDROW = RANGE81.map(row)
 const COORDCOL = RANGE81.map(col)
@@ -92,36 +92,4 @@ const solve3 = (grid) => { // ~200 ms for hard ones
   return solve(model)
 }
 
-/****************************************************************** */
-const solveExperiment1 = (grid) => { // interessanterweise bringt die Suche nach hidden single fast keinen Performancegewinn gegenüber solve2
-  const findHS = (candidatesForField) => { // find hidden single
-    for (let blockNumber = 0; blockNumber < 9; blockNumber++) {
-      for (let val = 1; val <= 9; val++) {
-        let cnt = 0, idx = -1
-        for (const cell of CELLSINBLK[blockNumber]) {
-          const cands = candidatesForField[cell] || []
-          if (cands.includes(val)) {
-            if (++cnt > 1) break
-            idx = cell
-          }
-        }
-        if (cnt === 1) return { idx, val }
-      }
-    }
-  }
-
-  const candidatesForField = [];
-  RANGE81.some(idx => (candidatesForField[idx] = candidates(grid, idx), candidatesForField[idx]?.length === 1))
-  const bestIdx = candidatesForField.reduce((res, c, idx) => c && (res === -100 || c.length < candidatesForField[res].length) ? idx : res, -100)
-  if (bestIdx < 0) return grid;
-
-  if (candidatesForField[bestIdx].length === 1)  // naked single
-    return solveExperiment1(grid.with(bestIdx, candidatesForField[bestIdx][0]))
-
-  const bestCell = 0 // findHS(candidatesForField)
-  return bestCell
-    ? solveExperiment1(grid.with(bestCell.idx, bestCell.val))
-    : candidatesForField[bestIdx].reduce((x, val) => x || solveExperiment1(grid.with(bestIdx, val)), null)
-}
-
-module.exports = { solve3 }
+module.exports = solve3

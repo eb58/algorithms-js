@@ -164,5 +164,4 @@ const solveDlx = (s) => {
 
 // console.log( sudokuDlx('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...'))
 
-module.exports = { solveDlx }
-
+module.exports = solveDlx

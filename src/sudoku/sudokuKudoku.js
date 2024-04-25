@@ -3,7 +3,7 @@ function sd_genmat() {
 	for (i = r = 0; i < 9; ++i)
 		for (j = 0; j < 9; ++j)
 			for (k = 0; k < 9; ++k)
-				C[r++] = [ 9 * i + j, (Math.floor(i/3)*3 + Math.floor(j/3)) * 9 + k + 81, 9 * i + k + 162, 9 * j + k + 243 ]
+				C[r++] = [9 * i + j, (Math.floor(i / 3) * 3 + Math.floor(j / 3)) * 9 + k + 81, 9 * i + k + 162, 9 * j + k + 243]
 	for (c = 0; c < 324; ++c) R[c] = []
 	for (r = 0; r < 729; ++r)
 		for (c2 = 0; c2 < 4; ++c2)
@@ -13,7 +13,7 @@ function sd_genmat() {
 
 function sd_update(R, C, sr, sc, r, v) {
 	var min = 10, min_c = 0;
-	for (var c2 = 0; c2 < 4; ++c2) sc[C[r][c2]] += v<<7;
+	for (var c2 = 0; c2 < 4; ++c2) sc[C[r][c2]] += v << 7;
 	for (var c2 = 0; c2 < 4; ++c2) {
 		var r2, rr, cc2, c = C[r][c2];
 		if (v > 0) {
@@ -33,7 +33,7 @@ function sd_update(R, C, sr, sc, r, v) {
 			}
 		}
 	}
-	return min<<16 | min_c; // return the col that has been modified and with the minimal available choices
+	return min << 16 | min_c; // return the col that has been modified and with the minimal available choices
 }
 
 function sd_solve(R, C, _s) {
@@ -42,15 +42,15 @@ function sd_solve(R, C, _s) {
 	for (r = 0; r < 729; ++r) sr[r] = 0;
 	for (c = 0; c < 324; ++c) sc[c] = 9;
 	for (i = 0; i < 81; ++i) {
-		var a = _s.charAt(i) >= '1' && _s.charAt(i) <= '9'? _s.charCodeAt(i) - 49 : -1;
+		var a = _s.charAt(i) >= '1' && _s.charAt(i) <= '9' ? _s.charCodeAt(i) - 49 : -1;
 		if (a >= 0) sd_update(R, C, sr, sc, i * 9 + a, 1);
 		if (a >= 0) ++hints;
 		cr[i] = cc[i] = -1, out[i] = a + 1;
 	}
-	for (i = 0, dir = 1, cand = 10<<16|0;;) {
+	for (i = 0, dir = 1, cand = 10 << 16 | 0; ;) {
 		while (i >= 0 && i < 81 - hints) {
 			if (dir == 1) {
-				min = cand>>16, cc[i] = cand&0xffff
+				min = cand >> 16, cc[i] = cand & 0xffff
 				if (min > 1) {
 					for (c = 0; c < 324; ++c) {
 						if (sc[c] < min) {
@@ -73,7 +73,7 @@ function sd_solve(R, C, _s) {
 		if (i < 0) break;
 		var y = []
 		for (j = 0; j < 81; ++j) y[j] = out[j]
-		for (j = 0; j < i; ++j) r = R[cc[j]][cr[j]], y[Math.floor(r/9)] = r%9 + 1;
+		for (j = 0; j < i; ++j) r = R[cc[j]][cr[j]], y[Math.floor(r / 9)] = r % 9 + 1;
 		ret.push(y)
 		--i; dir = -1;
 	}
@@ -81,6 +81,6 @@ function sd_solve(R, C, _s) {
 }
 
 const e = sd_genmat()
-solveKudoku = (s) => sd_solve(e[0], e[1], s.join(""))
+const solveKudoku = (s) => sd_solve(e[0], e[1], s.join(""))
 
-module.exports = { solveKudoku }
+module.exports = solveKudoku 

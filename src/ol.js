@@ -151,6 +151,8 @@ const vadd = (v1, v2) => zip(v1, v2, add)
 const vsqrdist = (v1, v2) => zip(v1, v2, (x, y) => (x - y) ** 2)
 const vdist = (v1, v2) => Math.sqrt(vsqrdist(v1, v2))
 
+
+
 const bitset = {
   MAX: 32,
   fromArray: (xs) => xs.reduce((acc, x) => acc | (1 << x), 0),
