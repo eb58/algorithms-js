@@ -40,7 +40,7 @@ function sd_solve(R, C, arr) {
 	for (let r = 0; r < 729; ++r) sr[r] = 0;
 	for (let c = 0; c < 324; ++c) sc[c] = 9;
 	for (let i = 0; i < 81; ++i) {
-		let a = arr.charAt(i) >= '1' && arr.charAt(i) <= '9' ? arr.charCodeAt(i) - 49 : -1;
+		let a = arr[i] > 0 ? arr[i] - 1 : -1;
 		if (a >= 0) sd_update(R, C, sr, sc, i * 9 + a, 1);
 		if (a >= 0) ++hints;
 		cr[i] = cc[i] = -1, out[i] = a + 1;
@@ -50,11 +50,9 @@ function sd_solve(R, C, arr) {
 			if (dir == 1) {
 				min = cand >> 16, cc[i] = cand & 0xffff
 				if (min > 1) {
-					for (let c = 0; c < 324; ++c) {
-						if (sc[c] < min) {
-							min = sc[c], cc[i] = c;
-							if (min <= 1) break;
-						}
+					for (let c = 0; c < 324; ++c) if (sc[c] < min) {
+						min = sc[c], cc[i] = c;
+						if (min <= 1) break;
 					}
 				}
 				if (min == 0 || min == 10) cr[i--] = dir = -1;
@@ -82,10 +80,10 @@ function sd_solve(R, C, arr) {
 }
 
 const e = sd_genmat()
-const solveKudoku = (s) => sd_solve(e[0], e[1], s.join(""))
+const solveKudoku = (arr) => sd_solve(e[0], e[1], arr)
 
- const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
- console.log(solveKudoku(conv2Arr('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...')))
+const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
+console.log(solveKudoku(conv2Arr('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...')))
 
 
 module.exports = solveKudoku 
