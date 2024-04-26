@@ -1,5 +1,5 @@
 /* Implementation of Knuth's Dancing Links technique for Algorithm X (exact cover). */
-function dlx_cover(c) {
+const dlx_cover = (c) => {
     c.right.left = c.left;
     c.left.right = c.right;
     for (let i = c.down; i != c; i = i.down) for (let j = i.right; j != i; j = j.right) {
@@ -9,7 +9,7 @@ function dlx_cover(c) {
     }
 }
 
-function dlx_uncover(c) {
+const dlx_uncover = (c) => {
     for (let i = c.up; i != c; i = i.up) for (let j = i.left; j != i; j = j.left) {
         j.column.size++;
         j.down.up = j;
@@ -19,7 +19,7 @@ function dlx_uncover(c) {
     c.left.right = c;
 }
 
-function dlx_search(head, solution, k, solutions, maxsolutions) {
+const dlx_search = (head, solution, k, solutions, maxsolutions) => {
     if (head.right == head) {
         solutions.push([...solution]);
         return solutions.length >= maxsolutions ? solutions : null;
@@ -44,7 +44,7 @@ function dlx_search(head, solution, k, solutions, maxsolutions) {
     dlx_uncover(c);
 }
 
-function dlx_solve(matrix, maxsolutions) {
+const dlx_solve = (matrix, maxsolutions) => {
     const columns = new Array(matrix[0].length);
     for (let i = 0; i < columns.length; i++) columns[i] = {};
     for (let i = 0; i < columns.length; i++) {
@@ -85,57 +85,47 @@ function dlx_solve(matrix, maxsolutions) {
     };
     columns[0].left = head;
     columns[columns.length - 1].right = head;
-    
-    const solutions = dlx_search(head, [], 0, [], maxsolutions);
-    return solutions;
+    return dlx_search(head, [], 0, [], maxsolutions);
 }
 
-function solve_sudoku(grid) {
+const solve_sudoku = (grid) => {
     const mat = [];
     const rinfo = [];
-    for (let i = 0; i < 9; i++) for (let j = 0; j < 9; j++) {
-        const g = grid[i][j] - 1;
-        if (g >= 0) {
+    for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
+        const n = grid[r][c] - 1;
+        if (n >= 0) {
             const row = new Array(324);
-            row[i * 9 + j] = 1;
-            row[9 * 9 + i * 9 + g] = 1;
-            row[9 * 9 * 2 + j * 9 + g] = 1;
-            row[9 * 9 * 3 + (Math.floor(i / 3) * 3 + Math.floor(j / 3)) * 9 + g] = 1;
+            row[r * 9 + c] = 1;
+            row[9 * 9 + r * 9 + n] = 1;
+            row[9 * 9 * 2 + c * 9 + n] = 1;
+            row[9 * 9 * 3 + (Math.floor(r / 3) * 3 + Math.floor(c / 3)) * 9 + n] = 1;
             mat.push(row);
-            rinfo.push({ 'row': i, 'col': j, 'n': g + 1 });
+            rinfo.push({ r, c, n });
         } else {
             for (let n = 0; n < 9; n++) {
                 const row = new Array(324);
-                row[i * 9 + j] = 1;
-                row[9 * 9 + i * 9 + n] = 1;
-                row[9 * 9 * 2 + j * 9 + n] = 1;
-                row[9 * 9 * 3 + (Math.floor(i / 3) * 3 + Math.floor(j / 3)) * 9 + n] = 1;
+                row[r * 9 + c] = 1;
+                row[9 * 9 + r * 9 + n] = 1;
+                row[9 * 9 * 2 + c * 9 + n] = 1;
+                row[9 * 9 * 3 + (Math.floor(r / 3) * 3 + Math.floor(c / 3)) * 9 + n] = 1;
                 mat.push(row);
-                rinfo.push({ 'row': i, 'col': j, 'n': n + 1 });
+                rinfo.push({ r, c, n });
             }
         }
     }
 
     const solutions = dlx_solve(mat, 1);
-    if (solutions.length > 0) {
-        const r = solutions[0];
-        const len = r.length
-        for (let i = 0; i < len; i++) {
-            const rinfoi = rinfo[r[i]]
-            grid[rinfoi['row']][rinfoi['col']] = rinfoi['n'];
-        }
-        return solutions.length;
-    }
-    return 0;
+
+    if (solutions.length <= 0) throw Error("No solution found")
+    solutions[0].map(n => rinfo[n]).forEach(ri => grid[ri.r][ri.c] = ri.n + 1)
+
+    return String(grid);
 }
 
-const solveDlx = (s) => {
-    const fld = reshape(s, 9);
-    solve_sudoku(fld)
-    return String(fld).split(",")
-}
+const range = (n) => [...Array(n).keys()]
+const reshape = (xs, nRows) => range(nRows).map(c => xs.slice(c * nRows, (c + 1) * nRows))
+const solveDlx = (xs) => solve_sudoku(reshape(xs, 9)).split(",")
 
 // console.log( solveDlx('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...'))
-const reshape = (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, [])
 
 module.exports = solveDlx
