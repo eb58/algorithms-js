@@ -1,5 +1,5 @@
 const solve1 = require('../src/sudoku/sudoku1'); // ~55000 ms for hard ones
-const solve2 = require('../src/sudoku/sudoku2'); // ~1000 ms for hard ones
+const solve2 = require('../src/sudoku/sudoku2'); // ~900 ms for hard ones
 const solve3 = require('../src/sudoku/sudoku3'); //  ~200 ms for hard ones
 const solveKudoku = require('../src/sudoku/sudokuKudoku');   // ~60 ms for hard ones
 const solveDlx = require('../src/sudoku/sudokuDlx'); // ~160 ms for hard ones

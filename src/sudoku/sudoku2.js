@@ -1,44 +1,38 @@
-const { CONNECTIONSETS, RANGE81, candidates, print_board } = require('./sudokuUtils');
-const  min = require('../ol').ol.min;
+const { CONNECTIONSETS, RANGE81, candidates } = require('./sudokuUtils');
+const min = require('../ol').ol.min;
 
-const solve2a = (grid) => { // ~1300 ms for hard ones
-    const solv = (grid, emptyCells) => {
-        if (emptyCells.length === 0)
-            return grid
+const solve2a = (grid, emptyCells = RANGE81.filter(x => grid[x] === 0)) => {
+    if (emptyCells.length === 0)
+        return grid
 
-        const candidatesForCells = [];
-        emptyCells.some(idx => (candidatesForCells[idx] = candidates(grid, idx), candidatesForCells[idx].length === 1))
-        const bestIdx = candidatesForCells.reduce((res, c, idx) => c && (res === -100 || c.length < candidatesForCells[res].length) ? idx : res, -100)
-        const newEmptyCells = emptyCells.filter(x => x !== bestIdx)
-        return bestIdx < 0 ? grid : candidatesForCells[bestIdx].reduce((res, val) => res || solv(grid.with(bestIdx, val), newEmptyCells), null)
-    }
-    return solv(grid, RANGE81.filter(x => grid[x] === 0))
+    const candidatesForCells = [];
+    emptyCells.some(idx => (candidatesForCells[idx] = candidates(grid, idx), candidatesForCells[idx].length === 1))
+    const bestIdx = candidatesForCells.reduce((res, c, idx) => c && (res === -100 || c.length < candidatesForCells[res].length) ? idx : res, -100)
+    const newEmptyCells = emptyCells.filter(x => x !== bestIdx)
+    return candidatesForCells[bestIdx].reduce((res, val) => res || solve2a(grid.with(bestIdx, val), newEmptyCells), null)
 }
 
-const solve2b = (grid) => { // ~800-900 ms for hard ones
-    const solv = (grid, emptyCells) => {
-        if (emptyCells.length === 0)
-            return grid
+const solve2b = (grid, emptyCells = RANGE81.filter(x => grid[x] === 0)) => {
+    if (emptyCells.length === 0)
+        return grid
 
-        const candidatesForCells = [];
-        emptyCells.some(idx => (candidatesForCells[idx] = candidates(grid, idx), candidatesForCells[idx].length === 1))
-        let bestIdx = candidatesForCells.reduce((res, c, idx) => (res === -100 || c.length < candidatesForCells[res].length) ? idx : res, -100)
+    const candidatesForCells = [];
+    emptyCells.some(idx => (candidatesForCells[idx] = candidates(grid, idx), candidatesForCells[idx].length === 1))
+    let bestIdx = candidatesForCells.reduce((res, c, idx) => (res === -100 || c.length < candidatesForCells[res].length) ? idx : res, -100)
 
-        const len = candidatesForCells[bestIdx].length
-        if (len === 1)
-            return solv(grid.with(bestIdx, candidatesForCells[bestIdx][0]), emptyCells.filter(x => x !== bestIdx))
+    const len = candidatesForCells[bestIdx].length
+    if (len === 1)
+        return solve2b(grid.with(bestIdx, candidatesForCells[bestIdx][0]), emptyCells.filter(x => x !== bestIdx))
 
-        if (len >= 2) {
-            const cands = candidatesForCells
-                .map((c, idx) => ({ idx, c }))
-                .filter(x => x.c?.length === len)
-                .map(a => ({ ...a, cntFree: CONNECTIONSETS[a.idx].reduce((acc, n) => acc + (grid[n] !== 0), 0) }), 0)
-            bestIdx = min(cands, x => x.cntFree).idx || bestIdx
-        }
-        const empty = emptyCells.filter(x => x !== bestIdx)
-        return candidatesForCells[bestIdx].reduce((res, val) => res || solv(grid.with(bestIdx, val), empty), undefined)
+    if (len >= 2) {
+        const candsOfFixedLength = candidatesForCells
+            .map((cands, idx) => ({ idx, cands }))
+            .filter(x => x.cands?.length === len)
+            .map(a => ({ ...a, cntFree: CONNECTIONSETS[a.idx].reduce((acc, n) => acc + (grid[n] !== 0), 0) }), 0)
+        bestIdx = min(candsOfFixedLength, x => x.cntFree).idx || bestIdx
     }
-    return solv(grid, RANGE81.filter(cellIdx => grid[cellIdx] === 0))
+    const empty = emptyCells.filter(x => x !== bestIdx)
+    return candidatesForCells[bestIdx].reduce((res, val) => res || solve2b(grid.with(bestIdx, val), empty), undefined)
 }
 
 module.exports = solve2b
