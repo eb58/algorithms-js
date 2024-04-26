@@ -6,18 +6,18 @@ const COORDBLK = RANGE81.map(block)
 const CELLSINBLK = RANGE81.reduce((acc, n) => (acc[COORDBLK[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
 
 const setVal = (model, idx, val) => {
-  model.emptyCells = val===0 ? model.emptyCells: model.emptyCells.filter(x => x !== idx) 
+  model.emptyCells = val === 0 ? model.emptyCells : model.emptyCells.filter(x => x !== idx)
   model.usedInRow[COORDROW[idx]] |= 1 << val
   model.usedInCol[COORDCOL[idx]] |= 1 << val
   model.usedInBlk[COORDBLK[idx]] |= 1 << val
-  model.cnt += val === 0 ? 0 : 1
+  model.cnt += val !== 0
   model.grid[idx] = val
   return model
 }
 
 const unsetVal = (model, idx) => {
   const val = model.grid[idx]
-  model.emptyCells = [...model.emptyCells, idx]
+  model.emptyCells.push(idx)
   model.usedInRow[COORDROW[idx]] &= ~(1 << val)
   model.usedInCol[COORDCOL[idx]] &= ~(1 << val)
   model.usedInBlk[COORDBLK[idx]] &= ~(1 << val)
@@ -26,7 +26,11 @@ const unsetVal = (model, idx) => {
   return model
 }
 
-const countBits = (bs) => RANGE1_9.reduce((cnt, v) => cnt + (bs & (1 << v) ? 1 : 0), 0)
+const countBits = (bs) => {
+  let cnt = 0;
+  for (let v = 1; v <= 9; v++) cnt += (bs & (1 << v) ? 1 : 0)
+  return cnt 
+}
 
 const getCandidates = (model, idx) => {
   const candidatesAsBitset = ~(model.usedInRow[COORDROW[idx]] | model.usedInCol[COORDCOL[idx]] | model.usedInBlk[COORDBLK[idx]])
@@ -35,7 +39,7 @@ const getCandidates = (model, idx) => {
 
 const getBestCell = (model) => {
   model.cands = []
-  const len =  model.emptyCells.length
+  const len = model.emptyCells.length
   for (let i = 0; i < len; i++) {
     const idx = model.emptyCells[i]
     const cands = getCandidates(model, idx)
@@ -44,7 +48,7 @@ const getBestCell = (model) => {
   }
 
   let bestIdx = model.emptyCells[0]
-  for (let i = 0; i < len; i++) {
+  for (let i = 1; i < len; i++) {
     const idx = model.emptyCells[i]
     if (model.cands[idx].cnt < model.cands[bestIdx].cnt) bestIdx = idx
   }
@@ -78,7 +82,7 @@ const solve3 = (grid) => { // ~200 ms for hard ones
       if (bestCell?.cands.vals & (1 << i)) {
         setVal(m, bestCell.idx, i)
         solve(m)
-        if( m.emptyCells.length === 0 ) return m.grid
+        if (m.emptyCells.length === 0) return m.grid
         unsetVal(m, bestCell.idx)
       }
     }
