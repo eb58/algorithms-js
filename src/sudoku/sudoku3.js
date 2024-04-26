@@ -73,13 +73,13 @@ const findHS = (m) => { // find hidden single - without this: ~500 ms for the ha
   }
 }
 
-const solve3 = (grid) => { // ~200 ms for hard ones
+const solve3 = (grid) => { // ~180 ms for hard ones
   const solve = (m) => {
     let bestCell = getBestCell(m)
-    if (bestCell?.cands.cnt === 0) return
+    if (!bestCell || bestCell?.cands.cnt === 0) return m.grid
     bestCell = bestCell?.cands.cnt === 1 ? bestCell : findHS(m) || bestCell
     for (let i = 1; i <= 9; i++) {
-      if (bestCell?.cands.vals & (1 << i)) {
+      if (bestCell.cands.vals & (1 << i)) {
         setVal(m, bestCell.idx, i)
         solve(m)
         if (m.emptyCells.length === 0) return m.grid
