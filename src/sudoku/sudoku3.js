@@ -56,11 +56,12 @@ const getBestCell = (model) => {
 }
 
 const findHS = (m) => { // find hidden single - without this: ~500 ms for the hard ones
-  for (let v = 1; v <= 9; v++) {
+  for (let v = 1; v <= 9; v++) { // for all values 
     const val = 1 << v
-    for (let n = 0; n < 9; n++) {
+    for (let b = 0; b < 9; b++) {  // for all blocks 
+      if( m.usedInBlk[b] & val ) continue //  value already used in block
       let cnt = 0, idx = -1
-      for (const cell of CELLSINBLK[n]) {
+      for (const cell of CELLSINBLK[b]) { // for every cell in block
         const cands = m.cands[cell]
         if (cands?.vals & val) {
           if (++cnt > 1) break
@@ -70,7 +71,6 @@ const findHS = (m) => { // find hidden single - without this: ~500 ms for the ha
       if (cnt === 1) return { idx, cands: { cnt: 1, vals: val } }
     }
   }
-  return null
 }
 
 const solve3 = (grid) => { // ~200 ms for hard ones
