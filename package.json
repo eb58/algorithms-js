@@ -19,7 +19,7 @@
       "test": "jest --watchAll",
       "test-sudoku": "jest --watchAll sudoku",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
-      "sudoku": "node src/sudoku/dlx_sudoku.js"
+      "sudoku": "node src/sudoku/sudoku3.js"
    },
    "dependencies": {
       "@algorithm.ts/dlx": "^4.0.0"

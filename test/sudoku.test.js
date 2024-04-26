@@ -6,7 +6,7 @@ const solveDlx = require('../src/sudoku/sudokuDlx'); // ~160 ms for hard ones
 
 const range = (n) => [...Array(n).keys()]
 const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
-const mysolve = xs => solve2(conv2Arr(xs)).join('');
+const mysolve = xs => solve3(conv2Arr(xs)).join('');
 
 test('sudoku easy ones short', () => {
     expect(mysolve('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...')).toEqual('381745629472396158659218473196583742734962581825174936948637215267851394513429867');

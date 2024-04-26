@@ -6,6 +6,7 @@ const COORDBLK = RANGE81.map(block)
 const CELLSINBLK = RANGE81.reduce((acc, n) => (acc[COORDBLK[n]].push(n), acc), [[], [], [], [], [], [], [], [], []])
 
 const setVal = (model, idx, val) => {
+  model.emptyCells = val===0 ? model.emptyCells: model.emptyCells.filter(x => x !== idx) 
   model.usedInRow[COORDROW[idx]] |= 1 << val
   model.usedInCol[COORDCOL[idx]] |= 1 << val
   model.usedInBlk[COORDBLK[idx]] |= 1 << val
@@ -16,6 +17,7 @@ const setVal = (model, idx, val) => {
 
 const unsetVal = (model, idx) => {
   const val = model.grid[idx]
+  model.emptyCells = [...model.emptyCells, idx]
   model.usedInRow[COORDROW[idx]] &= ~(1 << val)
   model.usedInCol[COORDCOL[idx]] &= ~(1 << val)
   model.usedInBlk[COORDBLK[idx]] &= ~(1 << val)
@@ -33,18 +35,17 @@ const getCandidates = (model, idx) => {
 
 const getBestCell = (model) => {
   model.cands = []
-  const grid = model.grid
-  for (let idx = 0; idx < 81; idx++) {
-    if (grid[idx] > 0) continue;
+  const len =  model.emptyCells.length
+  for (let i = 0; i < len; i++) {
+    const idx = model.emptyCells[i]
     const cands = getCandidates(model, idx)
     if (cands.cnt === 1) return { idx, cands }
     model.cands[idx] = cands
   }
 
-  let bestIdx = -1
-  for (let idx = 0; idx < 81; idx++) {
-    if (grid[idx] > 0) continue;
-    if (model.cands[idx] && bestIdx < 0) bestIdx = idx
+  let bestIdx = model.emptyCells[0]
+  for (let i = 0; i < len; i++) {
+    const idx = model.emptyCells[i]
     if (model.cands[idx].cnt < model.cands[bestIdx].cnt) bestIdx = idx
   }
   return bestIdx >= 0 ? { idx: bestIdx, cands: model.cands[bestIdx] } : null
@@ -77,12 +78,13 @@ const solve3 = (grid) => { // ~200 ms for hard ones
       if (bestCell?.cands.vals & (1 << i)) {
         setVal(m, bestCell.idx, i)
         solve(m)
-        if (m.cnt === 81) return m.grid
+        if( m.emptyCells.length === 0 ) return m.grid
         unsetVal(m, bestCell.idx)
       }
     }
   }
   const model = grid.reduce((m, val, idx) => setVal(m, idx, val), {
+    emptyCells: RANGE81.filter(x => grid[x] === 0),
     cnt: 0,
     grid,
     usedInRow: [],
@@ -91,5 +93,8 @@ const solve3 = (grid) => { // ~200 ms for hard ones
   })
   return solve(model)
 }
+
+// const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
+// console.log(solve3(conv2Arr('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...')))
 
 module.exports = solve3
