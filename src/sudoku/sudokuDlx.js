@@ -113,7 +113,7 @@ const solve_sudoku = (grid) => {
             }
         }
     }
-
+    
     const solutions = dlx_solve(mat, 1);
 
     if (solutions.length <= 0) throw Error("No solution found")
