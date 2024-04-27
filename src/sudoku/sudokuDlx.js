@@ -92,7 +92,8 @@ const solve_sudoku = (grid) => {
     const mat = [];
     const rinfo = [];
     for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
-        const n = grid[r][c] - 1;
+        const idx = r * 9 + c
+        const n = grid[idx] - 1;
         if (n >= 0) {
             const row = new Array(324);
             row[r * 9 + c] = 1;
@@ -100,7 +101,7 @@ const solve_sudoku = (grid) => {
             row[9 * 9 * 2 + c * 9 + n] = 1;
             row[9 * 9 * 3 + (Math.floor(r / 3) * 3 + Math.floor(c / 3)) * 9 + n] = 1;
             mat.push(row);
-            rinfo.push({ r, c, n });
+            rinfo.push({ idx, n });
         } else {
             for (let n = 0; n < 9; n++) {
                 const row = new Array(324);
@@ -109,22 +110,16 @@ const solve_sudoku = (grid) => {
                 row[9 * 9 * 2 + c * 9 + n] = 1;
                 row[9 * 9 * 3 + (Math.floor(r / 3) * 3 + Math.floor(c / 3)) * 9 + n] = 1;
                 mat.push(row);
-                rinfo.push({ r, c, n });
+                rinfo.push({ idx, n });
             }
         }
     }
-    
     const solutions = dlx_solve(mat, 1);
-
     if (solutions.length <= 0) throw Error("No solution found")
-    solutions[0].map(n => rinfo[n]).forEach(ri => grid[ri.r][ri.c] = ri.n + 1)
-
-    return String(grid);
+    return solutions[0].map((n) => rinfo[n]).reduce((res, ri) => (res[ri.idx] = ri.n + 1, res), []);
 }
 
-const range = (n) => [...Array(n).keys()]
-const reshape = (xs, nRows) => range(nRows).map(c => xs.slice(c * nRows, (c + 1) * nRows))
-const solveDlx = (xs) => solve_sudoku(reshape(xs, 9)).split(",")
+const solveDlx = (xs) => solve_sudoku(xs)
 
 // console.log( solveDlx('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...'))
 
