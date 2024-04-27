@@ -20,10 +20,13 @@
       "test-sudoku": "jest --watchAll sudoku",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "sudoku": "node src/sudoku/sudoku3.js",
-      "kudoku": "node src/sudoku/sudokuKudoku.js"
+      "sudoku-dlx": "node src/sudoku/sudokuDlx2.js"
    },
    "dependencies": {
-      "@algorithm.ts/dlx": "^4.0.0"
+      "@algorithm.ts/dlx": "^4.0.0",
+      "dancing-links": "^2.1.1",
+      "dlx": "^0.2.1",
+      "dlxlib": "^1.0.3"
    },
    "devDependencies": {
       "jest": "29.7.0",
