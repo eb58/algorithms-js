@@ -88,7 +88,7 @@ const dlx_solve = (matrix, maxsolutions) => {
     return dlx_search(head, [], 0, [], maxsolutions);
 }
 
-const solve_sudoku = (grid) => {
+const solveDlx = (grid) => {
     const mat = [];
     const rinfo = [];
     for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
@@ -118,8 +118,6 @@ const solve_sudoku = (grid) => {
     if (solutions.length <= 0) throw Error("No solution found")
     return solutions[0].map((n) => rinfo[n]).reduce((res, ri) => (res[ri.idx] = ri.n + 1, res), []);
 }
-
-const solveDlx = (xs) => solve_sudoku(xs)
 
 // console.log( solveDlx('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...'))
 
