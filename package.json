@@ -15,12 +15,10 @@
    "author": "eb",
    "contributors": [],
    "scripts": {
-      "start": "node src/complex.js",
       "test": "jest --watchAll",
-      "test-sudoku": "jest --watchAll sudoku",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "sudoku": "node src/sudoku/sudoku3.js",
-      "sudoku-dlx": "node src/sudoku/sudokuDlx2.js"
+      "complex": "node src/complex.js"
    },
    "dependencies": {
       "@algorithm.ts/dlx": "^4.0.0",

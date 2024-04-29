@@ -62,7 +62,8 @@ const comparerByKey = (key) => comparer((o) => o[key])
 const range = (n) => [...Array(n).keys()]
 
 // reshape( [1,2,3,4], 2 ) ->  [[1,2],[3,4]]
-const reshape = (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, [])
+// const reshape = (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, [])
+const reshape = (xs, cols) => range(cols).map( c => xs.slice(c*xs.length/cols, (c+1)*xs.length/cols))
 
 
 // rangeFilled(3, 0)   // [0, 0, 0]
