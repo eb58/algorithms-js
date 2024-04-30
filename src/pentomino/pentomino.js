@@ -1,21 +1,29 @@
 // some promitive from ol.js
+const feedX = (x, f) => f(x)
 const range = (n) => [...Array(n).keys()]
 const isInInterval = (xs, a, b) => a <= xs && xs <= b
+const minmax = (mm1, mm2) => ({ min: Math.min(mm1.min, mm2.min), max: Math.max(mm1.max, mm2.max) })
 
 // array functions
-const minmaxColIndexArr = (xs, v) => xs.reduce(({ min, max }, cv, n) => ({ min: cv !== v ? min : Math.min(min, n), max: cv !== v ? max : Math.max(max, n) }), { min: 1000, max: 0 })
+const minmaxColIndexArr = (xs, v) => xs.reduce((acc, cv, n) => cv !== v ? acc : minmax(acc, { min: n, max: n }), { min: 1000, max: 0 })
 const reshape = (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, [])
 // const reshape = (xs, cols) => range(cols).map(c => xs.slice(c * cols, (c + 1) * xs.length / cols))
 
 // matrix function
 const redim = (mat, nrows, ncols, defaultVal = 0) => range(nrows).map(r => range(ncols).map((c) => mat[r] && mat[r][c] || defaultVal))
-const extract = (mat, val, defaultVal = 0) => mat.map(r => r.map(c => c === val ? c : defaultVal))
+const minmaxRowIndex = (mat, v) => mat.reduce((res, row, n) => !row.includes(v) ? res : minmax(res, { min: n, max: n }), { min: 1000, max: 0 })
+const minmaxColIndex = (mat, v) => mat.reduce((res, row) => minmax(res, minmaxColIndexArr(row, v)), { min: 1000, max: 0 })
+const extract = (mat, val, defaultVal = 0) => {
+    const extracted = mat.map(r => r.map(c => c === val ? c : defaultVal))
+    const mmr = minmaxRowIndex(extracted, val)
+    const mmc = minmaxColIndex(extracted, val)
+    const [dimr, dimc] = [mmr.max - mmr.min + 1, mmc.max - mmc.min + 1]
+    return redim([], dimr, dimc, ' ').map((r, ri) => r.map((c, ci) => mat[mmr.min+ri][mmc.min+ci]))
+}
+
 // const ext = (mat, val, defaultVal = 0)
-const minmaxColIndex = (mat, v) => mat.reduce((res, row) =>
-    row.reduce(({ min, max }, cv, n) =>
-        ({ min: cv !== v ? min : Math.min([min, n]), maxc: cv !== v ? max : Math.max([max, n]) }), res)
-    , { minc: 1000, maxc: 0 })
-const makeQuadratic = (m, defaultVal = " ") => redim(m, Math.max(m.length, m[0].length), Math.max(m.length, m[0].length), defaultVal)
+
+const makeQuadratic = (m, defaultVal = ' ') => redim(m, Math.max(m.length, m[0].length), Math.max(m.length, m[0].length), defaultVal)
 const transpose = (mat) => mat.map((r, ri) => r.map((_, ci) => mat[ci][ri]))
 const rotate90 = (mat) => {
     const m = mat.length === mat[0].length ? [...mat] : makeQuadratic(mat)
@@ -65,7 +73,7 @@ const translate = (val, dr, dc) => {
 
 //'abcdefghijkl'.split('').forEach(c => {
 'f'.split('').forEach(c => {
-    const extractSym = reshape(filledBoard.map(ch => ch == c ? c : " "), 10)
+    const extractSym = reshape(filledBoard.map(ch => ch == c ? c : ' '), 10)
     const { minc, maxc } = minmaxColIndex(filledBoardAsMatrix, c);
 
     // console.log(x)
@@ -73,7 +81,7 @@ const translate = (val, dr, dc) => {
     for (let dr = -5; dr <= 5; dr++) for (let dc = -9; dc <= 9; dc++) {
         const tr = translate(c, dr, dc)
         if (tr) {
-            // console.log("AAA", dr, dc, "\n", reshape(tr, 10).map(x => x.join("")))
+            // console.log('AAA', dr, dc, '\n', reshape(tr, 10).map(x => x.join('')))
             // if (rotate90(tr)) console.log(rotate90(tr))
 
         }
@@ -81,7 +89,9 @@ const translate = (val, dr, dc) => {
 })
 
 module.exports = {
-    redim, extract, minmaxColIndexArr, reshape, makeQuadratic, transpose, rotate90,
+    redim, extract,
+    minmaxColIndexArr, minmaxColIndex, minmaxRowIndex,
+    reshape, makeQuadratic, transpose, rotate90,
     filledBoard,
     elements,
     cellsWithValue,
