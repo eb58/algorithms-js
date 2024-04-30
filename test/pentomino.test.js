@@ -53,13 +53,6 @@ test('minmaxRowIndex', () => {
     expect(minmaxRowIndex(m, 'c')).toEqual({ min: 2, max: 4 });
 });
 
-test('extract', () => {
-    const m = reshape(filledBoard.map(x => x === 'c' ? 'c' : ' '), 10)
-    expect(extract(m, 'c')).toEqual([[" ", "c", " "], [" ", "c", " "], ["c", "c", "c"]]);
-    expect(rotate90(extract(m, 'c'))).toEqual([[" ", " ", "c"], ["c", "c", "c"], [" ", " ", "c"]]);
-});
-
-
 
 test('transpose matrix', () => {
     const mat = [
@@ -80,7 +73,7 @@ test('rotate matrix', () => {
         [' ', ' ', 'c', ' ', ' '],
         [' ', ' ', 'c', ' ', ' ']
     ]
-    expect(rotate90(mat)).toEqual([
+    expect(rotate90(mat, ' ')).toEqual([
         [' ', ' ', ' ', ' ', ' '],
         ['c', ' ', ' ', ' ', ' '],
         ['c', 'c', 'c', ' ', ' '],
@@ -122,5 +115,19 @@ test('translate', () => {
     expect(translate('a', 1, 2).join('')).toBe('            a         aa         a         a                ')
 });
 
-test('rotate90', () => {
+test('extract', () => {
+    const extr = (c) => {
+        const m = reshape(filledBoard.map(x => x === c ? c : ' '), 10)
+        return extract(rotate90(extract(m, c, ' '), ' '), c, ' ')
+    }
+    expect(extr('a')).toEqual([[' ', 'a', 'a', 'a'], ['a', 'a', ' ', ' ']]);
+    expect(extr('b')).toEqual([[' ', ' ', ' ', 'b'], ['b', 'b', 'b', 'b']]);
+    expect(extr('c')).toEqual([[' ', ' ', 'c'], ['c', 'c', 'c'], [' ', ' ', 'c']]);
+    expect(extr('d')).toEqual([[' ', 'd', 'd'], ['d', 'd', ' '], ['d', ' ', ' ']]);
+    expect(extr('e')).toEqual([['e', ' '], ['e', ' '], ['e', 'e'], ['e', ' ']]);
+    expect(extr('f')).toEqual([['f', 'f'], ['f', 'f'], ['f', ' ']]);
+    expect(extr('g')).toEqual([['g', 'g'], ['g', ' '], ['g', 'g']]);
+    expect(extr('h')).toEqual([[' ', 'h', ' '], ['h', 'h', 'h'], [' ', 'h', ' ']]);
+    expect(extr('i')).toEqual([['i'], ['i'], ['i'], ['i'], ['i']]);
+    expect(extr('j')).toEqual([['j', 'j', 'j'], [' ', ' ', 'j'], [' ', ' ', 'j']]);
 });
