@@ -2,12 +2,21 @@ const {
     redim,
     extract,
     minmaxIndex,
+    reshape,
+    makeQuadratic,
     filledBoard,
     elements,
     cellsWithValue,
     translate,
     rotate90
 } = require("../src/pentomino/pentomino");
+
+test('matrix makeQuadratic', () => {
+    expect(makeQuadratic([[1]], 0)).toEqual([[1]]);
+    expect(makeQuadratic([[1], [3]], 0)).toEqual([[1, 0], [3, 0]]);
+    expect(makeQuadratic([[1, 2], [3, 4]], 0)).toEqual([[1, 2], [3, 4]]);
+    expect(makeQuadratic([[1, 2, 3], [4, 5, 6]], 0)).toEqual([[1, 2, 3], [4, 5, 6], [0, 0, 0]]);
+});
 
 test('redim matrix', () => {
     const mat = [[1, 2, 3], [4, 5, 6]]
@@ -24,9 +33,31 @@ test('extract matrix', () => {
 });
 
 test('minmaxIndex', () => {
-    expect(minmaxIndex([0, 1, 0, 0, 1, 0],1)).toEqual({minc:1, maxc:4});
-    expect(minmaxIndex([1, 1, 0, 0, 1, 0],1)).toEqual({minc:0, maxc:4});
-    expect(minmaxIndex([1, 1, 5, 0, 1, 7],1)).toEqual({minc:0, maxc:4});
+    const m = reshape(filledBoard.map(x => x === "c" ? "c" : " "), 10)
+    expect(minmaxIndex([0, 1, 0, 0, 1, 0], 1)).toEqual({ minc: 1, maxc: 4 });
+    expect(minmaxIndex([1, 1, 0, 0, 1, 0], 1)).toEqual({ minc: 0, maxc: 4 });
+    expect(minmaxIndex([1, 1, 5, 0, 1, 7], 1)).toEqual({ minc: 0, maxc: 4 });
+    expect(minmaxIndex(m[4], 'c')).toEqual({ minc: 1, maxc: 3 });
+});
+
+test('rotate matrix', () => {
+    const mat = [
+        [" ", "c", "c", "c", " "],
+        [" ", " ", "c", " ", " "],
+        [" ", " ", "c", " ", " "]
+    ]
+    expect(rotate90(mat)).toEqual([
+        [" ", " ", " ", " ", " "],
+        ["c", " ", " ", " ", " "],
+        ["c", "c", "c", " ", " "],
+        ["c", " ", " ", " ", " "],
+        [" ", " ", " ", " ", " "]
+    ]);
+
+})
+
+test('normalizeElement', () => {
+    const m = reshape(filledBoard.map(x => x === "b" ? "b" : " "), 10)
 });
 
 test('pentomino basics', () => {
