@@ -1,17 +1,15 @@
 const {
     redim,
-    extract,
     minmaxColIndexArr,
     minmaxColIndex,
     minmaxRowIndex,
     reshape,
-    makeQuadratic,
-    filledBoard,
-    elements,
-    cellsWithValue,
-    translate,
     transpose,
-    rotate90
+    rotate90,
+    makeQuadratic,
+    extract,
+    translate,
+    filledBoard,
 } = require('../src/pentomino/pentomino');
 
 test('matrix makeQuadratic', () => {
@@ -23,6 +21,8 @@ test('matrix makeQuadratic', () => {
 
 test('redim matrix', () => {
     const mat = [[1, 2, 3], [4, 5, 6]]
+    expect(redim([], 1, 1)).toEqual([[0]]);
+    expect(redim([], 2, 2)).toEqual([[0, 0], [0, 0]]);
     expect(redim(mat, 1, 1)).toEqual([[1]]);
     expect(redim(mat, 2, 1)).toEqual([[1], [4]]);
     expect(redim(mat, 2, 2)).toEqual([[1, 2], [4, 5]]);
@@ -53,7 +53,6 @@ test('minmaxRowIndex', () => {
     expect(minmaxRowIndex(m, 'c')).toEqual({ min: 2, max: 4 });
 });
 
-
 test('transpose matrix', () => {
     const mat = [
         [' ', 'c', 'c'],
@@ -73,7 +72,7 @@ test('rotate matrix', () => {
         [' ', ' ', 'c', ' ', ' '],
         [' ', ' ', 'c', ' ', ' ']
     ]
-    expect(rotate90(mat, ' ')).toEqual([
+    expect(rotate90(mat)).toEqual([
         [' ', ' ', ' ', ' ', ' '],
         ['c', ' ', ' ', ' ', ' '],
         ['c', 'c', 'c', ' ', ' '],
@@ -83,42 +82,51 @@ test('rotate matrix', () => {
 
 })
 
-test('normalizeElement', () => {
-    const m = reshape(filledBoard.map(x => x === 'b' ? 'b' : ' '), 10)
-});
-
-test('pentomino basics', () => {
-    expect(elements.length).toBe(12);
-    expect(elements[0].join('')).toBe('a         aa         a         a                            ');
-    expect(elements[1].join('')).toBe('                    b         b         b         bb        ');
-    expect(elements[2].join('')).toBe('                      c         c        ccc                ');
-    expect(elements[3].join('')).toBe(' dd         dd         d                                    ');
-});
-
-test('cellsWithValue', () => {
-    expect(cellsWithValue(filledBoard, 'a').length).toBe(5);
-    expect(cellsWithValue(filledBoard, 'a')).toEqual([
-        { 'c': 0, 'r': 0, val: 'a' },
-        { 'c': 0, 'r': 1, val: 'a' },
-        { 'c': 1, 'r': 1, val: 'a' },
-        { 'c': 1, 'r': 2, val: 'a' },
-        { 'c': 1, 'r': 3, val: 'a' },
-    ]);
+test('matrix translate', () => {
+    const mat = [[1, 1, 1, 0], [0, 1, 0, 0], [0, 0, 0, 0]]
+    expect(translate(mat, 1, 0)).toEqual([[0, 0, 0, 0], [1, 1, 1, 0], [0, 1, 0, 0]]);
+    expect(translate(mat, 0, 1)).toEqual([[0, 1, 1, 1], [0, 0, 1, 0], [0, 0, 0, 0]]);
+    expect(translate(mat, 1, 1)).toEqual([[0, 0, 0, 0], [0, 1, 1, 1], [0, 0, 1, 0]]);
+    expect(translate(mat, 1, 2)).toEqual([[0, 0, 0, 0], [0, 0, 1, 1], [0, 0, 0, 1]]);
 })
 
-test('translate', () => {
-    expect(translate('a', -1, 1)).toBe(undefined)
-    expect(translate('a', 1, -1)).toBe(undefined)
-    expect(translate('a', 0, 1).join('')).toBe(' a         aa         a         a                           ')
-    expect(translate('a', 0, 2).join('')).toBe('  a         aa         a         a                          ')
-    expect(translate('a', 1, 1).join('')).toBe('           a         aa         a         a                 ')
-    expect(translate('a', 1, 2).join('')).toBe('            a         aa         a         a                ')
-});
+
+// test('normalizeElement', () => {
+//     const m = reshape(filledBoard.map(x => x === 'b' ? 'b' : ' '), 10)
+// });
+
+// test('pentomino basics', () => {
+//     expect(elements.length).toBe(12);
+//     expect(elements[0].join('')).toBe('a         aa         a         a                            ');
+//     expect(elements[1].join('')).toBe('                    b         b         b         bb        ');
+//     expect(elements[2].join('')).toBe('                      c         c        ccc                ');
+//     expect(elements[3].join('')).toBe(' dd         dd         d                                    ');
+// });
+
+// test('cellsWithValue', () => {
+//     expect(cellsWithValue(filledBoard, 'a').length).toBe(5);
+//     expect(cellsWithValue(filledBoard, 'a')).toEqual([
+//         { 'c': 0, 'r': 0, val: 'a' },
+//         { 'c': 0, 'r': 1, val: 'a' },
+//         { 'c': 1, 'r': 1, val: 'a' },
+//         { 'c': 1, 'r': 2, val: 'a' },
+//         { 'c': 1, 'r': 3, val: 'a' },
+//     ]);
+// })
+
+// test('translate', () => {
+//     expect(translate('a', -1, 1)).toBe(undefined)
+//     expect(translate('a', 1, -1)).toBe(undefined)
+//     expect(translate('a', 0, 1).join('')).toBe(' a         aa         a         a                           ')
+//     expect(translate('a', 0, 2).join('')).toBe('  a         aa         a         a                          ')
+//     expect(translate('a', 1, 1).join('')).toBe('           a         aa         a         a                 ')
+//     expect(translate('a', 1, 2).join('')).toBe('            a         aa         a         a                ')
+// });
 
 test('extract', () => {
     const extr = (c) => {
         const m = reshape(filledBoard.map(x => x === c ? c : ' '), 10)
-        return extract(rotate90(extract(m, c, ' '), ' '), c, ' ')
+        return extract(rotate90(extract(m, c)), c)
     }
     expect(extr('a')).toEqual([[' ', 'a', 'a', 'a'], ['a', 'a', ' ', ' ']]);
     expect(extr('b')).toEqual([[' ', ' ', ' ', 'b'], ['b', 'b', 'b', 'b']]);
