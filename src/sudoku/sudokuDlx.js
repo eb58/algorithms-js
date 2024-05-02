@@ -1,4 +1,3 @@
-/* Implementation of Knuth's Dancing Links technique for Algorithm X (exact cover). */
 //const dlx = require("dlx");                    // does not work
 // const dlx = require('dlxlib');                // works -> ~2500 for 10x hard ones
 // const dancingLinks = require('dancing-links') // works -> ~1000 for 10x hard ones
@@ -31,8 +30,8 @@ const solveDlx = (grid) => {
         }
     }
 
-    //const solutions = dlx_solve(mat, 1);
-    const solutions = dancingLinks.findOne(mat.map(row => ({ row }))).map(x => x.map(o => o.index));
+    const solutions = dlx_solve(mat, 1);
+    // const solutions = dancingLinks.findOne(mat.map(row => ({ row }))).map(x => x.map(o => o.index));
     // const solutions = dlxlib.solve(mat.map(r => [...r].map(x => x || 0))); // works but slower s.o.
 
     // console.log( solutions )

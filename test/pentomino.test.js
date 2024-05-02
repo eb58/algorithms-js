@@ -32,7 +32,7 @@ test('redim matrix', () => {
 
 test('extract matrix', () => {
     const mat = [[1, 7, 7, 7], [1, 6, 6, 8], [1, 3, 4, 3], [1, 1, 9, 6]]
-    // expect(extract(mat, 1)).toEqual([[1, 0, 0, 0], [1, 0, 0, 0], [1, 0, 0, 0], [1, 1, 0, 0]]);
+    expect(extract(mat, 1, 0)).toEqual([[1, 0], [1, 0], [1, 0], [1, 1]]);
 });
 
 test('minmaxColIndexArr', () => {
@@ -54,30 +54,18 @@ test('minmaxRowIndex', () => {
 });
 
 test('transpose matrix', () => {
-    const mat = [
-        [' ', 'c', 'c'],
-        [' ', ' ', 'c'],
-        [' ', ' ', 'c']
-    ]
-    expect(transpose(mat)).toEqual([
-        [' ', ' ', ' '],
-        ['c', ' ', ' '],
-        ['c', 'c', 'c'],
-    ]);
+    const mat = [[' ', 'c', 'c'], [' ', ' ', 'c'], [' ', ' ', 'c']]
+    expect(transpose(mat)).toEqual([[' ', ' ', ' '], ['c', ' ', ' '], ['c', 'c', 'c'],]);
 })
 
 test('rotate matrix', () => {
-    const mat = [
-        [' ', 'c', 'c', 'c', ' '],
-        [' ', ' ', 'c', ' ', ' '],
-        [' ', ' ', 'c', ' ', ' ']
-    ]
+    const mat = [[0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]
     expect(rotate90(mat)).toEqual([
-        [' ', ' ', ' ', ' ', ' '],
-        ['c', ' ', ' ', ' ', ' '],
-        ['c', 'c', 'c', ' ', ' '],
-        ['c', ' ', ' ', ' ', ' '],
-        [' ', ' ', ' ', ' ', ' ']
+        [0, 0, 0, 0, 0],
+        [1, 0, 0, 0, 0],
+        [1, 1, 1, 0, 0],
+        [1, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0],
     ]);
 
 })
