@@ -4,6 +4,8 @@ const dlx_solve = require("../dlx");    // ~23 sec
 
 // some primitives 
 const range = (n) => [...Array(n).keys()]
+const zip = (xs, ys, f) => xs.map((x, i) => f(x, ys[i]))
+
 const minmax = (v1, v2) => ({ min: Math.min(v1.min, v2.min), max: Math.max(v1.max, v2.max) })
 
 // array functions
@@ -42,6 +44,7 @@ const rotate90 = (mat, defVal = 0) => {
 ///  PENTOMINO
 const [dimr, dimc] = [6, 10]
 
+const SYMBOLS = 'abcdefghijkl'
 const filledBoardAsString = `
 a d d e e e e f f f
 a a d d e g g g f f
@@ -72,9 +75,8 @@ const translateBoard = (board, dr, dc, defVal = ' ') => {
 
 const computeProblem = () => {
     const problem = []
-    const symbols = 'abcdefghijkl'
-    symbols.split('').forEach(ch => {
-        const symbolCondition = symbols.split("").map(x => ch === x ? 1 : 0);
+    SYMBOLS.split('').forEach(ch => {
+        const symbolCondition = SYMBOLS.split("").map(x => ch === x ? 1 : 0);
         const extractSym = makeQuadratic(extract(reshape(filledBoard, 10), ch))
         const elements = range(4)
             .reduce((res, n) => [...res, range(n).reduce(elem => rotate90(elem, ' '), makeCopy(extractSym))], [])
@@ -99,9 +101,20 @@ const computeProblem = () => {
 
 const problem = computeProblem();
 
-const solutions = dlx_solve(problem, 10);
+const solutions = dlx_solve(problem, 20);
 //  const solutions = dlxlib.solve(problem);
 console.log(solutions)
+
+const res = solutions[0]
+    .map(x => problem[x])
+    .map(r => ({ symbolIdx: r.slice(0, 12).findIndex(x => x === 1), elem: r.slice(12) }))
+    .map(r => ({ ...r, symbol: SYMBOLS.charAt(r.symbolIdx) }))
+    .map(r => r.elem.map(y => y === 1 ? r.symbol : ' '))
+    .reduce((acc, x) => zip(acc, x, (a, b) => a.trim() || b.trim() || ' '), range(60).map(() => ' '))
+
+console.log(reshape(res, 10).map(r => r.join(' ')))
+
+
 
 // const DL_TOTAL_COLUMNS = 12 + 6 * 10
 // const MAX_N = DL_TOTAL_COLUMNS * 2056
