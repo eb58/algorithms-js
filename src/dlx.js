@@ -18,7 +18,7 @@ const dlx_uncover = (c) => {
     c.left.right = c;
 }
 
-const dlx_search = (head, solution, lev, solutions, maxsolutions) => {
+const dlx_search = (head, solution, k, solutions, maxsolutions) => {
     if (head.right == head) {
         solutions.push([...solution]);
         return solutions.length >= maxsolutions ? solutions : null;
@@ -34,9 +34,9 @@ const dlx_search = (head, solution, lev, solutions, maxsolutions) => {
     }
     dlx_cover(c);
     for (let r = c.down; r != c; r = r.down) {
-        solution[lev] = r.row;
+        solution[k] = r.row;
         for (let j = r.right; j != r; j = j.right) dlx_cover(j.column);
-        const s = dlx_search(head, solution, lev + 1, solutions, maxsolutions);
+        const s = dlx_search(head, solution, k + 1, solutions, maxsolutions);
         if (s != null) return s;
         for (let j = r.left; j != r; j = j.left) dlx_uncover(j.column);
     }
