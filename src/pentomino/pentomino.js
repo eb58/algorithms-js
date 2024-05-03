@@ -1,9 +1,9 @@
 const { DancingLinkX } = require('@algorithm.ts/dlx') // do not understand how this works
 const dlx = require('dlx');                           // no solutions found in 5 min
 
-const dlxlib = require('dlxlib');                     // ~65 sec         
-const dlx_solve = require('../dlx');                  // ~23 sec
-const dancingLinks = require('dancing-links')         // ~25 sec
+const dlxlib = require('dlxlib');                     // ~30 sec         
+const dlx_solve = require('../dlx');                  // ~10.5 sec
+const dancingLinks = require('dancing-links')         // ~9.5 sec
 
 // some primitives 
 const range = (n) => [...Array(n).keys()]
@@ -79,7 +79,8 @@ const generateTiles = () => {
 
     return SYMBOLS.reduce((acc, ch) => {
         const extractSym = makeQuadratic(extract(reshape(filledBoard, 10), ch))
-        const tiles = range(4)
+        const N = ch === 'f' ? 1 : 4 // symmetrie!!
+        const tiles = range(N)
             .reduce((acc, n) => [...acc, rotateN90(makeCopy(extractSym), n)], [])
             .reduce((acc, tile) => ([...acc, tile, transpose(tile)]), [])
             .map(tile => makeQuadratic(extract(tile, ch), ' ').flat().join(''))
@@ -109,14 +110,14 @@ const solvePentonimo = () => {
 
     const mapToSymbol = Object.entries(allTiles).reduce((acc, [s, tiles]) => [...acc, ...tiles.map(() => s)], [])
 
-    // const solutions = dlxlib.solve(problem); // ~65sec
-    // const solutions = dlx_solve(problem, 2339 * 4); // ~23sec
-    const solutions = dancingLinks.findAll(problem.map(row => ({ row }))).map(x => x.map(o => o.index))// ~20sec
+    // const solutions = dlxlib.solve(problem); // ~30 sec
+    const solutions = dlx_solve(problem, 2339); // ~10.5 sec
+    // const solutions = dancingLinks.findAll(problem.map(row => ({ row }))).map(x => x.map(o => o.index))// ~9.5 sec
     return solutions.map(solution =>
         reshape(solution
             .map(r => problem[r].slice(12).map(y => y === 1 ? mapToSymbol[r] : ''))
             .reduce((acc, tile) => zip(acc, tile, (a, b) => a || b || ''), range(60).map(() => '')), 10)
-            .map(r => r.join(' '))
+            .map(r => r.join('')).join('')
     )
 }
 
