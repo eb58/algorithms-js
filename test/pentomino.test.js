@@ -1,6 +1,6 @@
 const {
     filledBoards,
-    redim, minmaxColIndexArr, minmaxColIndex, minmaxRowIndex,
+    minmaxColIndexArr, minmaxColIndex, minmaxRowIndex,
     reshape, makeQuadratic, transpose, rotate90, translate,
     pentonimo
 } = require('../src/pentomino/pentomino');
@@ -12,16 +12,6 @@ test('matrix makeQuadratic', () => {
     expect(makeQuadratic([[1, 2, 3], [4, 5, 6]], 0)).toEqual([[1, 2, 3], [4, 5, 6], [0, 0, 0]]);
 });
 
-test('redim matrix', () => {
-    const mat = [[1, 2, 3], [4, 5, 6]]
-    expect(redim([], 1, 1)).toEqual([[0]]);
-    expect(redim([], 2, 2)).toEqual([[0, 0], [0, 0]]);
-    expect(redim(mat, 1, 1)).toEqual([[1]]);
-    expect(redim(mat, 2, 1)).toEqual([[1], [4]]);
-    expect(redim(mat, 2, 2)).toEqual([[1, 2], [4, 5]]);
-    expect(redim(mat, 1, 4)).toEqual([[1, 2, 3, 0]]);
-    expect(redim(mat, 4, 4)).toEqual([[1, 2, 3, 0], [4, 5, 6, 0], [0, 0, 0, 0], [0, 0, 0, 0]]);
-});
 
 test('minmaxColIndexArr', () => {
     expect(minmaxColIndexArr([0, 1, 0, 0, 1, 0], 1)).toEqual({ min: 1, max: 4 });

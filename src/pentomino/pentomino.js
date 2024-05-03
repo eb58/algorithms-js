@@ -5,18 +5,15 @@ const dlxlib = require('dlxlib');                     // ~30 sec
 const dlx_solve = require('../dlx');                  // ~10.5 sec
 const dancingLinks = require('dancing-links')         // ~9.5 sec
 
+const { range, zip, reshape, redim  } = require('../ol').ol;                  // ~10.5 sec
+
 // some primitives 
-const range = (n) => [...Array(n).keys()]
-const zip = (xs, ys, f) => xs.map((x, i) => f(x, ys[i]))
 const minmax = (v1, v2) => ({ min: Math.min(v1.min, v2.min), max: Math.max(v1.max, v2.max) })
 
 // array functions
 const minmaxColIndexArr = (xs, v) => xs.reduce((acc, cv, n) => cv !== v ? acc : minmax(acc, { min: n, max: n }), { min: 1000, max: -1 })
-const reshape = (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, [])
-// const reshape = (xs, cols) => range(cols).map(c => xs.slice(c * cols, (c + 1) * xs.length / cols))
 
 // matrix functions
-const redim = (mat, nrows, ncols, defVal = 0) => range(nrows).map(r => range(ncols).map((c) => mat[r] && mat[r][c] || defVal))
 const minmaxRowIndex = (mat, v) => mat.reduce((res, row, n) => !row.includes(v) ? res : minmax(res, { min: n, max: n }), { min: 1000, max: -1 })
 const minmaxColIndex = (mat, v) => mat.reduce((res, row) => minmax(res, minmaxColIndexArr(row, v)), { min: 1000, max: -1 })
 const makeQuadratic = (mat, defVal = 0) => redim(mat, Math.max(mat.length, mat[0].length), Math.max(mat.length, mat[0].length), defVal)
