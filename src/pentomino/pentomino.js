@@ -1,11 +1,10 @@
-const dlx_solve = require("../dlx");    // ~23 sec
+const dlx_solve = require('../dlx');    // ~23 sec
 // const dlxlib = require('dlxlib');       // ~65 sec         
 // const { DancingLinkX } = require('@algorithm.ts/dlx') // ????
 
 // some primitives 
 const range = (n) => [...Array(n).keys()]
 const zip = (xs, ys, f) => xs.map((x, i) => f(x, ys[i]))
-
 const minmax = (v1, v2) => ({ min: Math.min(v1.min, v2.min), max: Math.max(v1.max, v2.max) })
 
 // array functions
@@ -40,19 +39,19 @@ const rotate90 = (mat, defVal = 0) => {
     }
     return m
 }
+const rotateN90 = (matrix, n) => range(n).reduce(m => rotate90(m, ' '), matrix)
 
 ///  PENTOMINO
-const [dimr, dimc] = [6, 10]
-
-const SYMBOLS = 'abcdefghijkl'
 const filledBoardAsString = `
-a d d e e e e f f f
-a a d d e g g g f f
-b a c d h g l g k k
-b a c h h h l l k j
-b c c c h l l k k j
-b b i i i i i j j j`.trim().replaceAll(' ', '')
+n w w y y y y p p p
+n n w w y u u u p p
+l n t w x u f u z z
+l n t x x x f f z v
+l t t t x f f z z v
+l l i i i i i v v v`.trim().replaceAll(' ', '')
 const filledBoard = filledBoardAsString.replaceAll('\n', '').split('')
+const SYMBOLS = [... new Set(filledBoard)].sort() // ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+const [DIMR, DIMC] = [filledBoardAsString.split('\n').length, filledBoardAsString.split('\n')[0].length] // 6, 10
 
 const extract = (board, val, defVal = ' ') => {
     const extracted = board.map(r => r.map(c => c === val ? c : defVal))
@@ -65,55 +64,58 @@ const extract = (board, val, defVal = ' ') => {
 const translateBoard = (board, dr, dc, defVal = ' ') => {
     const newBoard = translate(board, dr, dc, defVal)
     let [cnt1, cnt2] = [0, 0]
-    for (let r = 0; r < dimr; r++) for (let c = 0; c < dimc; c++) {
+    for (let r = 0; r < DIMR; r++) for (let c = 0; c < DIMC; c++) {
         cnt1 += (board[r][c] !== defVal)
         cnt2 += (newBoard[r][c] !== defVal)
     }
     return cnt1 != cnt2 ? undefined : newBoard
 }
 
+const generateTiles = () => {
+    const res = SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {})
 
-const computeProblem = () => {
-    const problem = []
-    SYMBOLS.split('').forEach(ch => {
-        const symbolCondition = SYMBOLS.split("").map(x => ch === x ? 1 : 0);
+    return SYMBOLS.reduce((acc, ch) => {
         const extractSym = makeQuadratic(extract(reshape(filledBoard, 10), ch))
-        const elements = range(4)
-            .reduce((res, n) => [...res, range(n).reduce(elem => rotate90(elem, ' '), makeCopy(extractSym))], [])
-            .reduce((acc, e) => ([...acc, e, transpose(e)]), [])
-            .map(x => makeQuadratic(extract(x, ch), ' ').flat().join(''))
-        const uniqElementsAsString = [... new Set(elements)]
-        const uniqElements = uniqElementsAsString.map(x => reshape(x.split(''), Math.sqrt(x.length)))
+        const tiles = range(4)
+            .reduce((acc, n) => [...acc, rotateN90(makeCopy(extractSym), n)], [])
+            .reduce((acc, tile) => ([...acc, tile, transpose(tile)]), [])
+            .map(tile => makeQuadratic(extract(tile, ch), ' ').flat().join(''))
+        const uniqTilesAsString = [... new Set(tiles)]
+        const uniqTiles = uniqTilesAsString.map(t => reshape(t.split(''), Math.sqrt(t.length)))
 
-        uniqElements.map(elem => redim(elem, dimr, dimc, ' ')).forEach(board =>
-            range(6).forEach(dr => range(10).forEach(dc => {
+        uniqTiles.map(tile => redim(tile, DIMR, DIMC, ' ')).forEach(board =>
+            range(DIMR).forEach(dr => range(DIMC).forEach(dc => {
                 const translated = translateBoard(board, dr, dc)
                 if (translated) {
-                    const cond = translated.flat().map(x => x === ' ' ? 0 : 1)
-                    problem.push([...symbolCondition, ...cond])
+                    acc[ch] = [...acc[ch], translated]
                 }
             }))
         )
-    })
-    // console.log("problem length:", problem.length, problem[0].length)
-    return problem
+        return acc
+    }, res)
 }
 
-const problem = computeProblem();
+const allTiles = generateTiles();
+// console.log(tiles)
+
+
+
+const problem = Object.entries(allTiles).reduce((acc, [s, tiles]) => [...acc, ...tiles.map(tile => [
+    ...SYMBOLS.map(ch => s === ch ? 1 : 0),
+    ...tile.flat().map(x => x === ' ' ? 0 : 1)])],
+    [])
+
+const mapToSymbol = Object.entries(allTiles).reduce((acc, [s, tiles]) => [...acc, ...tiles.map(() => s)], [])
 
 const solutions = dlx_solve(problem, 20);
 //  const solutions = dlxlib.solve(problem);
-console.log(solutions)
+// console.log(solutions)
 
-const res = solutions[0]
-    .map(x => problem[x])
-    .map(r => ({ symbolIdx: r.slice(0, 12).findIndex(x => x === 1), elem: r.slice(12) }))
-    .map(r => ({ ...r, symbol: SYMBOLS.charAt(r.symbolIdx) }))
-    .map(r => r.elem.map(y => y === 1 ? r.symbol : ' '))
-    .reduce((acc, x) => zip(acc, x, (a, b) => a.trim() || b.trim() || ' '), range(60).map(() => ' '))
+const res = solutions[7]
+    .map(r => problem[r].slice(12).map(y => y === 1 ? mapToSymbol[r] : ''))
+    .reduce((acc, tile) => zip(acc, tile, (a, b) => a || b || ''), range(60).map(() => ''))
 
 console.log(reshape(res, 10).map(r => r.join(' ')))
-
 
 
 // const DL_TOTAL_COLUMNS = 12 + 6 * 10
@@ -126,8 +128,9 @@ console.log(reshape(res, 10).map(r => r.join(' ')))
 // console.log(answer)
 
 module.exports = {
+    filledBoard,
     redim, extract,
     minmaxColIndexArr, minmaxColIndex, minmaxRowIndex,
     reshape, makeQuadratic, transpose, rotate90, translate,
-    filledBoard
+    generateTiles
 }
