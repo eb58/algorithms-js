@@ -58,7 +58,7 @@ const extract = (board, val, defVal = ' ') => {
     const mmr = minmaxRowIndex(extracted, val)
     const mmc = minmaxColIndex(extracted, val)
     const [dimr, dimc] = [mmr.max - mmr.min + 1, mmc.max - mmc.min + 1]
-    return redim([], dimr, dimc, ' ').map((r, ri) => r.map((c, ci) => extracted[mmr.min + ri][mmc.min + ci]), ' ')
+    return redim([], dimr, dimc, defVal).map((r, ri) => r.map((_, ci) => extracted[mmr.min + ri][mmc.min + ci]), defVal)
 }
 
 const translateBoard = (board, dr, dc, defVal = ' ') => {
@@ -97,7 +97,6 @@ const generateTiles = () => {
 
 const allTiles = generateTiles();
 // console.log(tiles)
-
 
 
 const problem = Object.entries(allTiles).reduce((acc, [s, tiles]) => [...acc, ...tiles.map(tile => [
