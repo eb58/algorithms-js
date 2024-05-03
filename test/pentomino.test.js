@@ -11,6 +11,7 @@ const {
     translate,
     filledBoard,
     generateTiles,
+    solvePentonimo
 } = require('../src/pentomino/pentomino');
 
 test('matrix makeQuadratic', () => {
@@ -98,6 +99,21 @@ test('extract', () => { // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w
 });
 
 test('generateTiles', () => {
-    const res = Object.entries(generateTiles()).map( ([key,value] ) => key + ":" + value.length)
+    const res = Object.entries(generateTiles()).map(([key, value]) => key + ":" + value.length)
     expect(res).toEqual(['f:256', 'i:56', 'l:248', 'n:248', 'p:304', 't:128', 'u:152', 'v:128', 'w:128', 'x:32', 'y:248', 'z:128']);
 })
+
+test('sovlePentonimo', () => {
+    const solutions = solvePentonimo();
+    console.log(solutions[7])
+    expect(solutions.length).toBe(2339 * 4)
+    expect(solutions[7]).toEqual([
+        'l l x i i i i i z v',
+        'l x x x w w z z z v',
+        'l n x w w p z v v v',
+        'l n t w f p p u u u',
+        'n n t f f p p u y u',
+        'n t t t f f y y y y'
+    ])
+})
+

@@ -1,6 +1,9 @@
-const dlx_solve = require('../dlx');    // ~23 sec
-// const dlxlib = require('dlxlib');       // ~65 sec         
-// const { DancingLinkX } = require('@algorithm.ts/dlx') // ????
+const { DancingLinkX } = require('@algorithm.ts/dlx') // do not understand how this works
+const dlx = require('dlx');                           // no solutions found in 5 min
+
+const dlxlib = require('dlxlib');                     // ~65 sec         
+const dlx_solve = require('../dlx');                  // ~23 sec
+const dancingLinks = require('dancing-links')         // ~25 sec
 
 // some primitives 
 const range = (n) => [...Array(n).keys()]
@@ -95,27 +98,30 @@ const generateTiles = () => {
     }, res)
 }
 
-const allTiles = generateTiles();
-// console.log(tiles)
+// console.log(allTiles)
 
+const solvePentonimo = () => {
+    const allTiles = generateTiles();
+    const problem = Object.entries(allTiles).reduce((acc, [s, tiles]) => [...acc, ...tiles.map(tile => [
+        ...SYMBOLS.map(ch => s === ch ? 1 : 0),
+        ...tile.flat().map(x => x === ' ' ? 0 : 1)])],
+        [])
 
-const problem = Object.entries(allTiles).reduce((acc, [s, tiles]) => [...acc, ...tiles.map(tile => [
-    ...SYMBOLS.map(ch => s === ch ? 1 : 0),
-    ...tile.flat().map(x => x === ' ' ? 0 : 1)])],
-    [])
+    const mapToSymbol = Object.entries(allTiles).reduce((acc, [s, tiles]) => [...acc, ...tiles.map(() => s)], [])
 
-const mapToSymbol = Object.entries(allTiles).reduce((acc, [s, tiles]) => [...acc, ...tiles.map(() => s)], [])
+    // const solutions = dlxlib.solve(problem); // ~65sec
+    // const solutions = dlx_solve(problem, 2339 * 4); // ~23sec
+    const solutions = dancingLinks.findAll(problem.map(row => ({ row }))).map(x => x.map(o => o.index))// ~20sec
+    return solutions.map(solution =>
+        reshape(solution
+            .map(r => problem[r].slice(12).map(y => y === 1 ? mapToSymbol[r] : ''))
+            .reduce((acc, tile) => zip(acc, tile, (a, b) => a || b || ''), range(60).map(() => '')), 10)
+            .map(r => r.join(' '))
+    )
+}
 
-const solutions = dlx_solve(problem, 20);
-//  const solutions = dlxlib.solve(problem);
-// console.log(solutions)
-
-const res = solutions[7]
-    .map(r => problem[r].slice(12).map(y => y === 1 ? mapToSymbol[r] : ''))
-    .reduce((acc, tile) => zip(acc, tile, (a, b) => a || b || ''), range(60).map(() => ''))
-
-console.log(reshape(res, 10).map(r => r.join(' ')))
-
+//const sol = solvePentonimo();
+//console.log(solutions.length)
 
 // const DL_TOTAL_COLUMNS = 12 + 6 * 10
 // const MAX_N = DL_TOTAL_COLUMNS * 2056
@@ -131,5 +137,6 @@ module.exports = {
     redim, extract,
     minmaxColIndexArr, minmaxColIndex, minmaxRowIndex,
     reshape, makeQuadratic, transpose, rotate90, translate,
-    generateTiles
+    generateTiles,
+    solvePentonimo
 }
