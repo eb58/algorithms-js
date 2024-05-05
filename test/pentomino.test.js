@@ -83,6 +83,12 @@ test('extract 6x10', () => { // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v
     expect(extr('z')).toEqual([['z', ' ', ' '], ['z', 'z', 'z'], [' ', ' ', 'z']]);
 });
 
+test('symbols', () => { // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+    const filledBoard = filledBoards['4x15'];
+    const pento = pentonimo(filledBoard, 4, 15)
+    expect(pento.internals.SYMBOLS).toEqual( ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']);
+});
+
 test('extract 4x15', () => { // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
     const filledBoard = filledBoards['4x15'];
     const pento = pentonimo(filledBoard, 4, 15)
