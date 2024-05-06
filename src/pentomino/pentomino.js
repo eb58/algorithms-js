@@ -19,13 +19,7 @@ const minmaxColIndex = (mat, v) => mat.reduce((res, row) => minmax(res, minmaxCo
 const makeQuadratic = (mat, defVal = 0) => redim(mat, Math.max(mat.length, mat[0].length), Math.max(mat.length, mat[0].length), defVal)
 const makeCopy = (mat) => mat.map(r => [...r])
 const transpose = (mat) => mat.map((r, ri) => r.map((_, ci) => mat[ci][ri]))
-const translate = (mat, dr, dc, defVal = 0) => {
-    const [dimr, dimc] = [mat.length, mat[0].length];
-    const newMat = redim([], dimr, dimc, defVal);
-    for (let r = 0; r < dimr - dr; r++) for (let c = 0; c < dimc - dc; c++)
-        newMat[r + dr][c + dc] = mat[r][c]
-    return newMat
-}
+const translate = (mat, dr, dc, defVal = 0) => range(mat.length).map(r => range(mat[0].length).map((c) => mat[r-dr] && mat[r-dr][c-dc] || defVal))
 
 const rotate90 = (mat, defVal = 0) => {
     const m = mat.length === mat[0].length ? [...mat] : makeQuadratic(mat, defVal)
