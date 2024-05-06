@@ -5,7 +5,7 @@ const dlxlib = require('dlxlib');                     // ~30 sec
 const dlx_solve = require('../dlx');                  // ~10.5 sec
 const dancingLinks = require('dancing-links')         // ~9.5 sec
 
-const { range, zip, reshape, redim  } = require('../ol').ol;                  // ~10.5 sec
+const { range, zip, reshape, redim } = require('../ol').ol;                  // ~10.5 sec
 
 // some primitives 
 const minmax = (v1, v2) => ({ min: Math.min(v1.min, v2.min), max: Math.max(v1.max, v2.max) })
@@ -14,26 +14,15 @@ const minmax = (v1, v2) => ({ min: Math.min(v1.min, v2.min), max: Math.max(v1.ma
 const minmaxColIndexArr = (xs, v) => xs.reduce((acc, cv, n) => cv !== v ? acc : minmax(acc, { min: n, max: n }), { min: 1000, max: -1 })
 
 // matrix functions
+const makeCopy = (mat) => mat.map(r => [...r])
+const makeQuadratic = (mat, defVal = 0) => redim(mat, Math.max(mat.length, mat[0].length), Math.max(mat.length, mat[0].length), defVal)
+const transpose = (mat) => mat.map((r, ri) => r.map((_, ci) => mat[ci][ri]))
+const translate = (mat, dr, dc, defVal = 0) => range(mat.length).map(r => range(mat[0].length).map((c) => mat[r - dr] && mat[r - dr][c - dc] || defVal))
+const rotate90 = (mat) => mat[0].map((_, idx) => mat.map(r => r[r.length - idx - 1]))
+const rotateN90 = (mat, n) => range(n).reduce(rotate90, mat)
+
 const minmaxRowIndex = (mat, v) => mat.reduce((res, row, n) => !row.includes(v) ? res : minmax(res, { min: n, max: n }), { min: 1000, max: -1 })
 const minmaxColIndex = (mat, v) => mat.reduce((res, row) => minmax(res, minmaxColIndexArr(row, v)), { min: 1000, max: -1 })
-const makeQuadratic = (mat, defVal = 0) => redim(mat, Math.max(mat.length, mat[0].length), Math.max(mat.length, mat[0].length), defVal)
-const makeCopy = (mat) => mat.map(r => [...r])
-const transpose = (mat) => mat.map((r, ri) => r.map((_, ci) => mat[ci][ri]))
-const translate = (mat, dr, dc, defVal = 0) => range(mat.length).map(r => range(mat[0].length).map((c) => mat[r-dr] && mat[r-dr][c-dc] || defVal))
-
-const rotate90 = (mat, defVal = 0) => {
-    const m = mat.length === mat[0].length ? [...mat] : makeQuadratic(mat, defVal)
-    const N = m.length
-    for (let r = 0; r < N / 2; r++) for (let c = r; c < N - r - 1; c++) {
-        const temp = m[r][c];
-        m[r][c] = m[c][N - 1 - r];
-        m[c][N - 1 - r] = m[N - 1 - r][N - 1 - c];
-        m[N - 1 - r][N - 1 - c] = m[N - 1 - c][r];
-        m[N - 1 - c][r] = temp;
-    }
-    return m
-}
-const rotateN90 = (matrix, n) => range(n).reduce(m => rotate90(m, ' '), matrix)
 
 
 //  PENTOMINO 

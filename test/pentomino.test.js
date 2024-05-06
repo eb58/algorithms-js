@@ -43,7 +43,7 @@ test('transpose matrix', () => {
 })
 
 test('rotate matrix', () => {
-    const mat = [[0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0]]
+    const mat = [[0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
     expect(rotate90(mat)).toEqual([
         [0, 0, 0, 0, 0],
         [1, 0, 0, 0, 0],
@@ -86,7 +86,7 @@ test('extract 6x10', () => { // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v
 test('symbols', () => { // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
     const filledBoard = filledBoards['4x15'];
     const pento = pentonimo(filledBoard, 4, 15)
-    expect(pento.internals.SYMBOLS).toEqual( ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']);
+    expect(pento.internals.SYMBOLS).toEqual(['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']);
 });
 
 test('extract 4x15', () => { // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
