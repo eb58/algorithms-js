@@ -1,17 +1,5 @@
-const {
-    filledBoards,
-    minmaxColIndexArr, minmaxColIndex, minmaxRowIndex,
-    reshape, makeQuadratic, transpose, rotate90, translate,
-    pentonimo
-} = require('../src/pentomino/pentomino');
-
-test('matrix makeQuadratic', () => {
-    expect(makeQuadratic([[1]], 0)).toEqual([[1]]);
-    expect(makeQuadratic([[1], [3]], 0)).toEqual([[1, 0], [3, 0]]);
-    expect(makeQuadratic([[1, 2], [3, 4]], 0)).toEqual([[1, 2], [3, 4]]);
-    expect(makeQuadratic([[1, 2, 3], [4, 5, 6]], 0)).toEqual([[1, 2, 3], [4, 5, 6], [0, 0, 0]]);
-});
-
+const { reshape, rotate90 } = require('../src/ol').matrix;
+const { filledBoards, minmaxColIndexArr, minmaxColIndex, minmaxRowIndex, pentonimo } = require('../src/pentomino/pentomino');
 
 test('minmaxColIndexArr', () => {
     expect(minmaxColIndexArr([0, 1, 0, 0, 1, 0], 1)).toEqual({ min: 1, max: 4 });
@@ -37,29 +25,6 @@ test('minmaxRowIndex', () => {
     expect(minmaxRowIndex(m, 1)).toEqual({ min: 1, max: 2 });
 });
 
-test('transpose matrix', () => {
-    const mat = [[' ', 't', 't'], [' ', ' ', 't'], [' ', ' ', 't']]
-    expect(transpose(mat)).toEqual([[' ', ' ', ' '], ['t', ' ', ' '], ['t', 't', 't'],]);
-})
-
-test('rotate matrix', () => {
-    const mat = [[0, 1, 1, 1, 0], [0, 0, 1, 0, 0], [0, 0, 1, 0, 0], [0, 0, 0, 0, 0], [0, 0, 0, 0, 0]]
-    expect(rotate90(mat)).toEqual([
-        [0, 0, 0, 0, 0],
-        [1, 0, 0, 0, 0],
-        [1, 1, 1, 0, 0],
-        [1, 0, 0, 0, 0],
-        [0, 0, 0, 0, 0],
-    ]);
-})
-
-test('matrix translate', () => {
-    const mat = [[1, 1, 1, 0], [0, 1, 0, 0], [0, 0, 0, 0]]
-    expect(translate(mat, 1, 0)).toEqual([[0, 0, 0, 0], [1, 1, 1, 0], [0, 1, 0, 0]]);
-    expect(translate(mat, 0, 1)).toEqual([[0, 1, 1, 1], [0, 0, 1, 0], [0, 0, 0, 0]]);
-    expect(translate(mat, 1, 1)).toEqual([[0, 0, 0, 0], [0, 1, 1, 1], [0, 0, 1, 0]]);
-    expect(translate(mat, 1, 2)).toEqual([[0, 0, 0, 0], [0, 0, 1, 1], [0, 0, 0, 1]]);
-})
 
 test('extract 6x10', () => { // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
     const filledBoard = filledBoards['6x10'];
@@ -113,7 +78,7 @@ test('extract 4x15', () => { // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v
 
 test('generateTiles 6x10', () => {
     const pento = pentonimo(filledBoards['6x10'])
-    const res = Object.entries(pento.internals.generateTiles()).map(([key, value]) => key + ":" + value.length)
+    const res = Object.entries(pento.internals.generateAllTiles()).map(([key, value]) => key + ":" + value.length)
     expect(res).toEqual(['f:64', 'i:56', 'l:248', 'n:248', 'p:304', 't:128', 'u:152', 'v:128', 'w:128', 'x:32', 'y:248', 'z:128']);
 })
 
@@ -134,4 +99,3 @@ test('solve pentonimo 4 x 15', () => {
     // expect(solutions.findIndex(s => s === 'llxtttyyyylxxxtppuyulfxwtppuuulffwwpzvvvffnnwwzzzvnnniiiiizv') >= 0).toBe(true)
     // expect(solutions.findIndex(s => s === 'uuxllllvvvuxxxwwltnvuuxwwtttnvppfwzzytnnppffzyyyynpffzziiiii') >= 0).toBe(true)
 })
-

@@ -61,11 +61,6 @@ const comparerByKey = (key) => comparer((o) => o[key])
 // range(5).map(()=>0) // [0,0,0,0,0]
 const range = (n) => [...Array(n).keys()]
 
-// reshape( [1,2,3,4], 2 ) ->  [[1,2],[3,4]]
-const reshape = (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, [])
-// const reshape = (xs, cols) => range(cols).map(c => xs.slice(c * cols, (c + 1) * xs.length / cols))
-const redim = (mat, nrows, ncols, defVal = 0) => range(nrows).map(r => range(ncols).map((c) => mat[r] && mat[r][c] || defVal))
-
 // rangeFilled(3, 0)   // [0, 0, 0]
 const rangeFilled = (n, val) => range(n).map(() => val)
 
@@ -75,7 +70,7 @@ const randomArray = (n, min, max) => range(n).map(() => randomInRange(min, max))
 const randomIntArray = (n, min, max) => range(n).map(() => randomIntInRange(min, max))
 const sum = (xs) => xs.reduce(add, 0)
 const prod = (xs) => xs.reduce(mul, 1)
-const patch = (xs, idx, val ) => xs.with(idx,val)
+const patch = (xs, idx, val) => xs.with(idx, val)
 const without = (xs, x) => xs.filter((y) => x !== y)
 const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx)
 const sort = (xs, cmp) => (xs.sort(cmp), xs)
@@ -215,6 +210,19 @@ const bitset = {
   },
 }
 
+const matrix = {
+  // reshape( [1,2,3,4], 2) -> [[1,2],[3,4]]
+  reshape: (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, []),
+  //reshape: (xs, cols) => range(cols).map(c => xs.slice(c * cols, (c + 1) * xs.length / cols)),
+  redim: (mat, nrows, ncols, defVal = 0) => range(nrows).map(r => range(ncols).map((c) => mat[r] && mat[r][c] || defVal)),
+  makeCopy: (mat) => mat.map(r => [...r]),
+  makeQuadratic: (mat, defVal = 0) => matrix.redim(mat, Math.max(mat.length, mat[0].length), Math.max(mat.length, mat[0].length), defVal),
+  transpose: (mat) => mat.map((r, ri) => r.map((_, ci) => mat[ci][ri])),
+  translate: (mat, dr, dc, defVal = 0) => range(mat.length).map(r => range(mat[0].length).map((c) => mat[r - dr] && mat[r - dr][c - dc] || defVal)),
+  rotate90: (mat) => mat[0].map((_, idx) => mat.map(r => r[r.length - idx - 1])),
+  rotateN90: (mat, n) => range(n).reduce(matrix.rotate90, mat),
+}
+
 const ol = {
   id,
   abs,
@@ -231,8 +239,6 @@ const ol = {
   withoutIndex,
   range,
   zip,
-  reshape,
-  redim,
   rangeFilled,
   randomArray,
   randomIntArray,
@@ -272,7 +278,7 @@ const ol = {
   flatten,
   shuffle,
   vadd,
-  min, 
+  min,
   max
 }
 
@@ -282,6 +288,7 @@ module.exports = {
   interval,
   array,
   bitset,
+  matrix
 }
 
 
