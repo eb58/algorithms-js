@@ -1,4 +1,4 @@
-const { evalComplex, evalScalar } = require('../src/complex')
+const { evalComplex, evalScalar, C$ } = require('../src/complex')
 
 test('exceptions', () => {
   expect(() => evalScalar('p+5')).toThrow('Unknow identifier <p>. Pos:1')
