@@ -158,14 +158,14 @@ const doEval = (s, variables = {}, ops = csops) => {
   return val;
 };
 
-const evalComplex = (s, variables = {}) => doEval(s, variables, cops);
-const complexFunction = (s) => doEval(s, {}, csops);
+const evalComplex = (s, vars = {}) => doEval(s, vars, cops);
+const evalFunction = (s, vars = {}) => doEval(s, vars, csops);
 
 const C$ = (r, i) => {
   if (typeof r === 'string' && typeof i === 'object') return evalComplex(r, i);
-  if (typeof r === 'string') return complexFunction(r);
+  if (typeof r === 'string') return evalFunction(r,i);
   if (typeof r === 'number') return { r, i: i || 0 };
-  return r;
+    return r;
 };
 
 const sops = {
