@@ -10,15 +10,6 @@ const cops = {
   div: (c1, c2) => feedx(c2.r * c2.r + c2.i * c2.i, (x) => C$((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x)),
 };
 
-const sops = {
-  id: (x) => x,
-  neg: (x) => -x,
-  add: (x, y) => x + y,
-  sub: (x, y) => x - y,
-  mul: (x, y) => x * y,
-  div: (x, y) => x / y,
-};
-
 const csops = {
   id: (x) => `cops.id(C$(${x}))`,
   neg: (x) => `cops.neg(C$(${x}))`,
@@ -67,7 +58,7 @@ const lexParser = (input) => {
   return {
     getToken: () => {
       while (isSpace(input[strpos])) strpos++;
-      if (strpos >= input.length) return tokens.end;
+      if (strpos >= input.length) return { strpos, token: tokens.end };
 
       const c = input[strpos];
       if (isLetter(c)) return getIdentifier();
@@ -81,7 +72,7 @@ const lexParser = (input) => {
   };
 };
 
-const doEval = (s, variables = {}, ops = sops) => {
+const doEval = (s, variables = {}, ops = csops) => {
   const CONSTS = {
     I: ops === csops ? 'C$(0, 1)' : C$(0, 1),
     PI: Math.PI,
@@ -104,17 +95,17 @@ const doEval = (s, variables = {}, ops = sops) => {
       if (token.token === tokens.plus) return ops.id(operand());
       if (token.token === tokens.number) return ops.id(token.value);
       if (token.token === tokens.ident) {
-        let ret = CONSTS[token.name.toUpperCase()] || variables[token.name];
-        if (ret === undefined && ops === csops) {
-          ret = token.name;
+        let varOrConstOrFunctionName = CONSTS[token.name.toUpperCase()] || variables[token.name];
+        if (varOrConstOrFunctionName === undefined) {
+          varOrConstOrFunctionName = token.name;
           params = uniq([...params, token.name]);
         }
-        if (typeof ret === 'function') {
+        if (typeof varOrConstOrFunctionName === 'function') {
           token = lex.getToken();
-          return ret(expression());
+          return varOrConstOrFunctionName(expression());
         }
-        if (ret === undefined) throw Error(`Unknow identifier <${token.name}>. Pos:${token.strpos}`);
-        return ret;
+        if (varOrConstOrFunctionName === undefined) throw Error(`Unknow identifier <${token.name}>. Pos:${token.strpos}`);
+        return varOrConstOrFunctionName;
       }
       if (token.token === tokens.lparen) {
         const ret = expression();
@@ -123,7 +114,7 @@ const doEval = (s, variables = {}, ops = sops) => {
         }
         return ret;
       }
-      throw Error(`Operand expected.`);
+      throw Error(`Operand expected. Pos:${token.strpos}`);
     };
 
     token = lex.getToken();
@@ -154,7 +145,7 @@ const doEval = (s, variables = {}, ops = sops) => {
 
   const lex = lexParser(s);
   let val = expression();
-  if (token != tokens.end) throw Error(`Unexpected symbol <${token.name}>. Pos:${token.strpos}`);
+  if (token.token != tokens.end) throw Error(`Unexpected symbol <${token.name}>. Pos:${token.strpos}`);
 
   if (ops === csops) {
     val = eval(params.length > 0 ? `(${params.join(',')}) => ${val}` : val);
@@ -167,8 +158,7 @@ const doEval = (s, variables = {}, ops = sops) => {
   return val;
 };
 
-const evalScalar = (s, variables) => doEval(s, variables, sops);
-const evalComplex = (s, variables) => doEval(s, variables, cops);
+const evalComplex = (s, variables = {}) => doEval(s, variables, cops);
 const complexFunction = (s) => doEval(s, {}, csops);
 
 const C$ = (r, i) => {
@@ -178,8 +168,19 @@ const C$ = (r, i) => {
   return r;
 };
 
+const sops = {
+  id: (x) => x,
+  neg: (x) => -x,
+  add: (x, y) => x + y,
+  sub: (x, y) => x - y,
+  mul: (x, y) => x * y,
+  div: (x, y) => x / y,
+};
+
+const evalScalar = (s, vars) => doEval(s, vars, sops);
+
 module.exports = {
-  C$,
   evalScalar,
   evalComplex,
+  C$,
 };
