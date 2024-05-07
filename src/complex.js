@@ -81,15 +81,13 @@ const lexParser = (input) => {
   };
 };
 
-const doEval = (s, variables, ops) => {
+const doEval = (s, variables = {}, ops = sops) => {
   const CONSTS = {
     I: ops === csops ? 'C$(0, 1)' : C$(0, 1),
     PI: Math.PI,
     E: Math.exp(1),
   };
 
-  variables = variables || {};
-  ops = ops || sops;
   let token;
   let params = [];
 
