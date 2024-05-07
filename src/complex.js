@@ -72,7 +72,7 @@ const lexParser = (input) => {
       const c = input[strpos];
       if (isLetter(c)) return getIdentifier();
       if (isDigit(c)) return getNumber();
-      if (!mapCharToToken[c]) throw `Char ${c} not allowed. Pos:${strpos}`;
+      if (!mapCharToToken[c]) throw Error(`Char ${c} not allowed. Pos:${strpos}`);
       return {
         strpos: ++strpos,
         token: mapCharToToken[c],
