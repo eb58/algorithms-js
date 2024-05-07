@@ -2,6 +2,7 @@ const permWithFilter = require('../perm').permWithFilter;
 const magicFilter3x3 = (x) => {
   // horizontal
   if (x.length === 2 && x[0] + x[1] >= 15) return false;
+  if (x.length === 2 && x[0] + x[1] < 15 - 9) return false;
   if (x.length === 3 && x[0] + x[1] + x[2] !== 15) return false;
   if (x.length === 6 && x[3] + x[4] + x[5] !== 15) return false;
   if (x.length === 9 && x[6] + x[7] + x[8] !== 15) return false;
