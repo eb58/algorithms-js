@@ -1,8 +1,6 @@
 const comb = require('../combinations').comb1
 const perm = require('../perm').perm4
-const range = require('../ol').ol.range
-const sum = require('../ol').ol.sum
-const array = require('../ol').array
+const { range, sum } = require('../ol').ol
 
 const magicSquare = (N, idxNotForNumberOne) => {
   let res = []
@@ -52,8 +50,8 @@ const magicSquare = (N, idxNotForNumberOne) => {
   }
 }
 
-magic3x3Solver = () => {
-  magic3x3 = magicSquare(3, [1, 2, 3, 4, 5, 6, 7, 8])
+const magic3x3Solver = () => {
+  const magic3x3 = magicSquare(3, [1, 2, 3, 4, 5, 6, 7, 8])
   const MN = magic3x3.MN
   return magic3x3.solve([
     { row: [0, 4, 8] }, // diag
@@ -66,7 +64,7 @@ magic3x3Solver = () => {
 }
 
 
-magic4x4Solver1 = () => {
+const magic4x4Solver1 = () => {
   const magic4x4 = magicSquare(4, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
   const MN = magic4x4.MN
   const chk = (avn, s1, s2) => s1 != s2 && avn.includes(MN - s1) && avn.includes(MN - s2)
@@ -83,7 +81,7 @@ magic4x4Solver1 = () => {
   ])
 }
 
-magic4x4Solver2 = () => {
+const magic4x4Solver2 = () => {
   const magic4x4 = magicSquare(4, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
   const MN = magic4x4.MN
   return magic4x4.solve([
@@ -97,7 +95,6 @@ magic4x4Solver2 = () => {
   ])
 }
 
-magic4x4Solver1()
 module.exports = {
   magic3x3Solver,
   magic4x4Solver1,
