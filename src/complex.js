@@ -20,8 +20,8 @@ const sops = {
 };
 
 const csops = {
-  id: (x) => `C$(${x})`,
-  neg: (x) => `C$(${-x})`,
+  id: (x) => `cops.id(C$(${x}))`,
+  neg: (x) => `cops.neg(C$(${x}))`,
   add: (x, y) => `cops.add(C$(${x}), C$(${y}))`,
   sub: (x, y) => `cops.sub(C$(${x}), C$(${y}))`,
   mul: (x, y) => `cops.mul(C$(${x}), C$(${y}))`,
