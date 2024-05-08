@@ -2,7 +2,7 @@ const feedx = (x, f) => f(x);
 const uniq = (xs) => Array.from(new Set(xs));
 
 const cops = {
-  id: (x) => C$(x),
+  id: (c) => C$(c),
   neg: (c) => C$(-c.r, -c.i),
   add: (c1, c2) => C$(c1.r + c2.r, c1.i + c2.i),
   sub: (c1, c2) => C$(c1.r - c2.r, c1.i - c2.i),
@@ -11,12 +11,12 @@ const cops = {
 };
 
 const csops = {
-  id: (x) => `cops.id(C$(${x}))`,
-  neg: (x) => `cops.neg(C$(${x}))`,
-  add: (x, y) => `cops.add(C$(${x}), C$(${y}))`,
-  sub: (x, y) => `cops.sub(C$(${x}), C$(${y}))`,
-  mul: (x, y) => `cops.mul(C$(${x}), C$(${y}))`,
-  div: (x, y) => `cops.div(C$(${x}), C$(${y}))`,
+  id: (c) => `C$(${c})`,
+  neg: (c) => `cops.neg(${c})`,
+  add: (c1, c2) => `cops.add(C$(${c1}), C$(${c2}))`,
+  sub: (c1, c2) => `cops.sub(C$(${c1}), C$(${c2}))`,
+  mul: (c1, c2) => `cops.mul(C$(${c1}), C$(${c2}))`,
+  div: (c1, c2) => `cops.div(C$(${c1}), C$(${c2}))`,
 };
 
 const tokens = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'lparen', 'rparen', 'end'].reduce(
@@ -72,7 +72,7 @@ const lexParser = (input) => {
   };
 };
 
-const doEval = (s, variables = {}, ops = csops) => {
+const doEval = (s, varsOrFcts = {}, ops = csops) => {
   const CONSTS = {
     I: ops === csops ? 'C$(0, 1)' : C$(0, 1),
     PI: Math.PI,
@@ -95,17 +95,24 @@ const doEval = (s, variables = {}, ops = csops) => {
       if (token.token === tokens.plus) return ops.id(operand());
       if (token.token === tokens.number) return ops.id(token.value);
       if (token.token === tokens.ident) {
-        let varOrConstOrFunctionName = CONSTS[token.name.toUpperCase()] || variables[token.name];
-        if (varOrConstOrFunctionName === undefined) {
-          varOrConstOrFunctionName = token.name;
+        let ident = CONSTS[token.name.toUpperCase()] || varsOrFcts[token.name];
+
+        if (ident === undefined) {
+          try {
+            ident = eval(token.name); // try to get from environment
+          } catch (e) {}
+        }
+        if (ident === undefined) {
+          ident = token.name;
           params = uniq([...params, token.name]);
         }
-        if (typeof varOrConstOrFunctionName === 'function') {
+        if (typeof ident === 'function') {
           token = lex.getToken();
-          return varOrConstOrFunctionName(expression());
+          return ident(expression());
         }
-        if (varOrConstOrFunctionName === undefined) throw Error(`Unknow identifier <${token.name}>. Pos:${token.strpos}`);
-        return varOrConstOrFunctionName;
+
+        if (ident === undefined) throw Error(`Unknow identifier <${token.name}>. Pos:${token.strpos}`);
+        return ident;
       }
       if (token.token === tokens.lparen) {
         const ret = expression();
@@ -147,13 +154,9 @@ const doEval = (s, variables = {}, ops = csops) => {
   let val = expression();
   if (token.token != tokens.end) throw Error(`Unexpected symbol <${token.name}>. Pos:${token.strpos}`);
 
-  if (ops === csops) {
-    val = eval(params.length > 0 ? `(${params.join(',')}) => ${val}` : val);
-  }
-
-  if (val === -0) val = 0;
-  if (val.i === -0) val.i = 0;
-  if (val.r === -0) val.r = 0;
+  //params.length > 0 && console.log('VAL1', s, val, params, ops);
+  val = eval(params.length > 0 ? `(${params.join(',')}) => ${val}` : val);
+  // params.length > 0 && console.log('VAL2', val);
 
   return val;
 };
@@ -163,24 +166,21 @@ const evalFunction = (s, vars = {}) => doEval(s, vars, csops);
 
 const C$ = (r, i) => {
   if (typeof r === 'string' && typeof i === 'object') return evalComplex(r, i);
-  if (typeof r === 'string') return evalFunction(r,i);
-  if (typeof r === 'number') return { r, i: i || 0 };
-    return r;
+  if (typeof r === 'string') return evalFunction(r, i);
+  if (typeof r === 'number') return { r: !!r ? r : 0, i: !!i ? i : 0 };
+  return r;
 };
-
-const sops = {
-  id: (x) => x,
-  neg: (x) => -x,
-  add: (x, y) => x + y,
-  sub: (x, y) => x - y,
-  mul: (x, y) => x * y,
-  div: (x, y) => x / y,
-};
-
-const evalScalar = (s, vars) => doEval(s, vars, sops);
 
 module.exports = {
-  evalScalar,
   evalComplex,
   C$,
+  evalScalar: (s, vars) =>
+    doEval(s, vars, {
+      id: (x) => x,
+      neg: (x) => -x,
+      add: (x, y) => x + y,
+      sub: (x, y) => x - y,
+      mul: (x, y) => x * y,
+      div: (x, y) => x / y,
+    }),
 };

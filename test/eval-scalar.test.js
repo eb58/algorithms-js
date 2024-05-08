@@ -1,7 +1,6 @@
-test('exceptions', () => {
-  expect(() => evalComplex('(1+5')).toThrow('Closing bracket not found!');
-  expect(() => evalComplex('1-*5')).toThrow('Operand expected. Pos:3');
+const { evalScalar } = require('../src/complex');
 
+test('exceptions', () => {
   expect(() => evalScalar('(1+5')).toThrow('Closing bracket not found!');
   expect(() => evalScalar('1+')).toThrow('Operand expected. Pos:2');
   expect(() => evalScalar('%1+')).toThrow('Char % not allowed. Pos:0');
@@ -11,7 +10,7 @@ test('exceptions', () => {
 test('evalScalar 1', () => {
     expect(evalScalar('0')).toBe(0);
     expect(evalScalar('+0')).toBe(0);
-    expect(evalScalar('-0')).toBe(0);
+    expect(evalScalar('-0')).toBe(-0);
   
     expect(evalScalar('5')).toBe(5);
     expect(evalScalar('+5')).toBe(5);
