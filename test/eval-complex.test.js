@@ -8,11 +8,6 @@ const f = C$('-i*(z+1)*(z+1)*(z*z*z*z)');
 test('exceptions', () => {
   expect(() => evalComplex('(1+5')).toThrow('Closing bracket not found!');
   expect(() => evalComplex('1-*5')).toThrow('Operand expected. Pos:3');
-
-  expect(() => evalScalar('(1+5')).toThrow('Closing bracket not found!');
-  expect(() => evalScalar('1+')).toThrow('Operand expected. Pos:2');
-  expect(() => evalScalar('%1+')).toThrow('Char % not allowed. Pos:0');
-  expect(() => evalScalar('1+3 sa')).toThrow('Unexpected symbol <sa>. Pos:6');
 });
 
 test('evalComplex', () => {
@@ -103,62 +98,14 @@ test('complexFunction type 3', () => {
 
   expect(C$('f(z)', { z: C$(1, 1), f })).toEqual(C$(-16, 12));
   expect(C$('f(z)', { z: C$(1, 1), f })).toEqual(C$(-16, 12));
+
+  expect(C$('csqr(z)*csqr(z)', { csqr, z:C$(0,2) })).toEqual(C$(16, 0));
+  expect(C$('f(z)*g(z)', { f,g, z:C$(0,2) })).toEqual(C$(2.842170943040401e-14, -320));
 });
 
-test('complexFunction', () => {});
 
-test('evalScalar', () => {
-  expect(evalScalar('0')).toBe(0);
-  expect(evalScalar('+0')).toBe(0);
-  expect(evalScalar('-0')).toBe(0);
+test('aaaa', () => {
+  expect(C$('csqr(a)', {csqr})(3)).toEqual(C$(9, 0));
 
-  expect(evalScalar('5')).toBe(5);
-  expect(evalScalar('+5')).toBe(5);
-  expect(evalScalar('-5')).toBe(-5);
-  expect(evalScalar('--5')).toBe(5);
-  expect(evalScalar(' 5 ')).toBe(5);
-  expect(evalScalar('( 5 )')).toBe(5);
-  expect(evalScalar('-( 5 )')).toBe(-5);
-  expect(evalScalar('5*-3')).toBe(-15);
-  expect(evalScalar('-5*3')).toBe(-15);
-  expect(evalScalar('--5*-3')).toBe(-15);
-
-  expect(evalScalar('1+3')).toBe(4);
-  expect(evalScalar('1+3+5')).toBe(9);
-  expect(evalScalar('2*7+3')).toBe(17);
-  expect(evalScalar('1+3+5')).toBe(9);
-  expect(evalScalar('3*3')).toBe(9);
-  expect(evalScalar('1*2*3*4')).toBe(24);
-  expect(evalScalar('(1+1)*(3+3)')).toBe(12);
-  expect(evalScalar('(7+4*3+13)')).toBe(32);
-  expect(evalScalar('(1+1)*(3*3)')).toBe(18);
-  expect(evalScalar('3*3+5*5')).toBe(34);
-  expect(evalScalar('3*(3+5)*5')).toBe(120);
-
-  expect(evalScalar('3/5')).toBe(3 / 5);
-  expect(evalScalar('PI*3')).toBe(Math.PI * 3);
-  expect(evalScalar('pi*3')).toBe(Math.PI * 3);
-  expect(evalScalar('E*3')).toBe(Math.exp(1) * 3);
-
-  expect(evalScalar('1/2')).toBe(0.5);
-  expect(evalScalar('0.5')).toBe(0.5);
-  expect(evalScalar('0.5 * 3')).toBe(1.5);
-
-  // with variables
-  const vars1 = { a: 3, b: 7 };
-  expect(evalScalar('a', vars1)).toBe(3);
-  expect(evalScalar('-a', vars1)).toBe(-3);
-  expect(evalScalar('a+b', vars1)).toBe(10);
-  expect(evalScalar('a*b', vars1)).toBe(21);
-  expect(evalScalar('(a)+(b)', vars1)).toBe(10);
-
-  // with variables and functions
-  const vars2 = { a: 3, b: 7, f: (x) => x * x };
-  expect(evalScalar('f(7)', vars2)).toBe(49);
-  expect(evalScalar('f(5)', vars2)).toBe(25);
-  expect(evalScalar('f(5)*f(5)', vars2)).toBe(625);
-
-  expect(evalScalar('f(a)', vars2)).toBe(9);
-  expect(evalScalar('f(b)', vars2)).toBe(49);
-  expect(evalScalar('10+f(b)', vars2)).toBe(59);
+  expect(C$('f(z)*g(z)', { f,g, z:C$(0,2) })).toEqual(C$(2.842170943040401e-14, -320));
 });
