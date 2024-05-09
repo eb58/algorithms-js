@@ -5,14 +5,17 @@ const dlxlib = require('dlxlib'); // ~30 sec
 const dlx_solve = require('../dlx'); // ~10.5 sec
 const dancingLinks = require('dancing-links'); // ~9.5 sec
 
-const { range, zip, uniqBy } = require('../ol').ol;
-const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = require('../ol').matrix;
+const { range, zip } = require('../ol').ol;
+const { reshape, redim, makeQuadratic, transpose, translate, rotate90, rotateN90 } = require('../ol').matrix;
+
+// some primitives
+const minmax = (v1, v2) => ({ min: Math.min(v1.min, v2.min), max: Math.max(v1.max, v2.max) });
 
 // array functions
-const minmax = (v1, v2) => ({ min: Math.min(v1.min, v2.min), max: Math.max(v1.max, v2.max) });
 const minmaxColIndexArr = (xs, v) => xs.reduce((acc, cv, n) => (cv !== v ? acc : minmax(acc, { min: n, max: n })), { min: 1000, max: -1 });
-const minmaxRowIndex = (m, v) => m.reduce((res, r, n) => (!r.includes(v) ? res : minmax(res, { min: n, max: n })), { min: 1000, max: -1 });
-const minmaxColIndex = (m, v) => m.reduce((res, row) => minmax(res, minmaxColIndexArr(row, v)), { min: 1000, max: -1 });
+const minmaxRowIndex = (mat, v) =>
+  mat.reduce((res, row, n) => (!row.includes(v) ? res : minmax(res, { min: n, max: n })), { min: 1000, max: -1 });
+const minmaxColIndex = (mat, v) => mat.reduce((res, row) => minmax(res, minmaxColIndexArr(row, v)), { min: 1000, max: -1 });
 
 //  PENTOMINO
 const filledBoards = {
@@ -50,11 +53,15 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
     return redim([], dimr, dimc, defVal).map((r, ri) => r.map((_, ci) => extracted[mmr.min + ri][mmc.min + ci]), defVal);
   };
 
-  const translateBoardAsArr = (arr, dr, dc, defVal = ' ') => {
-    const translatedBoard = arr.map((_, idx) => arr[idx - dr * DIMC - dc] || defVal);
-    const cnt1 = arr.reduce((acc, v) => acc + v != defVal, 0);
-    const cnt2 = translatedBoard.reduce((acc, v) => acc + v != defVal, 0);
-    return cnt1 === cnt2 ? translatedBoard : undefined;
+  const translateBoard = (board, dr, dc, defVal = ' ') => {
+    const newBoard = translate(board, dr, dc, defVal);
+    let [cnt1, cnt2] = [0, 0];
+    for (let r = 0; r < DIMR; r++)
+      for (let c = 0; c < DIMC; c++) {
+        cnt1 += board[r][c] !== defVal;
+        cnt2 += newBoard[r][c] !== defVal;
+      }
+    return cnt1 != cnt2 ? undefined : newBoard;
   };
 
   const generateAllTiles = () => {
@@ -62,25 +69,26 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
 
     return SYMBOLS.reduce((acc, ch) => {
       const extractSym = makeQuadratic(extract(reshape(filledBoard, DIMC), ch));
-      const N = ch === 'f' ? 1 : 4; // symmetry!
+      const N = ch === 'f' ? 1 : 4; // symmetrie!!
       const tiles = range(N)
         .reduce((acc, n) => [...acc, rotateN90(extractSym, n)], [])
         .reduce((acc, tile) => [...acc, tile, transpose(tile)], [])
-        .map((tile) => makeQuadratic(extract(tile, ch), ' '), ' ')
-        .map((tile) => redim(tile, DIMR, DIMC, ' '));
+        .map((tile) => makeQuadratic(extract(tile, ch), ' ').flat().join(''));
+      const uniqTilesAsString = [...new Set(tiles)];
+      const uniqTiles = uniqTilesAsString.map((t) => reshape(t.split(''), Math.sqrt(t.length)));
 
-      const uniqTiles = uniqBy(tiles, (t) => t.join(''));
-
-      uniqTiles.forEach((board) =>
-        range(DIMR).forEach((dr) =>
-          range(DIMC).forEach((dc) => {
-            const translated = translateBoardAsArr(board, dr, dc);
-            if (translated) {
-              acc[ch] = [...acc[ch], translated];
-            }
-          }),
-        ),
-      );
+      uniqTiles
+        .map((tile) => redim(tile, DIMR, DIMC, ' '))
+        .forEach((board) =>
+          range(DIMR).forEach((dr) =>
+            range(DIMC).forEach((dc) => {
+              const translated = translateBoard(board, dr, dc);
+              if (translated) {
+                acc[ch] = [...acc[ch], translated];
+              }
+            }),
+          ),
+        );
       return acc;
     }, res);
   };
@@ -122,6 +130,7 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
     internals: {
       SYMBOLS,
       extract,
+      translateBoard,
       generateAllTiles,
     },
   };
