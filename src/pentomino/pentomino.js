@@ -1,115 +1,131 @@
-const { DancingLinkX } = require('@algorithm.ts/dlx') // do not understand how this works
-const dlx = require('dlx');                           // no solutions found in 5 min
+const { DancingLinkX } = require('@algorithm.ts/dlx'); // do not understand how this works
+const dlx = require('dlx'); // no solutions found in 5 min
 
-const dlxlib = require('dlxlib');                     // ~30 sec         
-const dlx_solve = require('../dlx');                  // ~10.5 sec
-const dancingLinks = require('dancing-links')         // ~9.5 sec
+const dlxlib = require('dlxlib'); // ~30 sec
+const dlx_solve = require('../dlx'); // ~10.5 sec
+const dancingLinks = require('dancing-links'); // ~9.5 sec
 
-const { range, zip } = require('../ol').ol;
-const { reshape, redim, makeQuadratic, transpose, translate, rotate90, rotateN90, } = require('../ol').matrix
-
-// some primitives 
-const minmax = (v1, v2) => ({ min: Math.min(v1.min, v2.min), max: Math.max(v1.max, v2.max) })
+const { range, zip, uniqBy } = require('../ol').ol;
+const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = require('../ol').matrix;
 
 // array functions
-const minmaxColIndexArr = (xs, v) => xs.reduce((acc, cv, n) => cv !== v ? acc : minmax(acc, { min: n, max: n }), { min: 1000, max: -1 })
-const minmaxRowIndex = (mat, v) => mat.reduce((res, row, n) => !row.includes(v) ? res : minmax(res, { min: n, max: n }), { min: 1000, max: -1 })
-const minmaxColIndex = (mat, v) => mat.reduce((res, row) => minmax(res, minmaxColIndexArr(row, v)), { min: 1000, max: -1 })
+const minmax = (v1, v2) => ({ min: Math.min(v1.min, v2.min), max: Math.max(v1.max, v2.max) });
+const minmaxColIndexArr = (xs, v) => xs.reduce((acc, cv, n) => (cv !== v ? acc : minmax(acc, { min: n, max: n })), { min: 1000, max: -1 });
+const minmaxRowIndex = (m, v) => m.reduce((res, r, n) => (!r.includes(v) ? res : minmax(res, { min: n, max: n })), { min: 1000, max: -1 });
+const minmaxColIndex = (m, v) => m.reduce((res, row) => minmax(res, minmaxColIndexArr(row, v)), { min: 1000, max: -1 });
 
-//  PENTOMINO 
+//  PENTOMINO
 const filledBoards = {
-    "4x15": `
+  '4x15': `
         l l x n n n i i i i i f v v v
         l x x x p n n w w z f f f t v
         l u x u p p w w y z z z f t v
-        l u u u p p w y y y y z t t t`.trim().replaceAll(' ', '').replaceAll('\n', '').split(''),
-    "6x10": `
+        l u u u p p w y y y y z t t t`
+    .trim()
+    .replaceAll(' ', '')
+    .replaceAll('\n', '')
+    .split(''),
+  '6x10': `
         n w w y y y y p p p
         n n w w y u u u p p
         l n t w x u f u z z
         l n t x x x f f z v
         l t t t x f f z z v
-        l l i i i i i v v v`.trim().replaceAll(' ', '').replaceAll('\n', '').split('')
-}
+        l l i i i i i v v v`
+    .trim()
+    .replaceAll(' ', '')
+    .replaceAll('\n', '')
+    .split(''),
+};
 
 const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
-    const SYMBOLS = [... new Set(filledBoard)].sort() // ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-    // console.log( SYMBOLS, DIMR, DIMC )
+  const SYMBOLS = [...new Set(filledBoard)].sort(); // ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+  // console.log( SYMBOLS, DIMR, DIMC )
 
-    const extract = (board, val, defVal = ' ') => {
-        const extracted = board.map(r => r.map(c => c === val ? c : defVal))
-        const mmr = minmaxRowIndex(extracted, val)
-        const mmc = minmaxColIndex(extracted, val)
-        const [dimr, dimc] = [mmr.max - mmr.min + 1, mmc.max - mmc.min + 1]
-        return redim([], dimr, dimc, defVal).map((r, ri) => r.map((_, ci) => extracted[mmr.min + ri][mmc.min + ci]), defVal)
-    }
+  const extract = (board, val, defVal = ' ') => {
+    const extracted = board.map((r) => r.map((c) => (c === val ? c : defVal)));
+    const mmr = minmaxRowIndex(extracted, val);
+    const mmc = minmaxColIndex(extracted, val);
+    const [dimr, dimc] = [mmr.max - mmr.min + 1, mmc.max - mmc.min + 1];
+    return redim([], dimr, dimc, defVal).map((r, ri) => r.map((_, ci) => extracted[mmr.min + ri][mmc.min + ci]), defVal);
+  };
 
-    const translateBoard = (board, dr, dc, defVal = ' ') => {
-        const newBoard = translate(board, dr, dc, defVal)
-        let [cnt1, cnt2] = [0, 0]
-        for (let r = 0; r < DIMR; r++) for (let c = 0; c < DIMC; c++) {
-            cnt1 += (board[r][c] !== defVal)
-            cnt2 += (newBoard[r][c] !== defVal)
-        }
-        return cnt1 != cnt2 ? undefined : newBoard
-    }
+  const translateBoardAsArr = (arr, dr, dc, defVal = ' ') => {
+    const translatedBoard = arr.map((_, idx) => arr[idx - dr * DIMC - dc] || defVal);
+    const cnt1 = arr.reduce((acc, v) => acc + v != defVal, 0);
+    const cnt2 = translatedBoard.reduce((acc, v) => acc + v != defVal, 0);
+    return cnt1 === cnt2 ? translatedBoard : undefined;
+  };
 
-    const generateAllTiles = () => {
-        const res = SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {})
+  const generateAllTiles = () => {
+    const res = SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {});
 
-        return SYMBOLS.reduce((acc, ch) => {
-            const extractSym = makeQuadratic(extract(reshape(filledBoard, DIMC), ch))
-            const N = ch === 'f' ? 1 : 4 // symmetrie!!
-            const tiles = range(N)
-                .reduce((acc, n) => [...acc, rotateN90(extractSym, n)], [])
-                .reduce((acc, tile) => ([...acc, tile, transpose(tile)]), [])
-                .map(tile => makeQuadratic(extract(tile, ch), ' ').flat().join(''))
-            const uniqTilesAsString = [... new Set(tiles)]
-            const uniqTiles = uniqTilesAsString.map(t => reshape(t.split(''), Math.sqrt(t.length)))
+    return SYMBOLS.reduce((acc, ch) => {
+      const extractSym = makeQuadratic(extract(reshape(filledBoard, DIMC), ch));
+      const N = ch === 'f' ? 1 : 4; // symmetry!
+      const tiles = range(N)
+        .reduce((acc, n) => [...acc, rotateN90(extractSym, n)], [])
+        .reduce((acc, tile) => [...acc, tile, transpose(tile)], [])
+        .map((tile) => makeQuadratic(extract(tile, ch), ' '), ' ')
+        .map((tile) => redim(tile, DIMR, DIMC, ' '));
 
-            uniqTiles.map(tile => redim(tile, DIMR, DIMC, ' ')).forEach(board =>
-                range(DIMR).forEach(dr => range(DIMC).forEach(dc => {
-                    const translated = translateBoard(board, dr, dc)
-                    if (translated) {
-                        acc[ch] = [...acc[ch], translated]
-                    }
-                }))
-            )
-            return acc
-        }, res)
-    }
+      const uniqTiles = uniqBy(tiles, (t) => t.join(''));
 
-    const solve = () => {
-        const allTiles = generateAllTiles();
-        const problem = Object.entries(allTiles).reduce((acc, [s, tiles]) => [...acc, ...tiles.map(tile => [
-            ...SYMBOLS.map(ch => s === ch ? 1 : 0),
-            ...tile.flat().map(x => x === ' ' ? 0 : 1)])],
-            [])
+      uniqTiles.forEach((board) =>
+        range(DIMR).forEach((dr) =>
+          range(DIMC).forEach((dc) => {
+            const translated = translateBoardAsArr(board, dr, dc);
+            if (translated) {
+              acc[ch] = [...acc[ch], translated];
+            }
+          }),
+        ),
+      );
+      return acc;
+    }, res);
+  };
 
-        const mapToSymbol = Object.entries(allTiles).reduce((acc, [s, tiles]) => [...acc, ...tiles.map(() => s)], [])
+  const solve = () => {
+    const allTiles = generateAllTiles();
+    const problem = Object.entries(allTiles).reduce(
+      (acc, [s, tiles]) => [
+        ...acc,
+        ...tiles.map((tile) => [...SYMBOLS.map((ch) => (s === ch ? 1 : 0)), ...tile.flat().map((x) => (x === ' ' ? 0 : 1))]),
+      ],
+      [],
+    );
 
-        // const solutions = dlxlib.solve(problem); // ~30 sec
-        // const solutions = dlx_solve(problem, 368 ); // ~10.5 sec
-        const solutions = dancingLinks.findAll(problem.map(row => ({ row }))).map(x => x.map(o => o.index))// ~9.5 sec
-        return solutions.map(solution =>
-            reshape(solution
-                .map(r => problem[r].slice(12).map(y => y === 1 ? mapToSymbol[r] : ''))
-                .reduce((acc, tile) => zip(acc, tile, (a, b) => a || b || ''), range(60).map(() => '')), DIMC)
-                .map(r => r.join('')).join('')
-        )
-    }
+    const mapToSymbol = Object.entries(allTiles).reduce((acc, [s, tiles]) => [...acc, ...tiles.map(() => s)], []);
 
-    return {
-        DIMC, DIMR,
-        solve,
-        internals: {
-            SYMBOLS,
-            extract,
-            translateBoard,
-            generateAllTiles
-        }
-    }
-}
+    // const solutions = dlxlib.solve(problem); // ~30 sec
+    // const solutions = dlx_solve(problem, 368 ); // ~10.5 sec
+    const solutions = dancingLinks.findAll(problem.map((row) => ({ row }))).map((x) => x.map((o) => o.index)); // ~9.5 sec
+    return solutions.map((solution) =>
+      reshape(
+        solution
+          .map((r) => problem[r].slice(12).map((y) => (y === 1 ? mapToSymbol[r] : '')))
+          .reduce(
+            (acc, tile) => zip(acc, tile, (a, b) => a || b || ''),
+            range(60).map(() => ''),
+          ),
+        DIMC,
+      )
+        .map((r) => r.join(''))
+        .join(''),
+    );
+  };
+
+  return {
+    DIMC,
+    DIMR,
+    solve,
+    internals: {
+      SYMBOLS,
+      extract,
+      generateAllTiles,
+    },
+  };
+};
 
 //const sol = solvePentonimo();
 //console.log(solutions.length)
@@ -124,5 +140,9 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
 // console.log(answer)
 
 module.exports = {
-    filledBoards, minmaxColIndexArr, minmaxColIndex, minmaxRowIndex, pentonimo,
-}
+  filledBoards,
+  minmaxColIndexArr,
+  minmaxColIndex,
+  minmaxRowIndex,
+  pentonimo,
+};
