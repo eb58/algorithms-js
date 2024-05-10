@@ -33,14 +33,6 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
     return cnt1 === cnt2 ? newBoard : undefined;
   };
 
-  const translateBoardAsArr = (boardAsArr, dr, dc, defVal = ' ') => {
-    const translatedBoard = range(boardAsArr.length).map((x) => boardAsArr[x - dr * DIMC - dc] || defVal);
-    // const translatedBoard = boardAsArr.map((_, idx) => boardAsArr[idx - dr * DIMC - dc] || defVal);
-    const cnt1 = boardAsArr.reduce((acc, v) => (acc + (v != defVal) ? 1 : 0), 0);
-    const cnt2 = translatedBoard.reduce((acc, v) => (acc + (v != defVal) ? 1 : 0), 0);
-    return cnt1 === cnt2 ? translatedBoard : undefined;
-  };
-
   const generateAllTiles = () => {
     const res = SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {});
 
@@ -51,18 +43,16 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
         .reduce((acc, n) => [...acc, rotateN90(extractSym, n)], [])
         .reduce((acc, tile) => [...acc, tile, transpose(tile)], [])
         .map((tile) => makeQuadratic(extract(tile, ch), ' '))
-        .map((tile) => redim(tile, DIMR, DIMC, ' ').flat());
-      const uniqTiles = uniqBy(tiles, (t) => t.join(''));
-      uniqTiles
-        .map((t) => reshape(t, DIMC, ' '))
-        .forEach((tile) =>
-          range(DIMR).forEach((dr) =>
-            range(DIMC).forEach((dc) => {
-              const translated = translateBoard(tile, dr, dc);
-              acc[ch] = translated ? [...acc[ch], translated.flat()] : acc[ch];
-            }),
-          ),
-        );
+        .map((tile) => redim(tile, DIMR, DIMC, ' '));
+      const uniqTiles = uniqBy(tiles, (t) => t.flat().join(''));
+      uniqTiles.forEach((tile) =>
+        range(DIMR).forEach((dr) =>
+          range(DIMC).forEach((dc) => {
+            const translated = translateBoard(tile, dr, dc);
+            acc[ch] = translated ? [...acc[ch], translated.flat()] : acc[ch];
+          }),
+        ),
+      );
       return acc;
     }, res);
   };
