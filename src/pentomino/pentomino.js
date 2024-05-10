@@ -27,7 +27,7 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
   };
 
   const translateBoard = (board, dr, dc, defVal = ' ') => {
-    const count = (board) => range(DIMR).reduce((acc, r) => range(DIMC).reduce((acc, c) => (acc += board[r][c] !== defVal), acc), 0);
+    const count = (board) => board.flat().reduce((acc, x) => (acc += x !== defVal), 0);
     const newBoard = translate(board, dr, dc, defVal);
     return count(board) === count(newBoard) ? newBoard : undefined;
   };
@@ -43,7 +43,7 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
     );
 
   const generateAllTiles = () => {
-    const res = SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {}); // { 'f': [], 'c'.: [], ...}
+    const tilesTable = SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {}); // { 'f': [], 'c'.: [], ...}
 
     return SYMBOLS.reduce((res, ch) => {
       const extractSym = makeQuadratic(extract(reshape(filledBoard, DIMC), ch));
@@ -55,7 +55,7 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
         .map((tile) => redim(tile, DIMR, DIMC, ' '))
         .reduce((acc, tile) => [...acc, ...generateAllTranslatedTiles(tile)], []);
       return { ...res, [ch]: [...uniqBy(tiles, (t) => t.join(''))] };
-    }, res);
+    }, tilesTable);
   };
 
   const solve = () => {
@@ -69,23 +69,24 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
       [],
     );
 
-    const mapToSymbol = Object.entries(allTiles).reduce((acc, [s, tiles]) => [...acc, ...tiles.map(() => s)], []);
-
     // const solutions = dlxlib.solve(problem); // ~30 sec
     // const solutions = dlx_solve(problem, 368 ); // ~10.5 sec
     const solutions = dancingLinks.findAll(problem.map((row) => ({ row }))).map((x) => x.map((o) => o.index)); // ~9.5 sec
-    return solutions.map((solution) =>
-      reshape(
-        solution
-          .map((r) => problem[r].slice(SYMBOLS.length).map((y) => (y === 1 ? mapToSymbol[r] : '')))
-          .reduce(
-            (acc, tile) => zip(acc, tile, (a, b) => a || b || ''),
-            range(DIMR * DIMC).map(() => ''),
-          ),
-        DIMC,
-      )
-        .map((r) => r.join(''))
-        .join(''),
+
+    // Map solutions from DLX back to boards
+    const decodeSymbol = (r) => SYMBOLS[problem[r].slice(0, SYMBOLS.length).findIndex((x) => x === 1)];
+    return solutions.map(
+      (solution) =>
+        reshape(
+          solution // contains rows of problem array that realize an exact cover
+            .map((r) => ({ symbol: decodeSymbol(r), board: problem[r].slice(SYMBOLS.length) }))
+            .map(({ symbol, board }) => board.map((x) => (x === 1 ? symbol : '')))
+            .reduce(
+              (acc, tile) => zip(acc, tile, (a, b) => a || b || ''),
+              range(DIMR * DIMC).map(() => ''),
+            ),
+        ),
+      DIMC,
     );
   };
 
