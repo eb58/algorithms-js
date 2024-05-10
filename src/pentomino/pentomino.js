@@ -54,19 +54,20 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
         .reduce((acc, n) => [...acc, rotateN90(extractSym, n)], [])
         .reduce((acc, tile) => [...acc, tile, transpose(tile)], [])
         .map((tile) => makeQuadratic(extract(tile, ch), ' '))
-        .map((tile) => redim(tile, DIMR, DIMC, ' '));
-      const uniqTiles = uniqBy(tiles, (t) => t.flat().join(''));
-      return uniqTiles.reduce((res, tile) => ({ ...res, [ch]: [...res[ch], ...generateAllTranslated(tile)] }), res);
+        .map((tile) => redim(tile, DIMR, DIMC, ' '))
+        .reduce((acc, tile) => [...acc, ...generateAllTranslated(tile)], []);
+      return { ...res, [ch]: [...uniqBy(tiles, (t) => t.join(''))] };
     }, res);
   };
 
   const solve = () => {
+    const encodeSymbol = (s) => SYMBOLS.map((ch) => (s === ch ? 1 : 0));
+    const encodeTile = (t) => t.map((x) => (x === ' ' ? 0 : 1));
+
     const allTiles = generateAllTiles();
+
     const problem = Object.entries(allTiles).reduce(
-      (acc, [s, tiles]) => [
-        ...acc,
-        ...tiles.map((tile) => [...SYMBOLS.map((ch) => (s === ch ? 1 : 0)), ...tile.map((x) => (x === ' ' ? 0 : 1))]),
-      ],
+      (acc, [s, tiles]) => [...acc, ...tiles.map((tile) => [...encodeSymbol(s), ...encodeTile(tile)])],
       [],
     );
 
@@ -78,10 +79,10 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
     return solutions.map((solution) =>
       reshape(
         solution
-          .map((r) => problem[r].slice(12).map((y) => (y === 1 ? mapToSymbol[r] : '')))
+          .map((r) => problem[r].slice(SYMBOLS.length).map((y) => (y === 1 ? mapToSymbol[r] : '')))
           .reduce(
             (acc, tile) => zip(acc, tile, (a, b) => a || b || ''),
-            range(60).map(() => ''),
+            range(DIMR * DIMC).map(() => ''),
           ),
         DIMC,
       )
