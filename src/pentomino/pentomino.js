@@ -27,22 +27,20 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
   };
 
   const translateBoard = (board, dr, dc, defVal = ' ') => {
+    const count = (board) => range(DIMR).reduce((acc, r) => range(DIMC).reduce((acc, c) => (acc += board[r][c] !== defVal), acc), 0);
     const newBoard = translate(board, dr, dc, defVal);
-    const cnt1 = range(DIMR).reduce((acc, r) => range(DIMC).reduce((acc, c) => (acc += board[r][c] !== defVal), acc), 0);
-    const cnt2 = range(DIMR).reduce((acc, r) => range(DIMC).reduce((acc, c) => (acc += newBoard[r][c] !== defVal), acc), 0);
-    return cnt1 === cnt2 ? newBoard : undefined;
+    return count(board) === count(newBoard) ? newBoard : undefined;
   };
 
-  const generateAllTranslated = (tile) => {
-    let acc = [];
-    range(DIMR).forEach((dr) =>
-      range(DIMC).forEach((dc) => {
-        const translated = translateBoard(tile, dr, dc);
-        acc = translated ? [...acc, translated.flat()] : acc;
-      }),
+  const generateAllTranslatedTiles = (tile) =>
+    range(DIMR).reduce(
+      (acc, dr) =>
+        range(DIMC).reduce((acc, dc) => {
+          const translated = translateBoard(tile, dr, dc);
+          return translated ? [...acc, translated.flat()] : acc;
+        }, acc),
+      [],
     );
-    return acc;
-  };
 
   const generateAllTiles = () => {
     const res = SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {}); // { 'f': [], 'c'.: [], ...}
@@ -55,7 +53,7 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
         .reduce((acc, tile) => [...acc, tile, transpose(tile)], [])
         .map((tile) => makeQuadratic(extract(tile, ch), ' '))
         .map((tile) => redim(tile, DIMR, DIMC, ' '))
-        .reduce((acc, tile) => [...acc, ...generateAllTranslated(tile)], []);
+        .reduce((acc, tile) => [...acc, ...generateAllTranslatedTiles(tile)], []);
       return { ...res, [ch]: [...uniqBy(tiles, (t) => t.join(''))] };
     }, res);
   };
