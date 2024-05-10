@@ -33,10 +33,21 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
     return cnt1 === cnt2 ? newBoard : undefined;
   };
 
-  const generateAllTiles = () => {
-    const res = SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {});
+  const generateAllTranslated = (tile) => {
+    let acc = [];
+    range(DIMR).forEach((dr) =>
+      range(DIMC).forEach((dc) => {
+        const translated = translateBoard(tile, dr, dc);
+        acc = translated ? [...acc, translated.flat()] : acc;
+      }),
+    );
+    return acc;
+  };
 
-    return SYMBOLS.reduce((acc, ch) => {
+  const generateAllTiles = () => {
+    const res = SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {}); // { 'f': [], 'c'.: [], ...}
+
+    return SYMBOLS.reduce((res, ch) => {
       const extractSym = makeQuadratic(extract(reshape(filledBoard, DIMC), ch));
       const N = ch === 'f' ? 1 : 4; // symmetrie!!
       const tiles = range(N)
@@ -45,15 +56,7 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
         .map((tile) => makeQuadratic(extract(tile, ch), ' '))
         .map((tile) => redim(tile, DIMR, DIMC, ' '));
       const uniqTiles = uniqBy(tiles, (t) => t.flat().join(''));
-      uniqTiles.forEach((tile) =>
-        range(DIMR).forEach((dr) =>
-          range(DIMC).forEach((dc) => {
-            const translated = translateBoard(tile, dr, dc);
-            acc[ch] = translated ? [...acc[ch], translated.flat()] : acc[ch];
-          }),
-        ),
-      );
-      return acc;
+      return uniqTiles.reduce((res, tile) => ({ ...res, [ch]: [...res[ch], ...generateAllTranslated(tile)] }), res);
     }, res);
   };
 
