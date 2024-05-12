@@ -46,10 +46,10 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
     const tilesTable = SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {}); // { 'f': [], 'c'.: [], ...}
 
     return SYMBOLS.reduce((res, ch) => {
-      const extractSym = makeQuadratic(extract(reshape(filledBoard, DIMC), ch));
+      const extractedSym = makeQuadratic(extract(reshape(filledBoard, DIMC), ch));
       const N = ch === 'f' ? 1 : 4; // symmetrie!!
       const tiles = range(N)
-        .reduce((acc, n) => [...acc, rotateN90(extractSym, n)], [])
+        .reduce((acc, n) => [...acc, rotateN90(extractedSym, n)], [])
         .reduce((acc, tile) => [...acc, tile, transpose(tile)], [])
         .map((tile) => makeQuadratic(extract(tile, ch), ' '))
         .map((tile) => redim(tile, DIMR, DIMC, ' '))
@@ -103,22 +103,6 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
   };
 };
 
-const prep = (s) => s.trim().replaceAll(' ', '').replaceAll('\n', '').split('');
-const filledBoards = {
-  '4x15': prep(`
-        l l x n n n i i i i i f v v v
-        l x x x p n n w w z f f f t v
-        l u x u p p w w y z z z f t v
-        l u u u p p w y y y y z t t t`),
-  '6x10': prep(`
-        n w w y y y y p p p
-        n n w w y u u u p p
-        l n t w x u f u z z
-        l n t x x x f f z v
-        l t t t x f f z z v
-        l l i i i i i v v v`),
-};
-
 //const sol = solvePentonimo();
 //console.log(solutions.length)
 
@@ -131,10 +115,4 @@ const filledBoards = {
 // const answer = dlx.solve()
 // console.log(answer)
 
-module.exports = {
-  filledBoards,
-  minmaxColIndexArr,
-  minmaxColIndex,
-  minmaxRowIndex,
-  pentonimo,
-};
+module.exports = pentonimo;

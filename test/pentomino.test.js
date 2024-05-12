@@ -1,39 +1,21 @@
 const { reshape, rotate90 } = require('../src/ol').matrix;
-const { filledBoards, minmaxColIndexArr, minmaxColIndex, minmaxRowIndex, pentonimo } = require('../src/pentomino/pentomino');
+const pentonimo = require('../src/pentomino/pentomino');
 
-test('minmaxColIndexArr', () => {
-  expect(minmaxColIndexArr([0, 1, 0, 0, 1, 0], 1)).toEqual({ min: 1, max: 4 });
-  expect(minmaxColIndexArr([1, 1, 0, 0, 1, 0], 1)).toEqual({ min: 0, max: 4 });
-  expect(minmaxColIndexArr([1, 1, 5, 0, 1, 7], 1)).toEqual({ min: 0, max: 4 });
-  expect(minmaxColIndexArr([0, 1, 0, 0, 1, 0], 1)).toEqual({ min: 1, max: 4 });
-});
-
-test('minmaxRowIndexArr', () => {
-  expect(minmaxColIndexArr([0, 1, 0, 0, 1, 0], 1)).toEqual({ min: 1, max: 4 });
-  expect(minmaxColIndexArr([1, 1, 0, 0, 1, 0], 1)).toEqual({ min: 0, max: 4 });
-  expect(minmaxColIndexArr([1, 1, 5, 0, 1, 7], 1)).toEqual({ min: 0, max: 4 });
-  expect(minmaxColIndexArr([0, 1, 0, 0, 1, 0], 1)).toEqual({ min: 1, max: 4 });
-});
-
-test('minmaxColIndex', () => {
-  const m = [
-    [0, 0, 0, 0, 0],
-    [0, 0, 1, 0, 0],
-    [0, 0, 1, 0, 0],
-    [0, 0, 0, 0, 1],
-  ];
-  expect(minmaxColIndex(m, 1)).toEqual({ min: 2, max: 4 });
-});
-
-test('minmaxRowIndex', () => {
-  const m = [
-    [0, 0, 0, 0, 0],
-    [0, 0, 1, 0, 0],
-    [0, 0, 1, 1, 0],
-    [0, 0, 0, 0, 0],
-  ];
-  expect(minmaxRowIndex(m, 1)).toEqual({ min: 1, max: 2 });
-});
+const prep = (s) => s.trim().replaceAll(' ', '').replaceAll('\n', '').split('');
+const filledBoards = {
+  '4x15': prep(`
+        l l x n n n i i i i i f v v v
+        l x x x p n n w w z f f f t v
+        l u x u p p w w y z z z f t v
+        l u u u p p w y y y y z t t t`),
+  '6x10': prep(`
+        n w w y y y y p p p
+        n n w w y u u u p p
+        l n t w x u f u z z
+        l n t x x x f f z v
+        l t t t x f f z z v
+        l l i i i i i v v v`),
+};
 
 test('extract 6x10', () => {
   // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
@@ -187,7 +169,7 @@ test('generateTiles 6x10', () => {
   expect(res).toEqual(['f:64', 'i:56', 'l:248', 'n:248', 'p:304', 't:128', 'u:152', 'v:128', 'w:128', 'x:32', 'y:248', 'z:128']);
 });
 
-const boardToString = (b) => boardToString.flat().join();
+const boardToString = (b) => b.flat().join('');
 
 test('solve pentonimo 6 x 10', () => {
   const pento = pentonimo(filledBoards['6x10']);
