@@ -215,7 +215,7 @@ const bitset = {
       if (bs & (1 << i)) cnt++;
       i++;
     }
-    if (i === 0 || i > bitset.MAX) throw 'Wrong index ' + n;
+    if (i === 0 || i > bitset.MAX) throw Error('Wrong index ' + n);
     return i - 1;
   },
 };
@@ -224,12 +224,11 @@ const matrix = {
   // reshape( [1,2,3,4], 2) -> [[1,2],[3,4]]
   reshape: (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, []),
   //reshape: (xs, cols) => range(cols).map(c => xs.slice(c * cols, (c + 1) * xs.length / cols)),
-  redim: (mat, nrows, ncols, defVal = 0) => range(nrows).map((r) => range(ncols).map((c) => (mat[r] && mat[r][c]) || defVal)),
+  redim: (mat, nrows, ncols, defVal = 0) => range(nrows).map((r) => range(ncols).map((c) => mat[r]?.[c] || defVal)),
   makeCopy: (mat) => mat.map((r) => [...r]),
   makeQuadratic: (mat, defVal = 0) => feedX(Math.max(mat.length, mat[0].length), (dim) => matrix.redim(mat, dim, dim, defVal)),
   transpose: (mat) => mat.map((r, ri) => r.map((_, ci) => mat[ci][ri])),
-  translate: (mat, dr, dc, defVal = 0) =>
-    range(mat.length).map((r) => range(mat[0].length).map((c) => (mat[r - dr] && mat[r - dr][c - dc]) || defVal)),
+  translate: (mat, dr, dc, defVal = 0) => range(mat.length).map((r) => range(mat[0].length).map((c) => mat[r - dr]?.[c - dc] || defVal)),
   rotate90: (mat) => mat[0].map((_, idx) => mat.map((r) => r[r.length - idx - 1])),
   rotateN90: (mat, n) => range(n).reduce(matrix.rotate90, mat),
 };
