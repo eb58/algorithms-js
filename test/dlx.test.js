@@ -28,10 +28,10 @@ test('dlx problem2', () => {
         [0, 0, 1, 0]
     ];
 
-    //console.log("AAA", dlx_solve(problem,3).map(x => x.sort()))
-    console.log("BBB", dlxlib.solve(problem).map(x => x.sort()))
-    console.log("CCC", dlx.solve(problem).map(x => x.sort()))
-    console.log("DDD", dancingLinks.findAll(problem.map(row => ({ row }))).map(x => x.map(o => o.index)).map(x => x.sort()))
+    // console.log("AAA", dlx_solve(problem,3).map(x => x.sort()))
+    // console.log("BBB", dlxlib.solve(problem).map(x => x.sort()))
+    // console.log("CCC", dlx.solve(problem).map(x => x.sort()))
+    // console.log("DDD", dancingLinks.findAll(problem.map(row => ({ row }))).map(x => x.map(o => o.index)).map(x => x.sort()))
     
     // expect(dlx_solve(problem, 3).map(x => x.sort())).toEqual([[0, 3, 4], [1, 2], [2, 4, 5]])
     expect(dlxlib.solve(problem).map(x => x.sort())).toEqual([[0, 3, 4], [1, 2], [2, 4, 5]])
