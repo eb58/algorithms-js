@@ -221,9 +221,7 @@ const bitset = {
 };
 
 const matrix = {
-  // reshape( [1,2,3,4], 2) -> [[1,2],[3,4]]
   reshape: (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, []),
-  //reshape: (xs, cols) => range(cols).map(c => xs.slice(c * cols, (c + 1) * xs.length / cols)),
   redim: (mat, nrows, ncols, defVal = 0) => range(nrows).map((r) => range(ncols).map((c) => mat[r]?.[c] || defVal)),
   makeCopy: (mat) => mat.map((r) => [...r]),
   makeQuadratic: (mat, defVal = 0) => feedX(Math.max(mat.length, mat[0].length), (dim) => matrix.redim(mat, dim, dim, defVal)),

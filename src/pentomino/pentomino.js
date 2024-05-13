@@ -8,34 +8,15 @@ const dancingLinks = require('dancing-links'); // ~9.5 sec
 const { range, zip, uniqBy } = require('../ol').ol;
 const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = require('../ol').matrix;
 
-// array functions
-const minmax = (v1, v2) => ({ min: Math.min(v1.min, v2.min), max: Math.max(v1.max, v2.max) });
-const minmaxColIndexArr = (xs, v) => xs.reduce((acc, cv, n) => (cv !== v ? acc : minmax(acc, { min: n, max: n })), { min: 1000, max: -1 });
-const minmaxRowIndex = (m, v) => m.reduce((res, r, n) => (!r.includes(v) ? res : minmax(res, { min: n, max: n })), { min: 1000, max: -1 });
-const minmaxColIndex = (m, v) => m.reduce((res, row) => minmax(res, minmaxColIndexArr(row, v)), { min: 1000, max: -1 });
-
 //  PENTOMINO
-const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
-  const SYMBOLS = [...new Set(filledBoard)].sort(); // ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
+const pentonimo = (filledBoard) => {
+  const [DIMR, DIMC]= [filledBoard.length, filledBoard[0].length]
+  const SYMBOLS = [...new Set(filledBoard.flat())].sort(); // ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
-  const extractx = (board, val, defVal = ' ') => {
-    const extracted = board.map((r) => r.map((c) => (c === val ? c : defVal)));
-    const mmr = minmaxRowIndex(extracted, val);
-    const mmc = minmaxColIndex(extracted, val);
-    const [dimr, dimc] = [mmr.max - mmr.min + 1, mmc.max - mmc.min + 1];
-    return redim([], dimr, dimc, defVal).map((r, ri) => r.map((_, ci) => extracted[mmr.min + ri][mmc.min + ci]), defVal);
-  };
   const extract = (board, val, defVal = ' ') => {
     const extracted = board.map((r) => r.map((c) => (c === val ? c : defVal)));
-    const a = extracted.filter((r) => r.some((v) => v !== defVal));
-    console.log('A', a);
-    const b = transpose(makeQuadratic(a, defVal));
-    console.log('B', b);
-    const c = b.filter((r) => r.some((v) => v !== defVal));
-    console.log('C', c);
-    const d = transpose(makeQuadratic(c, defVal)).filter((r) => r.some((v) => v !== defVal));
-    console.log('YYY', d);
-    return transpose(e);
+    const a = transpose(extracted.filter((r) => r.some((v) => v !== defVal)));
+    return a.filter((r) => r.some((v) => v !== defVal));
   };
 
   const translateBoard = (board, dr, dc, defVal = ' ') => {
@@ -58,7 +39,7 @@ const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
     const tilesTable = SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {}); // { 'f': [], 'c'.: [], ...}
 
     return SYMBOLS.reduce((res, ch) => {
-      const extractedSym = makeQuadratic(extract(reshape(filledBoard, DIMC), ch));
+      const extractedSym = makeQuadratic(extract(filledBoard, ch));
       const N = ch === 'f' ? 1 : 4; // symmetrie!!
       const tiles = range(N)
         .reduce((acc, n) => [...acc, rotateN90(extractedSym, n)], [])
