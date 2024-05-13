@@ -26,8 +26,9 @@ test('matrix makeQuadratic', () => {
 });
 
 test('transpose matrix', () => {
-    const mat = [[' ', 't', 't'], [' ', ' ', 't'], [' ', ' ', 't']]
-    expect(transpose(mat)).toEqual([[' ', ' ', ' '], ['t', ' ', ' '], ['t', 't', 't'],]);
+    expect(transpose([[1,2,3]])).toEqual([[1], [2], [3]]);
+    expect(transpose([[1,2,3],[4,5,6]])).toEqual([[1,4], [2,5], [3,6]]);
+    expect(transpose([[0,1,1], [0,0,1], [0,0,1]])).toEqual([[0,0,0], [1,0,0], [1,1,1],]);
 })
 
 test('rotate matrix', () => {

@@ -97,7 +97,7 @@ const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {});
 //    men   = [{name:'hugo', age:36 }, {name:'hans', age:37 }]
 //    women = [{name:'anna', age:35 }, {name:'lena', age:27 }]
 // zip(men, women, (a,b) => ({ 'husband': a, 'wife': b }) ) // -> [{"husband":"hugo","wife":"anna"}, {"husband":"hans","wife":"lena"}]
-const zip = (xs, ys, f = id) => xs.map((x, i) => f([x, ys[i]]));
+const zip = (xs, ys, f) => xs.map((x, i) => (f ? f(x, ys[i]) : [x, ys[i]]));
 
 const uniq = (xs) => Array.from(new Set(xs));
 const uniqBy = (xs, proj) => Object.values(xs.reduce((a, v) => ({ ...a, [proj(v)]: v }), {}));
@@ -227,7 +227,7 @@ const matrix = {
   redim: (mat, nrows, ncols, defVal = 0) => range(nrows).map((r) => range(ncols).map((c) => mat[r]?.[c] || defVal)),
   makeCopy: (mat) => mat.map((r) => [...r]),
   makeQuadratic: (mat, defVal = 0) => feedX(Math.max(mat.length, mat[0].length), (dim) => matrix.redim(mat, dim, dim, defVal)),
-  transpose: (mat) => mat.map((r, ri) => r.map((_, ci) => mat[ci][ri])),
+  transpose: (mat) =>mat[0].map((_,ci) => mat.map((r) => r[ci])),
   translate: (mat, dr, dc, defVal = 0) => range(mat.length).map((r) => range(mat[0].length).map((c) => mat[r - dr]?.[c - dc] || defVal)),
   rotate90: (mat) => mat[0].map((_, idx) => mat.map((r) => r[r.length - idx - 1])),
   rotateN90: (mat, n) => range(n).reduce(matrix.rotate90, mat),
