@@ -1,4 +1,4 @@
-const { range, fac } = require('../src/ol').ol;
+const { range, fac } = require('../src/ol/ol').ol;
 const perm = require('../src/perm');
 
 const perms = Object.keys(perm).filter(name => name !== 'permWithFilter').map(k => perm[k]);

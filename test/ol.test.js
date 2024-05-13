@@ -1,4 +1,4 @@
-const { ol, num, interval, array } = require('../src/ol');
+const { ol, num, interval, array } = require('../src/ol/ol');
 const {
   id,
   sqr,

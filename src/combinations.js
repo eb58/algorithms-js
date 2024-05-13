@@ -1,4 +1,4 @@
-const { ol, bitset, array } = require('./ol')
+const { ol, bitset, array } = require('./ol/ol')
 const { range } = ol
 
 // comb1 - fastest solution

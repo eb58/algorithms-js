@@ -1,4 +1,4 @@
-const { bitset } = require('../src/ol');
+const  bitset = require('../src/ol/ol.bitset');
 test('bitset', () => {
 
     const bs = bitset.fromArray([11, 1, 2, 9]);
@@ -30,6 +30,4 @@ test('bitset', () => {
     expect(bitset.contains(bs1, 12)).toBe(false);
 
     expect(bitset.sum(bs)).toBe(23);
-
-
 });

@@ -1,5 +1,5 @@
 const { CONNECTIONSETS, RANGE81, candidates } = require('./sudokuUtils');
-const min = require('../ol').ol.min;
+const min = require('../ol/ol').ol.min;
 
 const solve2a = (grid, emptyCells = RANGE81.filter(x => grid[x] === 0)) => {
     if (emptyCells.length === 0)

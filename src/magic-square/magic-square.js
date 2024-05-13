@@ -1,6 +1,6 @@
 const comb = require('../combinations').comb1
 const perm = require('../perm').perm4
-const { range, sum } = require('../ol').ol
+const { range, sum } = require('../ol/ol').ol
 
 const magicSquare = (N, idxNotForNumberOne) => {
   let res = []

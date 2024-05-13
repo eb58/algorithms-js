@@ -1,4 +1,4 @@
-const { range, cmp } = require('../src/ol').ol;
+const { range, cmp } = require('../src/ol/ol').ol;
 const qsorts = require('../src/sorting/qsort');
 const mergesort = require('../src/sorting/mergesort');
 

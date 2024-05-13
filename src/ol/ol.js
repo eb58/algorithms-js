@@ -158,73 +158,6 @@ const vadd = (v1, v2) => zip(v1, v2, add);
 const vsqrdist = (v1, v2) => zip(v1, v2, (x, y) => (x - y) ** 2);
 const vdist = (v1, v2) => Math.sqrt(vsqrdist(v1, v2));
 
-const bitset = {
-  MAX: 32,
-  fromArray: (xs) => xs.reduce((acc, x) => acc | (1 << x), 0),
-  toArray: (bs) => {
-    const res = [];
-    let i = 0;
-    while (bs) {
-      if (bs & 1) res.push(i);
-      i++;
-      bs >>= 1;
-    }
-    return res;
-  },
-  size: (bs) => {
-    let count = 0;
-    while (bs) bs & 1 ? count++ : 0, (bs >>= 1);
-    return count;
-  },
-
-  add: (bs, v) => bs | (1 << v),
-  rm: (bs, v) => bs & ~(1 << v),
-  set: (bs, n, v) => bs | ((v ? 1 : 0) << n),
-  isEmpty: (bs) => bs === 0,
-  sum: (bs) => bitset.toArray(bs).reduce(add, 0),
-  union: (bs1, bs2) => bs1 | bs2,
-  intersection: (bs1, bs2) => bs1 & bs2,
-  diff: (bs1, bs2) => bs1 & ~bs2,
-  xor: (bs1, bs2) => bs1 ^ bs2,
-  isSubset: (bs1, bs2) => (bs1 & ~bs2) === 0,
-  has: (bs, v) => !!(bs & (1 << v)),
-  includes: (bs, v) => !!(bs & (1 << v)),
-  contains: (bs, n) => !!(bs & (1 << n)),
-  slice: (bs, n) => {
-    let res = 0;
-    let i = 0;
-    let cnt = 0;
-    while (i <= bitset.MAX && cnt < n) {
-      if (bs & (1 << i)) cnt++;
-      i++;
-    }
-    for (let j = i; j < bitset.MAX; j++) {
-      res |= bs & (1 << j);
-    }
-    return res;
-  },
-  at: (bs, n) => {
-    let i = (cnt = 0);
-    while (i <= bitset.MAX && cnt <= n) {
-      if (bs & (1 << i)) cnt++;
-      i++;
-    }
-    if (i === 0 || i > bitset.MAX) throw Error('Wrong index ' + n);
-    return i - 1;
-  },
-};
-
-const matrix = {
-  reshape: (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, []),
-  redim: (mat, nrows, ncols, defVal = 0) => range(nrows).map((r) => range(ncols).map((c) => mat[r]?.[c] || defVal)),
-  makeCopy: (mat) => mat.map((r) => [...r]),
-  makeQuadratic: (mat, defVal = 0) => feedX(Math.max(mat.length, mat[0].length), (dim) => matrix.redim(mat, dim, dim, defVal)),
-  transpose: (mat) => mat[0].map((_, ci) => mat.map((r) => r[ci])),
-  translate: (mat, dr, dc, defVal = 0) => range(mat.length).map((r) => range(mat[0].length).map((c) => mat[r - dr]?.[c - dc] || defVal)),
-  rotate90: (mat) => mat[0].map((_, idx) => mat.map((r) => r[r.length - idx - 1])),
-  rotateN90: (mat, n) => range(n).reduce(matrix.rotate90, mat),
-};
-
 const ol = {
   id,
   abs,
@@ -289,6 +222,4 @@ module.exports = {
   num,
   interval,
   array,
-  bitset,
-  matrix,
 };

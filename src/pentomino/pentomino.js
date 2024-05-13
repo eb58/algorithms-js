@@ -5,8 +5,8 @@ const dlxlib = require('dlxlib'); // ~30 sec
 const dlx_solve = require('../dlx'); // ~10.5 sec
 const dancingLinks = require('dancing-links'); // ~9.5 sec
 
-const { range, zip, uniqBy } = require('../ol').ol;
-const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = require('../ol').matrix;
+const { range, zip, uniqBy } = require('../ol/ol').ol;
+const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = require('../ol/ol.matrix');
 
 //  PENTOMINO
 const pentonimo = (filledBoard) => {

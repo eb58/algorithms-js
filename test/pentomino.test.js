@@ -1,4 +1,4 @@
-const { reshape, rotate90, transpose } = require('../src/ol').matrix;
+const { reshape } = require('../src/ol/ol.matrix');
 const pentonimo = require('../src/pentomino/pentomino');
 
 const prep = (s,dimc) => reshape(s.trim().replaceAll(' ', '').replaceAll('\n', '').split(''), dimc);

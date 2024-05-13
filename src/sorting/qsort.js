@@ -1,4 +1,4 @@
-const { groupBy } = require('../ol').ol
+const { groupBy } = require('../ol/ol').ol
 
 Array.prototype.rndElem = function () {
   return this[Math.floor(Math.random() * this.length)]
