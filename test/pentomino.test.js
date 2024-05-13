@@ -24,45 +24,44 @@ test('symbols', () => {
   expect(pento.internals.SYMBOLS).toEqual(['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']);
 });
 
-xtest('extract 6x10', () => {
+test('extract 6x10', () => {
   const filledBoard = filledBoards['6x10']
   const pento = pentonimo(filledBoard);  
   const extract = pento.internals.extract;
-  const extr = (c) => extract(filledBoard, c);
+  const extr = (c) => extract(filledBoard, c).map(r => r.join('')).join('|');
   
-  // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-  expect(extr('f')).toEqual([[' ',' ','f'],['f','f','f'],[' ','f',' ']]);
-  expect(extr('i')).toEqual([['i'], ['i'], ['i'], ['i'], ['i']]);
-  expect(extr('l')).toEqual([['l','l','l','l'],[' ',' ',' ','l']]);
-  expect(extr('n')).toEqual([['n','n',' ',' '],[' ','n','n','n']]);
-  expect(extr('p')).toEqual([['p',' '],['p','p'],['p','p']]);
-  expect(extr('t')).toEqual([[' ',' ','t' ],['t','t','t'],[' ',' ','t']]);
-  expect(extr('u')).toEqual([['u','u'],['u',' '],['u','u']]);
-  expect(extr('v')).toEqual([[' ',' ','v'],[' ',' ','v'],['v','v','v']]);
-  expect(extr('w')).toEqual([['w',' ',' '],['w','w',' '],[' ','w','w']]);
-  expect(extr('x')).toEqual([[' ', 'x', ' '],['x', 'x', 'x'],[' ', 'x', ' ']]);
-  expect(extr('y')).toEqual([['y',' '],['y','y'],['y',' '],['y',' ']]);
-  expect(extr('z')).toEqual([[' ',' ','z '],['z','z','z'],['z',' ',' ']]);
+  expect(extr('f')).toEqual('  f|fff| f ');
+  expect(extr('i')).toEqual('i|i|i|i|i');
+  expect(extr('l')).toEqual('llll|   l');
+  expect(extr('n')).toEqual('nn  | nnn');
+  expect(extr('p')).toEqual('p |pp|pp');
+  expect(extr('t')).toEqual('  t|ttt|  t');
+  expect(extr('u')).toEqual('uu|u |uu');
+  expect(extr('v')).toEqual('  v|  v|vvv');
+  expect(extr('w')).toEqual('w  |ww | ww');
+  expect(extr('x')).toEqual(' x |xxx| x ');
+  expect(extr('y')).toEqual('y |yy|y |y ');
+  expect(extr('z')).toEqual('  z|zzz|z  ');
 });
 
 test('extract 4x15', () => { 
   const filledBoard = filledBoards['4x15'];
   const pento = pentonimo(filledBoard)
   const extract = pento.internals.extract
-  const extr = (c) => extract(filledBoard, c)
+  const extr = (c) => extract(filledBoard, c).map(r => r.join('')).join('|');
 
-  expect(extr('f')).toEqual([[' ','f',' '],['f','f',' '],[' ','f','f']]);
-  expect(extr('i')).toEqual([['i'], ['i'], ['i'], ['i'], ['i']]);
-  expect(extr('l')).toEqual([['l','l','l','l'],['l',' ',' ',' ']]);
-  expect(extr('n')).toEqual([['n',' '],['n',' '],['n','n'],[' ','n']]);
-  expect(extr('p')).toEqual([['p','p','p'],[' ','p','p']]);
-  expect(extr('t')).toEqual([[' ',' ','t'],['t','t','t'],[' ',' ','t']]);
-  expect(extr('u')).toEqual([['u','u'],[' ','u'],['u','u']]);
-  expect(extr('v')).toEqual([['v',' ',' '],['v',' ',' '],['v','v','v']]);
-  expect(extr('w')).toEqual([[' ','w','w'],['w','w',' '],['w',' ',' ']]);
-  expect(extr('x')).toEqual([[' ', 'x', ' '],['x', 'x', 'x'],[' ', 'x', ' ']]);
-  expect(extr('y')).toEqual([[' ','y'],['y','y'],[' ','y'],[' ', 'y']]);
-  expect(extr('z')).toEqual([['z','z',' '],[' ','z',' '],[' ','z','z']]);
+  expect(extr('f')).toEqual(' f |ff | ff');
+  expect(extr('i')).toEqual('i|i|i|i|i');
+  expect(extr('l')).toEqual('llll|l   ');
+  expect(extr('n')).toEqual('n |n |nn| n');
+  expect(extr('p')).toEqual('ppp| pp');
+  expect(extr('t')).toEqual('  t|ttt|  t');
+  expect(extr('u')).toEqual('uu| u|uu');
+  expect(extr('v')).toEqual('v  |v  |vvv');
+  expect(extr('w')).toEqual(' ww|ww |w  ');
+  expect(extr('x')).toEqual(' x |xxx| x ');
+  expect(extr('y')).toEqual(' y|yy| y| y');
+  expect(extr('z')).toEqual('zz | z | zz');
 });
 
 test('generateTiles 6x10', () => {

@@ -10,13 +10,13 @@ const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = requi
 
 //  PENTOMINO
 const pentonimo = (filledBoard) => {
-  const [DIMR, DIMC]= [filledBoard.length, filledBoard[0].length]
+  const [DIMR, DIMC] = [filledBoard.length, filledBoard[0].length];
   const SYMBOLS = [...new Set(filledBoard.flat())].sort(); // ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
   const extract = (board, val, defVal = ' ') => {
-    const extracted = board.map((r) => r.map((c) => (c === val ? c : defVal)));
-    const a = transpose(extracted.filter((r) => r.some((v) => v !== defVal)));
-    return a.filter((r) => r.some((v) => v !== defVal));
+    const extracted = board.map((r) => r.map((c) => (c === val ? c : defVal)))
+    const x = extracted.filter((r) => r.some((v) => v !== defVal));
+    return transpose(x).filter((r) => r.some((v) => v !== defVal));
   };
 
   const translateBoard = (board, dr, dc, defVal = ' ') => {
