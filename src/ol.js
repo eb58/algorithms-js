@@ -79,14 +79,8 @@ const patch = (xs, idx, val) => xs.with(idx, val);
 const without = (xs, x) => xs.filter((y) => x !== y);
 const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx);
 const sort = (xs, cmp) => (xs.sort(cmp), xs);
-const shuffle = (xs) => (
-  xs.forEach((x, i) => {
-    const j = Math.floor(Math.random() * xs.length);
-    xs[i] = xs[j];
-    xs[j] = x;
-  }),
-  xs
-);
+const shuffle = (xs) =>
+  xs.reduce((xs, x, i) => (feedX(Math.floor(Math.random() * xs.length), (j) => ([xs[i], xs[j]] = [xs[j], xs[i]])), xs), xs);
 const flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flatten(o) : o), []);
 const add2obj = (o, k, v) => ((o[k] = [...(o[k] || []), v]), o);
 const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {});
@@ -225,7 +219,7 @@ const matrix = {
   redim: (mat, nrows, ncols, defVal = 0) => range(nrows).map((r) => range(ncols).map((c) => mat[r]?.[c] || defVal)),
   makeCopy: (mat) => mat.map((r) => [...r]),
   makeQuadratic: (mat, defVal = 0) => feedX(Math.max(mat.length, mat[0].length), (dim) => matrix.redim(mat, dim, dim, defVal)),
-  transpose: (mat) =>mat[0].map((_,ci) => mat.map((r) => r[ci])),
+  transpose: (mat) => mat[0].map((_, ci) => mat.map((r) => r[ci])),
   translate: (mat, dr, dc, defVal = 0) => range(mat.length).map((r) => range(mat[0].length).map((c) => mat[r - dr]?.[c - dc] || defVal)),
   rotate90: (mat) => mat[0].map((_, idx) => mat.map((r) => r[r.length - idx - 1])),
   rotateN90: (mat, n) => range(n).reduce(matrix.rotate90, mat),
@@ -298,93 +292,3 @@ module.exports = {
   bitset,
   matrix,
 };
-
-// ***********************************************************
-// Some other stuff - mostly so called bracket functions
-// ***********************************************************
-
-// usage: log(() => callSomeComplicatedFunction(2, 4, 6))
-// log(() => sin(2))
-log = (f) => {
-  const start = new Date().getTime();
-  const res = f();
-  const end = new Date().getTime();
-  console.log('res:', res, 'time:', end - start);
-  return res;
-};
-
-tryAction = (action, finalAction) => {
-  try {
-    action();
-  } catch (e) {
-    console.log('tryAction', e);
-    throw 'tryAction' + e;
-  } finally {
-    finalAction && finalAction();
-  }
-};
-
-onCCAction = (doc, title, action) => {
-  const ccs = toArray(doc.selectContentControlsByTitle(title));
-  if (ccs.length === 0) {
-    tryAction(action);
-  } else
-    ccs.forEach((cc) => {
-      const keepState = [cc.lockContentControl, cc.lockContent];
-      cc.lockContent = cc.lockContentControl = false;
-      tryAction(
-        () => action(cc),
-        () => ([cc.lockContent, cc.lockContentControl] = keepState),
-      );
-    });
-};
-
-withOutScreenUpdating = (app, action) => {
-  const keep = app.screenUpdating;
-  app.screenUpdating = false;
-  tryAction(action, () => {
-    app.screenUpdating = keep;
-  });
-};
-
-// experimentell not working!!!
-logtor = (f) => {
-  let lev = 0;
-  const range = (n) => [...Array(n).keys()];
-  const blanks = range(100)
-    .map(() => ' ')
-    .join('');
-  const indent = (lev) => blanks.substring(0, lev * 3);
-
-  return function () {
-    const start = new Date().getTime();
-    console.log(indent(lev++), '>', f.name, 'args=', [].slice.call(arguments, 0).toString());
-    const ret = f.apply(this, [].slice.call(arguments, 0));
-    const end = new Date().getTime();
-    console.log(indent(--lev), '<', f.name, 'ret=', ret, 'time', end - start);
-    return ret;
-  };
-};
-
-logtor = (f) => {
-  let lev = 0;
-  const range = (n) => [...Array(n).keys()];
-  const blanks = range(100)
-    .map(() => ' ')
-    .join('');
-  const indent = (lev) => blanks.substring(0, lev * 3);
-
-  return function nf() {
-    debugger;
-    const start = new Date().getTime();
-    console.log(indent(lev++), '>', f.name, 'args=', [].slice.call(arguments, 0).toString());
-    const args = [].slice.call(arguments, 0);
-    const ret = f(args);
-
-    const end = new Date().getTime();
-    console.log(indent(--lev), '<', f.name, 'ret=', ret, 'time', end - start);
-    return ret;
-  };
-};
-
-// experimentell end !!!

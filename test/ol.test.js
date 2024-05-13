@@ -13,6 +13,7 @@ const {
   randomIntArray,
   randomIntInRange,
   cmp,
+  cmpNumbers,
   isLeapYear,
   odd,
   even,
@@ -204,9 +205,11 @@ test('add2obj', () => {
 });
 
 test('shuffle & sort', () => {
-  const xs = range(10);
-  const ys = shuffle(xs);
-  expect(xs).toEqual(sort(ys));
+  const xs = range(30);
+  const ys = shuffle([...xs]);
+  // console.log( "BBBB", xs, ys, sort([...ys], cmpNumbers))
+  expect(xs).not.toEqual(ys);
+  expect(xs).toEqual(sort(ys, cmpNumbers));
 });
 
 test('groupBy', () => {
