@@ -97,7 +97,7 @@ const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {});
 //    men   = [{name:'hugo', age:36 }, {name:'hans', age:37 }]
 //    women = [{name:'anna', age:35 }, {name:'lena', age:27 }]
 // zip(men, women, (a,b) => ({ 'husband': a, 'wife': b }) ) // -> [{"husband":"hugo","wife":"anna"}, {"husband":"hans","wife":"lena"}]
-const zip = (xs, ys, f = id) => xs.map((x, i) => (f ? f(x, ys[i]) : [x, ys[i]]));
+const zip = (xs, ys, f = id) => xs.map((x, i) => f([x, ys[i]]));
 
 const uniq = (xs) => Array.from(new Set(xs));
 const uniqBy = (xs, proj) => Object.values(xs.reduce((a, v) => ({ ...a, [proj(v)]: v }), {}));
