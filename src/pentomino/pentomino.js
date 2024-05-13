@@ -1,7 +1,7 @@
 // const { DancingLinkX } = require('@algorithm.ts/dlx'); // do not understand how this works
-const dlx = require('dlx'); // no solutions found in 5 min
-const dlxlib = require('dlxlib'); // ~30 sec
-const dlx_solve = require('../dlx'); // ~10.5 sec
+// const dlx = require('dlx'); // no solutions found in 5 min
+// const dlxlib = require('dlxlib'); // ~30 sec
+// const dlx_solve = require('../dlx'); // ~10.5 sec
 const dancingLinks = require('dancing-links'); // ~9.5 sec
 
 
