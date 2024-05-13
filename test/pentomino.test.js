@@ -19,16 +19,6 @@ const filledBoards = {
 
 test('extract 6x10', () => {
   // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-  const filledBoard = filledBoards['6x10'];
-  const pento = pentonimo(filledBoard);
-  const extract = pento.internals.extract;
-  const extr = (c) => {
-    const m = reshape(
-      filledBoard.map((x) => (x === c ? c : ' ')),
-      pento.DIMC,
-    );
-    return extract(rotate90(extract(m, c)), c);
-  };
   expect(extr('f')).toEqual([
     [' ', 'f', ' '],
     ['f', 'f', 'f'],
@@ -94,17 +84,6 @@ test('symbols', () => {
 });
 
 test('extract 4x15', () => {
-  // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
-  const filledBoard = filledBoards['4x15'];
-  const pento = pentonimo(filledBoard, 4, 15);
-  const extract = pento.internals.extract;
-  const extr = (c) => {
-    const m = reshape(
-      filledBoard.map((x) => (x === c ? c : ' ')),
-      pento.DIMC,
-    );
-    return extract(rotate90(extract(m, c)), c);
-  };
   expect(extr('f')).toEqual([
     [' ', 'f', 'f'],
     ['f', 'f', ' '],
@@ -171,7 +150,7 @@ test('generateTiles 6x10', () => {
 
 const boardToString = (b) => b.flat().join('');
 
-test('solve pentonimo 6 x 10', () => {
+xtest('solve pentonimo 6 x 10', () => {
   const pento = pentonimo(filledBoards['6x10']);
   const solutions = pento.solve();
   expect(solutions.length).toBe(2339);

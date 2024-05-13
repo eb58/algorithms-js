@@ -18,12 +18,24 @@ const minmaxColIndex = (m, v) => m.reduce((res, row) => minmax(res, minmaxColInd
 const pentonimo = (filledBoard, DIMR = 6, DIMC = 10) => {
   const SYMBOLS = [...new Set(filledBoard)].sort(); // ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
-  const extract = (board, val, defVal = ' ') => {
+  const extractx = (board, val, defVal = ' ') => {
     const extracted = board.map((r) => r.map((c) => (c === val ? c : defVal)));
     const mmr = minmaxRowIndex(extracted, val);
     const mmc = minmaxColIndex(extracted, val);
     const [dimr, dimc] = [mmr.max - mmr.min + 1, mmc.max - mmc.min + 1];
     return redim([], dimr, dimc, defVal).map((r, ri) => r.map((_, ci) => extracted[mmr.min + ri][mmc.min + ci]), defVal);
+  };
+  const extract = (board, val, defVal = ' ') => {
+    const extracted = board.map((r) => r.map((c) => (c === val ? c : defVal)));
+    const a = extracted.filter((r) => r.some((v) => v !== defVal));
+    console.log('A', a);
+    const b = transpose(makeQuadratic(a, defVal));
+    console.log('B', b);
+    const c = b.filter((r) => r.some((v) => v !== defVal));
+    console.log('C', c);
+    const d = transpose(makeQuadratic(c, defVal)).filter((r) => r.some((v) => v !== defVal));
+    console.log('YYY', d);
+    return transpose(e);
   };
 
   const translateBoard = (board, dr, dc, defVal = ' ') => {
