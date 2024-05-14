@@ -87,4 +87,4 @@ const dlx_solve = (matrix, maxsolutions) => {
     return dlx_search(head, [], 0, [], maxsolutions);
 }
 
-module.exports = dlx_solve
+if (typeof module !== 'undefined') module.exports = dlx_solve;
