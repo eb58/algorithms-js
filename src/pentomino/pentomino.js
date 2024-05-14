@@ -1,19 +1,12 @@
-// const { DancingLinkX } = require('@algorithm.ts/dlx'); // do not understand how this works
-// const dlx = require('dlx'); // no solutions found in 5 min
-// const dlxlib = require('dlxlib'); // ~30 sec
-// const dlx_solve = require('../dlx'); // ~10.5 sec
-const dancingLinks = require('dancing-links'); // ~9.5 sec
-
-
 //  PENTOMINO
-const pentonimo = (filledBoard) => {
+const pentonimo = (filledBoard, dlxSolve ) => {
   const { range, zip, uniqBy } = require('../ol/ol').ol;
   const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = require('../ol/ol.matrix');
   const [DIMR, DIMC] = [filledBoard.length, filledBoard[0].length];
   const SYMBOLS = [...new Set(filledBoard.flat())].sort(); // ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
   const extract = (board, val, defVal = ' ') => {
-    const extracted = board.map((r) => r.map((c) => (c === val ? c : defVal)))
+    const extracted = board.map((r) => r.map((c) => (c === val ? c : defVal)));
     const x = extracted.filter((r) => r.some((v) => v !== defVal));
     return transpose(x).filter((r) => r.some((v) => v !== defVal));
   };
@@ -61,9 +54,7 @@ const pentonimo = (filledBoard) => {
       [],
     );
 
-    // const solutions = dlxlib.solve(problem); // ~30 sec
-    // const solutions = dlx_solve(problem, 368 ); // ~10.5 sec
-    const solutions = dancingLinks.findAll(problem.map((row) => ({ row }))).map((x) => x.map((o) => o.index)); // ~9.5 sec
+    const solutions = dlxSolve(problem)
 
     // Map solutions from DLX back to boards
     const decodeSymbol = (r) => SYMBOLS[problem[r].slice(0, SYMBOLS.length).findIndex((x) => x === 1)];
@@ -95,16 +86,5 @@ const pentonimo = (filledBoard) => {
   };
 };
 
-//const sol = solvePentonimo();
-//console.log(solutions.length)
 
-// const DL_TOTAL_COLUMNS = 12 + 6 * 10
-// const MAX_N = DL_TOTAL_COLUMNS * 2056
-// const dlx = new DancingLinkX({ MAX_N })
-
-// dlx.init(DL_TOTAL_COLUMNS)
-// problem.forEach((r, idx) => dlx.addRow(idx, r))
-// const answer = dlx.solve()
-// console.log(answer)
-
-module.exports = pentonimo;
+if (typeof module !== undefined) module.exports = pentonimo;

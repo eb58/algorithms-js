@@ -1,20 +1,36 @@
+// const { DancingLinkX } = require('@algorithm.ts/dlx'); // do not understand how this works
+// const dlx = require('dlx'); // no solutions found in 5 min
+// const dlxlib = require('dlxlib'); // ~30 sec
+// const dlx_solve = require('../dlx'); // ~10.5 sec
+const dancingLinks = require('dancing-links'); // ~9.5 sec
+
+// const solve = problem => dlxlib.solve(problem); // ~30 sec
+// const solve =  problem => dlx_solve(problem, 368 ); // ~10.5 sec
+const dlxSolve = (problem) => dancingLinks.findAll(problem.map((row) => ({ row }))).map((x) => x.map((o) => o.index));
+
 const { reshape } = require('../src/ol/ol.matrix');
 const pentonimo = require('../src/pentomino/pentomino');
 
-const prep = (s,dimc) => reshape(s.trim().replaceAll(' ', '').replaceAll('\n', '').split(''), dimc);
+const prep = (s, dimc) => reshape(s.trim().replaceAll(' ', '').replaceAll('\n', '').split(''), dimc);
 const filledBoards = {
-  '4x15': prep(`
+  '4x15': prep(
+    `
         l l x n n n i i i i i f v v v
         l x x x p n n w w z f f f t v
         l u x u p p w w y z z z f t v
-        l u u u p p w y y y y z t t t`, 15),
-  '6x10': prep(`
+        l u u u p p w y y y y z t t t`,
+    15,
+  ),
+  '6x10': prep(
+    `
         n w w y y y y p p p
         n n w w y u u u p p
         l n t w x u f u z z
         l n t x x x f f z v
         l t t t x f f z z v
-        l l i i i i i v v v`, 10),
+        l l i i i i i v v v`,
+    10,
+  ),
 };
 
 test('symbols', () => {
@@ -25,11 +41,14 @@ test('symbols', () => {
 });
 
 test('extract 6x10', () => {
-  const filledBoard = filledBoards['6x10']
-  const pento = pentonimo(filledBoard);  
+  const filledBoard = filledBoards['6x10'];
+  const pento = pentonimo(filledBoard);
   const extract = pento.internals.extract;
-  const extr = (c) => extract(filledBoard, c).map(r => r.join('')).join('|');
-  
+  const extr = (c) =>
+    extract(filledBoard, c)
+      .map((r) => r.join(''))
+      .join('|');
+
   expect(extr('f')).toEqual('  f|fff| f ');
   expect(extr('i')).toEqual('i|i|i|i|i');
   expect(extr('l')).toEqual('llll|   l');
@@ -44,11 +63,14 @@ test('extract 6x10', () => {
   expect(extr('z')).toEqual('  z|zzz|z  ');
 });
 
-test('extract 4x15', () => { 
+test('extract 4x15', () => {
   const filledBoard = filledBoards['4x15'];
-  const pento = pentonimo(filledBoard)
-  const extract = pento.internals.extract
-  const extr = (c) => extract(filledBoard, c).map(r => r.join('')).join('|');
+  const pento = pentonimo(filledBoard);
+  const extract = pento.internals.extract;
+  const extr = (c) =>
+    extract(filledBoard, c)
+      .map((r) => r.join(''))
+      .join('|');
 
   expect(extr('f')).toEqual(' f |ff | ff');
   expect(extr('i')).toEqual('i|i|i|i|i');
@@ -73,7 +95,7 @@ test('generateTiles 6x10', () => {
 const boardToString = (b) => b.flat().join('');
 
 test('solve pentonimo 6 x 10', () => {
-  const pento = pentonimo(filledBoards['6x10']);
+  const pento = pentonimo(filledBoards['6x10'],dlxSolve);
   const solutions = pento.solve();
   expect(solutions.length).toBe(2339);
   expect(solutions.findIndex((s) => boardToString(s) === 'llxiiiiiwwlxxxvvvwwylfxuuuvwyylffutuvzzyffnntpppzynnntttppzz') >= 0).toBe(true);
@@ -82,7 +104,7 @@ test('solve pentonimo 6 x 10', () => {
 });
 
 test('solve pentonimo 4 x 15', () => {
-  const pento = pentonimo(filledBoards['4x15'], 4, 15);
+  const pento = pentonimo(filledBoards['4x15'], dlxSolve);
   const solutions = pento.solve();
   expect(solutions.length).toBe(368);
 });
