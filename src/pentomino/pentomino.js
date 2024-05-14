@@ -87,4 +87,4 @@ const pentonimo = (filledBoard, dlxSolve ) => {
 };
 
 
-if (typeof module !== undefined) module.exports = pentonimo;
+if (typeof module !== 'undefined') module.exports = pentonimo;
