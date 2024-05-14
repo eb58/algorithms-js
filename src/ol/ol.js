@@ -217,9 +217,10 @@ const ol = {
   max,
 };
 
-module.exports = {
-  ol,
-  num,
-  interval,
-  array,
-};
+if (typeof module !== 'undefined')
+  module.exports = {
+    ol,
+    num,
+    interval,
+    array,
+  };

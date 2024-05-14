@@ -56,4 +56,4 @@ const bitset = {
   },
 };
 
-module.exports = bitset;
+if (typeof module !== 'undefined') module.exports = bitset;

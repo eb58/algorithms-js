@@ -1,4 +1,4 @@
-const { range, feedX } = require('./ol').ol
+const { range, feedX } = require('./ol').ol;
 const matrix = {
   reshape: (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, []),
   redim: (mat, nrows, ncols, defVal = 0) => range(nrows).map((r) => range(ncols).map((c) => mat[r]?.[c] || defVal)),
@@ -10,4 +10,4 @@ const matrix = {
   rotateN90: (mat, n) => range(n).reduce(matrix.rotate90, mat),
 };
 
-module.exports = matrix
+if (typeof module !== 'undefined') module.exports = matrix;
