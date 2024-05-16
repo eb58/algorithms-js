@@ -1,4 +1,4 @@
-const  bitset = require('../src/ol/ol.bitset');
+const { bitset }= require('../src/ol/ol');
 test('bitset', () => {
 
     const bs = bitset.fromArray([11, 1, 2, 9]);

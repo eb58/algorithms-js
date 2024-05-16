@@ -1,7 +1,9 @@
 //  PENTOMINO
-const pentonimo = (filledBoard, dlxSolve ) => {
-  const { range, zip, uniqBy } = require('../ol/ol').ol;
-  const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = require('../ol/ol.matrix');
+const { matrix, ol} = require('../ol/ol');
+const { range, zip, uniqBy } = ol;
+const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = matrix;
+
+const pentomino = (filledBoard, dlxSolve) => {
   const [DIMR, DIMC] = [filledBoard.length, filledBoard[0].length];
   const SYMBOLS = [...new Set(filledBoard.flat())].sort(); // ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
 
@@ -28,7 +30,8 @@ const pentonimo = (filledBoard, dlxSolve ) => {
     );
 
   const generateAllTiles = () => {
-    const tilesTable = SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {}); // { 'f': [], 'c'.: [], ...}
+    const tilesTable = // { 'f': [], 'c'.: [], ...}
+      SYMBOLS.reduce((acc, c) => ({ ...acc, [c]: [] }), {}); // { 'f': [], 'c'.: [], ...}
 
     return SYMBOLS.reduce((res, ch) => {
       const extractedSym = makeQuadratic(extract(filledBoard, ch));
@@ -54,7 +57,7 @@ const pentonimo = (filledBoard, dlxSolve ) => {
       [],
     );
 
-    const solutions = dlxSolve(problem)
+    const solutions = dlxSolve(problem);
 
     // Map solutions from DLX back to boards
     const decodeSymbol = (r) => SYMBOLS[problem[r].slice(0, SYMBOLS.length).findIndex((x) => x === 1)];
@@ -86,5 +89,4 @@ const pentonimo = (filledBoard, dlxSolve ) => {
   };
 };
 
-
-if (typeof module !== 'undefined') module.exports = pentonimo;
+if (typeof module !== 'undefined') module.exports = pentomino;

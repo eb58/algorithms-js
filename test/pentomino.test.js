@@ -8,7 +8,7 @@ const dancingLinks = require('dancing-links'); // ~9.5 sec
 // const solve =  problem => dlx_solve(problem, 368 ); // ~10.5 sec
 const dlxSolve = (problem) => dancingLinks.findAll(problem.map((row) => ({ row }))).map((x) => x.map((o) => o.index));
 
-const { reshape } = require('../src/ol/ol.matrix');
+const { reshape } = require('../src/ol/ol').matrix;
 const pentonimo = require('../src/pentomino/pentomino');
 
 const prep = (s, dimc) => reshape(s.trim().replaceAll(' ', '').replaceAll('\n', '').split(''), dimc);
@@ -32,7 +32,7 @@ const filledBoards = {
     10,
   ),
 };
-
+ 
 test('symbols', () => {
   // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
   const filledBoard = filledBoards['4x15'];
