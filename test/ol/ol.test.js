@@ -1,22 +1,38 @@
-const { ol, num, interval, array } = require('../src/ol/ol');
+const { ol, num, interval, array } = require('../../src/ol/ol');
 const {
+  clone,
+  swap,
   id,
-  sqr,
   abs,
+  sqr,
   cube,
   fac,
   fib,
+  gcd,
+  add,
+  sum,
+  inc,
+  dec,
+  without,
+  withoutIndex,
   range,
+  zip,
   rangeFilled,
   randomArray,
-  randomInRange,
   randomIntArray,
+  randomInRange,
   randomIntInRange,
-  cmp,
-  cmpNumbers,
-  isLeapYear,
+  feedX,
+  call,
+  eq,
+  lt,
+  lte,
+  gt,
+  gte,
   odd,
   even,
+  isInInterval,
+  isLeapYear,
   not,
   or,
   and,
@@ -24,20 +40,22 @@ const {
   comb,
   every,
   some,
-  isInInterval,
+  gtPred,
+  gtePred,
+  ltPred,
+  ltePred,
   add2obj,
   groupBy,
-  sum,
-  add,
-  without,
-  withoutIndex,
+  cmpNumbers,
   sort,
   uniq,
   uniqBy,
-  zip,
   flatten,
   shuffle,
   vadd,
+  vdist,
+  min,
+  max,
 } = ol;
 
 test('simple', () => {
@@ -75,10 +93,8 @@ test('randomInRange', () => {
 });
 
 test('randomIntInRange', () => {
-  const res = {};
   for (let i = 0; i < 1000; i++) {
     const x = randomIntInRange(1, 6);
-    res[x] = (res[x] || 0) + 1;
     expect(x).toBeGreaterThanOrEqual(1);
     expect(x).toBeLessThanOrEqual(6);
   }
@@ -132,15 +148,6 @@ test('combine predicates', () => {
   expect(every(isLeapYear, even)(1800)).toBe(false);
   expect(some(isLeapYear, even)(1804)).toBe(true);
   expect(some(isLeapYear, even)(1800)).toBe(true);
-});
-
-test('cmp', () => {
-  expect(cmp(1, 1)).toBe(0);
-  expect(cmp(1, 2)).toBe(-1);
-  expect(cmp(2, 1)).toBe(+1);
-  expect(cmp('a', 'a')).toBe(0);
-  expect(cmp('a', 'b')).toBe(-1);
-  expect(cmp('b', 'a')).toBe(+1);
 });
 
 test('vector functions', () => {
@@ -207,7 +214,7 @@ test('add2obj', () => {
 test('shuffle & sort', () => {
   const xs = range(30);
   const ys = shuffle([...xs]);
-  // console.log( "BBBB", xs, ys, sort([...ys], cmpNumbers))
+  console.log( ys )
   expect(xs).not.toEqual(ys);
   expect(xs).toEqual(sort(ys, cmpNumbers));
 });
