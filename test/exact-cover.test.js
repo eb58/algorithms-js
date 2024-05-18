@@ -1,4 +1,4 @@
-const exactCover = require('../src/exact-cover');
+const solve = require('../src/exact-cover');
 
 const problem1 = [
   [1, 0, 0, 0],
@@ -19,9 +19,9 @@ const problem2 = [
 ];
 
 test('exactCover 1', () => {
- expect(exactCover.solve(problem1)).toEqual([[0, 3, 4], [1, 2], [2, 4, 5]])
+ expect(solve(problem1)).toEqual([[0, 3, 4], [1, 2], [2, 4, 5]])
 })
 
 test('exactCover 2', () => {
-    expect(exactCover.solve(problem2)).toEqual([[0, 3, 4]])
+    expect(solve(problem2)).toEqual([[0, 3, 4]])
  })
