@@ -7,6 +7,8 @@ const solveDlx = require('../src/sudoku/sudokuDlx');         // ~800 ms for 10x 
 const solveDlx2 = require('../src/sudoku/sudokuDlx2');       // ~350 ms for 10x hard ones  -> fastest
 
 const solve = solveDlx2
+
+const N = solve === solve1 || solve === solve2 ? 1 : 10
 const range = (n) => [...Array(n).keys()]
 const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
 const mysolve = s => solve(conv2Arr(s)).join("");
@@ -26,7 +28,6 @@ test('sudoku easy ones', () => {
     expect(mysolve('..6..85......7.613........9....9...1..1...8..4..53....1.7.53....5..64...3..1...6.')).toEqual('296318574584972613713645289625897341931426857478531926167253498859764132342189765');
 });
 
-const N = solve === solve1 || solve === solve2 ? 1 : 10
 test('sudoku hard ones', () => range(N).forEach(() => {
     expect(mysolve('.......12........3..23..4....18....5.6..7.8.......9.....85.....9...4.5..47...6...')).toEqual('839465712146782953752391486391824675564173829287659341628537194913248567475916238');
     expect(mysolve('.2..5.7..4..1....68....3...2....8..3.4..2.5.....6...1...2.9.....9......57.4...9..')).toEqual('123456789457189236869273154271548693346921578985637412512394867698712345734865921');
