@@ -34,7 +34,6 @@ const filledBoards = {
 };
  
 test('symbols', () => {
-  // symbols = ['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']
   const filledBoard = filledBoards['4x15'];
   const pento = pentonimo(filledBoard);
   expect(pento.internals.SYMBOLS).toEqual(['f', 'i', 'l', 'n', 'p', 't', 'u', 'v', 'w', 'x', 'y', 'z']);
