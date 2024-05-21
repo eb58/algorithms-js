@@ -1,40 +1,41 @@
-const { f } = require('dlxlib');
-
-const { range, rangeFilled, zip, add } = require('./ol/ol').ol;
+const { rangeFilled, zip, add } = require('./ol/ol').ol;
 const bitset = require('./ol/ol').bitset;
 
 const noConflict = (cover, cond) => zip(cover, cond, add).every((x) => x <= 1);
-const cmpCond = (c1, c2) => (c1.join('') < c2.join('') ? 1 : -1)
 
-const solve = (conditions) => {
-  // console.log(conditions);
+const solve = (constraints, count = 1000000) => {
   const solutions = [];
 
-  // conditions = conditions.toSorted(cmpCond)
+  console.log("CONSTRAINTS", constraints.length, constraints[0].length);
 
-  console.log(conditions.map((c) => c.join('')));
-  const solv = (cover, conditions, res) => {
+  const solv = (cover, constraints, res) => {
+    // console.log(
+    //   cover.join(''),
+    //   conditions.map((c) => c.join('')),
+    // );
+    if (solutions.length >= count) return;
     if (cover.every((x) => x === 1)) {
+      // console.log( "AAAA", res )
       solutions.push(res);
       return;
     }
 
     const firstIndexZero = cover.findIndex((v) => v === 0);
-    let newConditions; 
-
-    conditions
+    const newConstraints = constraints
       .filter((condition) => condition[firstIndexZero] === 1) // conditions, that fill first zero item in cover
-      .filter((condition) => noConflict(cover, condition)) // conditions, that do not conflict with cover
-      .forEach((condition, idx) => {
-        const newCover = zip(cover, condition, add);
-        newConditions = conditions.filter((_, i) => i !== idx);
-        return solv(newCover, newConditions, [...res, [...condition]]);
-      });
+      .filter((condition) => noConflict(cover, condition)); // conditions, that do not conflict with cover
+
+    newConstraints.forEach((constraint, idx) => {
+      const newCover = zip(cover, constraint, add);
+      const newConstraints = constraints.filter((_, i) => idx != i);
+      return solv(newCover, newConstraints, [...res, [...constraint]]);
+    });
   };
 
-  solv(rangeFilled(conditions[0].length), conditions, []);
-  const res = solutions.map((solution) => solution.map((sol) => conditions.findIndex((condition) => condition.join('') === sol.join(''))));
-  console.log('AAA', res);
+  solv(rangeFilled(constraints[0].length), constraints, []);
+  console.log('BBB');
+  const res = solutions.map((solution) => solution.map((sol) => constraints.findIndex((c) => c.join('') === sol.join(''))));
+  console.log('CCC', res);
   return res;
 };
 
