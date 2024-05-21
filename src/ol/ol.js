@@ -108,7 +108,7 @@ const patch = (xs, idx, val) => xs.with(idx, val);
 const without = (xs, x) => xs.filter((y) => x !== y);
 const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx);
 const sort = (xs, cmp) => (xs.sort(cmp), xs);
-const shuffle = (xs) => xs.reduce((xs, x, i) => (feedX(randomIntInRange(0, xs.length), (j) => ([xs[i], xs[j]] = [xs[j], x])), xs), xs);
+const shuffle = (xs) => xs.reduce((xs, x, i) => (feedX(randomIntInRange(0, xs.length-1), (j) => ([xs[i], xs[j]] = [xs[j], x])), xs), xs);
 const flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flatten(o) : o), []);
 const add2obj = (o, k, v) => ((o[k] = [...(o[k] || []), v]), o);
 const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {});
