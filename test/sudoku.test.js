@@ -1,9 +1,10 @@
+const exactCover = require( '../src/exact-cover')
 const solve1 = require('../src/sudoku/sudoku1');             // ~55000 ms for hard ones
 const solve2 = require('../src/sudoku/sudoku2');             // ~900 ms for hard ones
 
 const solve3 = require('../src/sudoku/sudoku3');             // ~1400 ms for 10x hard ones
 const solveKudoku = require('../src/sudoku/sudokuKudoku');   // ~450 ms 10x for hard ones
-const solveDlx = require('../src/sudoku/sudokuDlx');         // ~800 ms for 10x hard ones
+const solveDlx = require('../src/sudoku/sudokuDlx1');         // ~800 ms for 10x hard ones
 const solveDlx2 = require('../src/sudoku/sudokuDlx2');       // ~350 ms for 10x hard ones  -> fastest
 
 const solve = solveDlx2

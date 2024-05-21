@@ -45,7 +45,7 @@ const dlx_search = (head, solution, k, solutions, maxsolutions) => {
   dlx_uncover(c);
 };
 
-const dlx_solve = (matrix, maxsolutions) => {
+const dlx_solve = (matrix, maxsolutions = 1) => {
   const columns = new Array(matrix[0].length);
   for (let i = 0; i < columns.length; i++) columns[i] = {};
   for (let i = 0; i < columns.length; i++) {

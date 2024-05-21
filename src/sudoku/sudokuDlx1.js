@@ -2,38 +2,36 @@
 // const dlx = require('dlxlib');                // works -> ~2500 for 10x hard ones
 // const dancingLinks = require('dancing-links') // works -> ~1000 for 10x hard ones
 const dlx_solve = require("../dlx");             // works -> ~800  for 10x hard ones
-const solveCover = require("../exact-cover");
-const solve = dlx_solve
 const range = (n) => [...Array(n).keys()];
 
-const solveDlx = (grid) => {
-    const mat = [];
+const solveSudoku = (grid, solver = dlx_solve ) => {
+    const conditions = [];
     const rinfo = [];
     for (let r = 0; r < 9; r++) for (let c = 0; c < 9; c++) {
         const idx = r * 9 + c
         const n = grid[idx] - 1;
         if (n >= 0) {
-            const row = range(324).map(()=>0);
-            row[r * 9 + c] = 1;
-            row[9 * 9 + r * 9 + n] = 1;
-            row[9 * 9 * 2 + c * 9 + n] = 1;
-            row[9 * 9 * 3 + (Math.floor(r / 3) * 3 + Math.floor(c / 3)) * 9 + n] = 1;
-            mat.push(row);
+            const condition = range(324).map(()=>0);
+            condition[r * 9 + c] = 1;
+            condition[9 * 9 + r * 9 + n] = 1;
+            condition[9 * 9 * 2 + c * 9 + n] = 1;
+            condition[9 * 9 * 3 + (Math.floor(r / 3) * 3 + Math.floor(c / 3)) * 9 + n] = 1;
+            conditions.push(condition);
             rinfo.push({ idx, n });
         } else {
             for (let n = 0; n < 9; n++) {
-                const row = range(324).map(()=>0);
-                row[r * 9 + c] = 1;
-                row[9 * 9 + r * 9 + n] = 1;
-                row[9 * 9 * 2 + c * 9 + n] = 1;
-                row[9 * 9 * 3 + (Math.floor(r / 3) * 3 + Math.floor(c / 3)) * 9 + n] = 1;
-                mat.push(row);
+                const condition = range(324).map(()=>0);
+                condition[r * 9 + c] = 1;
+                condition[9 * 9 + r * 9 + n] = 1;
+                condition[9 * 9 * 2 + c * 9 + n] = 1;
+                condition[9 * 9 * 3 + (Math.floor(r / 3) * 3 + Math.floor(c / 3)) * 9 + n] = 1;
+                conditions.push(condition);
                 rinfo.push({ idx, n });
             }
         }
     }
     
-    const solutions = solve(mat, 1);
+    const solutions = solver(conditions);
     // const solutions = dancingLinks.findOne(mat.map(row => ({ row }))).map(x => x.map(o => o.index));
     // const solutions = dlxlib.solve(mat.map(r => [...r].map(x => x || 0))); // works but slower s.o.
     // console.log( solutions )
@@ -49,4 +47,4 @@ const solveDlx = (grid) => {
 // const sol = dancingLinks.findAll(constraints)
 //console.log(dancingLinks.findAll(constraints))
 
-module.exports = solveDlx
+module.exports = solveSudoku
