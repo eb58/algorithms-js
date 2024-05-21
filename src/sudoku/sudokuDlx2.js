@@ -44,9 +44,4 @@ function solveSudoku(grid) {
   return solution.flat();
 }
 
-// const conv2Arr = s => s.split('').map(x => (x === '.' ? 0 : Number(x)) - 1);
-// console.log(solveSudoku(conv2Arr('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...')).join(""))
-// console.log(solveSudoku(conv2Arr('.914.7..8.74.3.....8..2.9...2..4...6...2..5..8..5....1.37.1..5241...93..6.8......')).join(""))
-// console.log(solveSudoku(conv2Arr('97........62.19.54...682...5981..6.3...896.4.14.3..9..2.4938.7...7...49868.5.72..')).join(""))
-
 module.exports = solveSudoku;
