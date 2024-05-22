@@ -20,9 +20,9 @@ const pentomino = () => {
   };
 
   const translateBoard = (board, dr, dc, defVal = ' ') => {
-    const count = (board) => board.flat().reduce((acc, x) => (acc += x !== defVal), 0);
+    const count = (board) => board.flat().reduce((acc, x) => acc + (x !== defVal), 0);
     const newBoard = translate(board, dr, dc, defVal);
-    return count(board) === count(newBoard) ? newBoard : undefined;
+    return count(newBoard)===5 ? newBoard : undefined;
   };
 
   const generateAllTranslatedTiles = (tile) =>
@@ -58,19 +58,31 @@ const pentomino = () => {
     const allTiles = generateAllTiles(dimr, dimc);
 
     const problem = Object.entries(allTiles).reduce(
-      (acc, [s, tiles]) => [...acc, ...tiles.map((tile) => [...encodeSymbol(s), ...encodeTile(tile)])],
+      (acc, [s, tiles]) => [...acc, ...tiles.map((tile) => [...encodeTile(tile), ...encodeSymbol(s)])],
       [],
     );
+
+    // const x = problem.filter( r => r.filter(x=>x==1).length !== 6).length;
+    // console.log( "XXX", x)
+
+    // require('fs').writeFileSync(
+    //   '/tmp/my1.json',
+    //   JSON.stringify(
+    //     problem.map((x) => x.join('')),
+    //     0,
+    //     2,
+    //   ),
+    // );
 
     const solutions = dlxSolve(problem);
 
     // Map solutions from DLX back to boards
-    const decodeSymbol = (r) => SYMBOLS[problem[r].slice(0, SYMBOLS.length).findIndex((x) => x === 1)];
+    const decodeSymbol = (r) => SYMBOLS[problem[r].slice(60).findIndex((x) => x === 1)];
     return solutions.map(
       (solution) =>
         reshape(
           solution // contains rows of problem array that realize an exact cover
-            .map((r) => ({ symbol: decodeSymbol(r), board: problem[r].slice(SYMBOLS.length) }))
+            .map((r) => ({ symbol: decodeSymbol(r), board: problem[r].slice(0, 60) }))
             .map(({ symbol, board }) => board.map((x) => (x === 1 ? symbol : '')))
             .reduce(
               (acc, tile) => zip(acc, tile, (a, b) => a || b || ''),
