@@ -1,13 +1,13 @@
-const exactCover = require( '../src/exact-cover')
 const solve1 = require('../src/sudoku/sudoku1');             // ~55000 ms for hard ones
 const solve2 = require('../src/sudoku/sudoku2');             // ~900 ms for hard ones
 
 const solve3 = require('../src/sudoku/sudoku3');             // ~1400 ms for 10x hard ones
 const solveKudoku = require('../src/sudoku/sudokuKudoku');   // ~450 ms 10x for hard ones
-const solveDlx = require('../src/sudoku/sudokuDlx1');         // ~800 ms for 10x hard ones
+const solveDlx1 = require('../src/sudoku/sudokuDlx1');       // ~2000 ms for 10x hard ones
 const solveDlx2 = require('../src/sudoku/sudokuDlx2');       // ~350 ms for 10x hard ones  -> fastest
+const solveDlx3 = require('../src/sudoku/sudokuDlx3');       // ~2500 ms for 10x hard ones  
 
-const solve = (constraints) => solveDlx(constraints, exactCover)
+const solve = (grid) => solveDlx3(grid)
 
 const N = solve === solve1 || solve === solve2 ? 1 : 10
 const range = (n) => [...Array(n).keys()]
@@ -18,7 +18,7 @@ test('sudoku easy ones short', () => {
     expect(mysolve('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...')).toEqual('381745629472396158659218473196583742734962581825174936948637215267851394513429867');
 });
 
-xtest('sudoku easy ones', () => {
+test('sudoku easy ones', () => {
     expect(mysolve('.914.7..8.74.3.....8..2.9...2..4...6...2..5..8..5....1.37.1..5241...93..6.8......')).toEqual('591467238274938165386125974125743896769281543843596721937814652412659387658372419');
     expect(mysolve('2..863.......1259.1.8.946....3...18.7.1....3.6.9.2...7.3.647....6.158..25.....8.4')).toEqual('295863741346712598178594623423975186751486239689321457832647915964158372517239864');
     expect(mysolve('85...2.9......7.8......6.2.1.2.8...5....6...9..8.9...47.91..3...4.3..1..51....9.7')).toEqual('851432796624917583937856421192784635475263819368591274789145362246379158513628947');
@@ -29,7 +29,7 @@ xtest('sudoku easy ones', () => {
     expect(mysolve('..6..85......7.613........9....9...1..1...8..4..53....1.7.53....5..64...3..1...6.')).toEqual('296318574584972613713645289625897341931426857478531926167253498859764132342189765');
 });
 
-xtest('sudoku hard ones', () => range(N).forEach(() => {
+test('sudoku hard ones', () => range(N).forEach(() => {
     expect(mysolve('.......12........3..23..4....18....5.6..7.8.......9.....85.....9...4.5..47...6...')).toEqual('839465712146782953752391486391824675564173829287659341628537194913248567475916238');
     expect(mysolve('.2..5.7..4..1....68....3...2....8..3.4..2.5.....6...1...2.9.....9......57.4...9..')).toEqual('123456789457189236869273154271548693346921578985637412512394867698712345734865921');
     expect(mysolve('........3..1..56...9..4..7......9.5.7.......8.5.4.2....8..2..9...35..1..6........')).toEqual('562987413471235689398146275236819754714653928859472361187324596923568147645791832');
