@@ -1,3 +1,5 @@
+const range = (n) => [...Array(n).keys()];
+
 const dlx_cover = (c) => {
   c.right.left = c.left;
   c.left.right = c.right;
@@ -20,25 +22,32 @@ const dlx_uncover = (c) => {
   c.left.right = c;
 };
 
-const dlx_search = (head, solution, k, solutions, maxsolutions) => {
+const colWithMinSize = (head) => {
+  let minSize = 99999;
+  let c;
+  for (let j = head.right; j != head; j = j.right) {
+    if (j.size < minSize) {
+      if (j.size === 0) return null;
+      if (j.size === 1) return j;
+      minSize = j.size;
+      c = j;
+    }
+  }
+  return c;
+};
+
+const dlx_search = (head, solution, solutions, maxsolutions) => {
   if (head.right == head) {
     solutions.push([...solution]);
     return solutions.length >= maxsolutions ? solutions : null;
   }
-  let c = null;
-  let s = 99999;
-  for (let j = head.right; j != head; j = j.right) {
-    if (j.size == 0) return null;
-    if (j.size < s) {
-      s = j.size;
-      c = j;
-    }
-  }
+  const c = colWithMinSize(head);
+  if (!c) return;
   dlx_cover(c);
   for (let r = c.down; r != c; r = r.down) {
-    solution[k] = r.row;
+    solution.push(r.row);
     for (let j = r.right; j != r; j = j.right) dlx_cover(j.column);
-    const s = dlx_search(head, solution, k + 1, solutions, maxsolutions);
+    const s = dlx_search(head, solution, solutions, maxsolutions);
     if (s != null) return s;
     for (let j = r.left; j != r; j = j.left) dlx_uncover(j.column);
   }
@@ -46,15 +55,9 @@ const dlx_search = (head, solution, k, solutions, maxsolutions) => {
 };
 
 const dlx_solve = (matrix, maxsolutions = 1) => {
-  const columns = new Array(matrix[0].length);
-  for (let i = 0; i < columns.length; i++) columns[i] = {};
-  for (let i = 0; i < columns.length; i++) {
-    columns[i].index = i;
-    columns[i].up = columns[i].down = columns[i];
-    if (i - 1 >= 0) columns[i].left = columns[i - 1];
-    if (i + 1 < columns.length) columns[i].right = columns[i + 1];
-    columns[i].size = 0;
-  }
+  const columns = range(matrix[0].length).map(() => ({ size: 0 }));
+  columns.forEach((n, i) => (((n.up = n.down = n), (n.left = columns[i - 1])), (n.right = columns[i + 1])));
+
   for (let i = 0; i < matrix.length; i++) {
     let last = null;
     for (let j = 0; j < matrix[i].length; j++) {
@@ -82,11 +85,11 @@ const dlx_solve = (matrix, maxsolutions = 1) => {
   }
   const head = {
     right: columns[0],
-    left: columns[columns.length - 1],
+    left: columns[columns.length - 1]
   };
   columns[0].left = head;
   columns[columns.length - 1].right = head;
-  return dlx_search(head, [], 0, [], maxsolutions);
+  return dlx_search(head, [], [], maxsolutions);
 };
 
 if (typeof module !== 'undefined') module.exports = dlx_solve;
