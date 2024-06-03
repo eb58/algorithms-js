@@ -55,40 +55,40 @@ const dlx_search = (head, solution, solutions, maxsolutions) => {
 };
 
 const dlx_solve = (matrix, maxsolutions = 1) => {
-  const columns = range(matrix[0].length).map(() => ({ size: 0 }));
+  const RNGCOLS = range(matrix[0].length);
+  const columns = RNGCOLS.map(() => ({ size: 0 }));
   columns.forEach((n, i) => (((n.up = n.down = n), (n.left = columns[i - 1])), (n.right = columns[i + 1])));
 
-  for (let i = 0; i < matrix.length; i++) {
+  const RNGROWS = range(matrix.length);
+  RNGROWS.forEach((row) => {
     let last = null;
-    for (let j = 0; j < matrix[i].length; j++) {
-      if (matrix[i][j]) {
-        const node = {};
-        node.row = i;
-        node.column = columns[j];
-        node.up = columns[j].up;
-        node.down = columns[j];
-        if (last) {
-          node.left = last;
-          node.right = last.right;
-          last.right.left = node;
-          last.right = node;
-        } else {
-          node.left = node;
-          node.right = node;
-        }
-        columns[j].up.down = node;
-        columns[j].up = node;
-        columns[j].size++;
-        last = node;
+    RNGCOLS.filter((col) => matrix[row][col]).forEach((col) => {
+      const node = {
+        row,
+        column: columns[col],
+        up: columns[col].up,
+        down: columns[col]
+      };
+      if (last) {
+        node.left = last;
+        node.right = last.right;
+        last.right.left = node;
+        last.right = node;
+      } else {
+        node.left = node;
+        node.right = node;
       }
-    }
-  }
+      columns[col].up.down = node;
+      columns[col].up = node;
+      columns[col].size++;
+      last = node;
+    });
+  });
   const head = {
     right: columns[0],
     left: columns[columns.length - 1]
   };
-  columns[0].left = head;
-  columns[columns.length - 1].right = head;
+  columns[0].left = columns[columns.length - 1].right = head;
   return dlx_search(head, [], [], maxsolutions);
 };
 

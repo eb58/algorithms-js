@@ -7,7 +7,7 @@ const solveDlx1 = require('../src/sudoku/sudokuDlx1');       // ~2000 ms for 10x
 const solveDlx2 = require('../src/sudoku/sudokuDlx2');       // ~350 ms for 10x hard ones  -> fastest
 const solveDlx3 = require('../src/sudoku/sudokuDlx3');       // ~2500 ms for 10x hard ones  
 
-const solve = (grid) => solveDlx3(grid)
+const solve = (grid) => solveDlx1(grid)
 
 const N = solve === solve1 || solve === solve2 ? 1 : 10
 const range = (n) => [...Array(n).keys()]
