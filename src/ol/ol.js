@@ -22,7 +22,6 @@ const call = (f, ...args) => f(...args);
 const swap = (x, y) => [y, x];
 const clone = (o) => JSON.parse(JSON.stringify(o));
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // predicates
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,7 +107,7 @@ const patch = (xs, idx, val) => xs.with(idx, val);
 const without = (xs, x) => xs.filter((y) => x !== y);
 const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx);
 const sort = (xs, cmp) => (xs.sort(cmp), xs);
-const shuffle = (xs) => xs.reduce((xs, x, i) => (feedX(randomIntInRange(0, xs.length-1), (j) => ([xs[i], xs[j]] = [xs[j], x])), xs), xs);
+const shuffle = (xs) => xs.reduce((xs, x, i) => (feedX(randomIntInRange(0, xs.length - 1), (j) => ([xs[i], xs[j]] = [xs[j], x])), xs), xs);
 const flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flatten(o) : o), []);
 const add2obj = (o, k, v) => ((o[k] = [...(o[k] || []), v]), o);
 const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {});
@@ -145,7 +144,7 @@ const interval = (a, b) => ({
   dec: (x) => (x <= a ? a : x - 1),
 
   random: () => randomInRange(a, b),
-  randomInt: () => randomIntInRange(a, b),
+  randomInt: () => randomIntInRange(a, b)
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -156,7 +155,7 @@ const num = (x) => ({
   abs: () => abs(x),
   sqr: () => sqr(x),
   cube: () => cube(x),
-  isInInterval: (a, b) => isInInterval(x, a, b),
+  isInInterval: (a, b) => isInInterval(x, a, b)
 });
 
 const array = (xs) => ({
@@ -183,7 +182,7 @@ const array = (xs) => ({
   greaterThen: (a) => xs.filter(gtPred(a)),
   lesserThen: (a) => xs.filter(ltPred(a)),
   shuffle: () => shuffle(xs),
-  flatten: () => flatten(xs),
+  flatten: () => flatten(xs)
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -204,7 +203,14 @@ const matrix = {
   transpose: (mat) => mat[0].map((_, ci) => mat.map((r) => r[ci])),
   translate: (mat, dr, dc, defVal = 0) => range(mat.length).map((r) => range(mat[0].length).map((c) => mat[r - dr]?.[c - dc] || defVal)),
   rotate90: (mat) => mat[0].map((_, idx) => mat.map((r) => r[r.length - idx - 1])),
-  rotateN90: (mat, n) => range(n).reduce(matrix.rotate90, mat),
+  rotateN90: (mat, n) => range(n).reduce(matrix.rotate90, mat)
+};
+
+const timer = () => {
+  const start = new Date();
+  return {
+    elapsedTime: () => (new Date() - start) / 1000
+  };
 };
 
 const ol = {
@@ -267,11 +273,12 @@ const ol = {
   vdist,
   min,
   max,
+  timer
 };
 
 const sparseMatrix = {
-  fromMatrix: m => map(row => row.reduce((acc,v,idx)=>(v?[...acc,idx]:acc),[]))
-}
+  fromMatrix: (m) => map((row) => row.reduce((acc, v, idx) => (v ? [...acc, idx] : acc), []))
+};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // bitset
@@ -322,15 +329,15 @@ const bitset = {
     return res;
   },
   at: (bs, n) => {
-    let cnt = 0
-    let i =  0;
+    let cnt = 0;
+    let i = 0;
     while (i <= bitset.MAX && cnt <= n) {
       if (bs & (1 << i)) cnt++;
       i++;
     }
     if (i === 0 || i > bitset.MAX) throw Error('Wrong index ' + n);
     return i - 1;
-  },
+  }
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -341,5 +348,5 @@ if (typeof module !== 'undefined')
     interval,
     array,
     bitset,
-    matrix,
+    matrix
   };
