@@ -70,10 +70,12 @@ const lexParser = (input) => {
 };
 
 const doEval = (s, varsOrFcts = {}, ops = csops) => {
-  const CONSTS = {
-    I: ops === csops ? 'C$(0, 1)' : C$(0, 1),
-    E: ops === csops ? `C$(${Math.exp(1)})` : C$(Math.exp(1)),
-    PI: ops === csops ? `C$(${Math.PI})` : C$(Math.PI)
+  const [pi, e] = [Math.PI, Math.E];
+  varsOrFcts = {
+    ...varsOrFcts,
+    i: ops === csops ? 'C$(0, 1)' : C$(0, 1),
+    e: ops === csops ? `C$(Math.E)` : C$(e),
+    pi: ops === csops ? `C$(Math.PI)` : C$(pi)
   };
 
   let token;
@@ -81,28 +83,27 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
 
   const operand = () => {
     const op = () => {
-      if (token.token === tokens.minus) return (token = lex.getToken()), ops.neg(op());
-      if (token.token === tokens.plus) return (token = lex.getToken()), op();
+      token = lex.getToken();
+      if (token.token === tokens.minus) return ops.neg(op());
+      if (token.token === tokens.plus) return op();
       if (token.token === tokens.number) return ops.id(token.value);
       if (token.token === tokens.ident) {
-        let ident = CONSTS[token.name.toUpperCase()] || varsOrFcts[token.name];
+        let varOrFct = varsOrFcts[token.name];
 
-        if (ident === undefined) {
-          try {
-            ident = eval(token.name); // try to get from environment
-          } catch (e) {}
+        if (varOrFct) {
+          return typeof varOrFct === 'function' ? ((token = lex.getToken()), varOrFct(expression())) : varOrFct;
         }
-        if (ident === undefined) {
-          ident = token.name;
-          params = uniq([...params, token.name]);
-        }
-        if (typeof ident === 'function') {
-          token = lex.getToken();
-          return ident(expression());
+        try {
+          varOrFct = eval(token.name); // try to get from environment
+        } catch (e) {}
+        if (varOrFct) {
+          return typeof varOrFct === 'function' ? ((token = lex.getToken()), varOrFct(expression())) : varOrFct;
         }
 
-        if (ident === undefined) throw Error(`Unknow identifier <${token.name}>. Pos:${lex.pos()}`);
-        return ident;
+        // we use some variable in expression, but we dont know it
+        // -> it must be a free variable, i.e. a parameter
+        params = uniq([...params, token.name]);
+        return token.name;
       }
       if (token.token === tokens.lparen) {
         const ret = expression();
@@ -114,7 +115,6 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
       throw Error(`Operand expected. Pos:${lex.pos()}`);
     };
 
-    token = lex.getToken();
     const ret = op();
     token = lex.getToken();
     return ret;
@@ -145,7 +145,7 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
   if (token.token != tokens.end) throw Error(`Unexpected symbol. Pos:${lex.pos()}`);
 
   // ops !== csops && console.log('VAL ###', s, val, varsOrFcts );
-  ops === csops && console.log('VAL ***', s, val, params, varsOrFcts);
+  // ops === csops && console.log('VAL ***', s, val, params, varsOrFcts);
   val = ops !== csops ? val : eval(`(${params.join(',')}) => ${val}`);
   // params.length > 0 && console.log('VAL2', val);
 
