@@ -25,8 +25,6 @@ test('init', () => {
   expect(C$('+i')).toEqual(C$(0, 1));
   expect(C$('i')).toEqual(C$(0, 1));
   expect(C$('-i')).toEqual(C$(0, -1));
-  console.log("AAA", C$('-i'))
-
   expect(C$('1+i')).toEqual({ r: 1, i: 1 });
 });
 
