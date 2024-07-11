@@ -167,7 +167,7 @@ const evalFunction = (s, vars = {}) => doEval(s, vars, csops);
 const C$ = (r, i) => {
   if (typeof r === 'string' && typeof i === 'object') return evalComplex(r, i); // C$("3+i")
   if (typeof r === 'string') return evalFunction(r, i);
-  if (typeof r === 'number') return { r: !!r ? r : 0, i: !!i ? i : 0 };
+  if (typeof r === 'number') return { r: !r ? 0 : r, i: !i ? 0 : i };
   return r;
 };
 
