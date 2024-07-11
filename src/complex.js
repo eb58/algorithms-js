@@ -7,7 +7,7 @@ const cops = {
   add: (c1, c2) => C$(c1.r + c2.r, c1.i + c2.i),
   sub: (c1, c2) => C$(c1.r - c2.r, c1.i - c2.i),
   mul: (c1, c2) => C$(c1.r * c2.r - c1.i * c2.i, c1.r * c2.i + c1.i * c2.r),
-  div: (c1, c2) => feedx(c2.r * c2.r + c2.i * c2.i, (x) => C$((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x)),
+  div: (c1, c2) => feedx(c2.r * c2.r + c2.i * c2.i, (x) => C$((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x))
 };
 
 const csops = {
@@ -16,12 +16,12 @@ const csops = {
   add: (c1, c2) => `cops.add(C$(${c1}), C$(${c2}))`,
   sub: (c1, c2) => `cops.sub(C$(${c1}), C$(${c2}))`,
   mul: (c1, c2) => `cops.mul(C$(${c1}), C$(${c2}))`,
-  div: (c1, c2) => `cops.div(C$(${c1}), C$(${c2}))`,
+  div: (c1, c2) => `cops.div(C$(${c1}), C$(${c2}))`
 };
 
 const tokens = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'lparen', 'rparen', 'end'].reduce(
   (acc, s) => ({ ...acc, [s]: s }),
-  {},
+  {}
 );
 
 const lexParser = (input) => {
@@ -33,7 +33,7 @@ const lexParser = (input) => {
     '*': tokens.times,
     '/': tokens.divide,
     '(': tokens.lparen,
-    ')': tokens.rparen,
+    ')': tokens.rparen
   };
 
   const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_';
@@ -46,13 +46,13 @@ const lexParser = (input) => {
   const getIdentifier = () => ({
     token: tokens.ident,
     name: getIdentOrNumber(isIdentifierChar),
-    strpos,
+    strpos
   });
 
   const getNumber = () => ({
     token: tokens.number,
     value: parseFloat(getIdentOrNumber(isNumberChar)),
-    strpos,
+    strpos
   });
 
   return {
@@ -66,9 +66,9 @@ const lexParser = (input) => {
       if (!mapCharToToken[c]) throw Error(`Char ${c} not allowed. Pos:${strpos}`);
       return {
         strpos: ++strpos,
-        token: mapCharToToken[c],
+        token: mapCharToToken[c]
       };
-    },
+    }
   };
 };
 
@@ -76,7 +76,7 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
   const CONSTS = {
     I: ops === csops ? 'C$(0, 1)' : C$(0, 1),
     PI: Math.PI,
-    E: Math.exp(1),
+    E: Math.exp(1)
   };
 
   let token;
@@ -165,22 +165,22 @@ const evalComplex = (s, vars = {}) => doEval(s, vars, cops);
 const evalFunction = (s, vars = {}) => doEval(s, vars, csops);
 
 const C$ = (r, i) => {
-  if (typeof r === 'string' && typeof i === 'object') return evalComplex(r, i);
+  if (typeof r === 'string' && typeof i === 'object') return evalComplex(r, i); // C$("3+i")
   if (typeof r === 'string') return evalFunction(r, i);
   if (typeof r === 'number') return { r: !!r ? r : 0, i: !!i ? i : 0 };
   return r;
 };
 
-module.exports = {
-  evalComplex,
-  C$,
-  evalScalar: (s, vars) =>
-    doEval(s, vars, {
-      id: (x) => x,
-      neg: (x) => -x,
-      add: (x, y) => x + y,
-      sub: (x, y) => x - y,
-      mul: (x, y) => x * y,
-      div: (x, y) => x / y,
-    }),
-};
+if (typeof module !== 'undefined')
+  module.exports = {
+    C$,
+    evalScalar: (s, vars) =>
+      doEval(s, vars, {
+        id: (x) => x,
+        neg: (x) => -x,
+        add: (x, y) => x + y,
+        sub: (x, y) => x - y,
+        mul: (x, y) => x * y,
+        div: (x, y) => x / y
+      })
+  };
