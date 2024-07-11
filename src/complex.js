@@ -11,8 +11,8 @@ const cops = {
 };
 
 const csops = {
-  id: (c) => `C$(${c})`,
-  neg: (c) => `cops.neg(${c})`,
+  id: (c) => `${c}`,
+  neg: (c) => `cops.neg(C$(${c}))`,
   add: (c1, c2) => `cops.add(C$(${c1}), C$(${c2}))`,
   sub: (c1, c2) => `cops.sub(C$(${c1}), C$(${c2}))`,
   mul: (c1, c2) => `cops.mul(C$(${c1}), C$(${c2}))`,
@@ -63,7 +63,7 @@ const lexParser = (input) => {
       if (isLetter(c)) return getIdentifier();
       if (isDigit(c)) return getNumber();
       if (!mapCharToToken[c]) throw Error(`Char ${c} not allowed. Pos:${strpos}`);
-      strpos++;
+      if (strpos <= input.length) strpos++;
       return { token: mapCharToToken[c] };
     }
   };
@@ -72,8 +72,8 @@ const lexParser = (input) => {
 const doEval = (s, varsOrFcts = {}, ops = csops) => {
   const CONSTS = {
     I: ops === csops ? 'C$(0, 1)' : C$(0, 1),
-    PI: Math.PI,
-    E: Math.exp(1)
+    E: ops === csops ? `C$(${Math.exp(1)})` : C$(Math.exp(1)),
+    PI: ops === csops ? `C$(${Math.PI})` : C$(Math.PI)
   };
 
   let token;
@@ -81,15 +81,8 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
 
   const operand = () => {
     const op = () => {
-      if (token.token === tokens.minus) {
-        token = lex.getToken();
-        return ops.neg(op());
-      }
-      if (token.token === tokens.plus) {
-        token = lex.getToken();
-        return ops.id(op());
-      }
-      if (token.token === tokens.plus) return ops.id(operand());
+      if (token.token === tokens.minus) return (token = lex.getToken()), ops.neg(op());
+      if (token.token === tokens.plus) return (token = lex.getToken()), op();
       if (token.token === tokens.number) return ops.id(token.value);
       if (token.token === tokens.ident) {
         let ident = CONSTS[token.name.toUpperCase()] || varsOrFcts[token.name];
@@ -149,35 +142,26 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
 
   const lex = lexParser(s);
   let val = expression();
-  if (token.token != tokens.end) throw Error(`Unexpected symbol <${token.name}>. Pos:${lex.pos()}`);
+  if (token.token != tokens.end) throw Error(`Unexpected symbol. Pos:${lex.pos()}`);
 
-  //params.length > 0 && console.log('VAL1', s, val, params, ops);
-  val = eval(params.length > 0 ? `(${params.join(',')}) => ${val}` : val);
+  // ops !== csops && console.log('VAL ###', s, val, varsOrFcts );
+  ops === csops && console.log('VAL ***', s, val, params, varsOrFcts);
+  val = ops !== csops ? val : eval(`(${params.join(',')}) => ${val}`);
   // params.length > 0 && console.log('VAL2', val);
 
   return val;
 };
 
-const evalComplex = (s, vars = {}) => doEval(s, vars, cops);
-const evalFunction = (s, vars = {}) => doEval(s, vars, csops);
+const evalComplexWithVariables = (s, vars = {}) => doEval(s, vars, cops);
+const evalComplex = (s, vars = {}) => doEval(s.substring(s.indexOf('=>') + 2), vars, csops);
 
 const C$ = (r, i) => {
-  if (typeof r === 'string' && typeof i === 'object') return evalComplex(r, i); // C$("3+i")
-  if (typeof r === 'string') return evalFunction(r, i);
+  if (typeof r === 'object' && Object.keys(r).every((k) => k === 'r' || k === 'i')) return r; // C$({ r: 1, i: 1 })
+  if (typeof r === 'string' && typeof i === 'object') return evalComplexWithVariables(r, i); // C$("a+7+i", {a:C$('3+i')})
+  if (typeof r === 'string' && !r.includes('=>')) return evalComplexWithVariables(r, {}); // C$("3+i") ( returns value )
+  if (typeof r === 'string' && r.includes('=>')) return evalComplex(r); // C$("(z) => z*z") ( return function )
   if (typeof r === 'number') return { r: !r ? 0 : r, i: !i ? 0 : i };
-  return r;
+  throw Error(`False initialisation of C$`);
 };
 
-if (typeof module !== 'undefined')
-  module.exports = {
-    C$,
-    evalScalar: (s, vars) =>
-      doEval(s, vars, {
-        id: (x) => x,
-        neg: (x) => -x,
-        add: (x, y) => x + y,
-        sub: (x, y) => x - y,
-        mul: (x, y) => x * y,
-        div: (x, y) => x / y
-      })
-  };
+if (typeof module !== 'undefined') module.exports = C$;
