@@ -1,4 +1,4 @@
-const { evalComplex, C$ } = require('../src/complex');
+const { C$ } = require('../src/complex');
 
 const I = C$(0, 1);
 const csqr = C$('z*z');
@@ -6,8 +6,8 @@ const g = C$('z*z*(z-1)/(z+1)');
 const f = C$('-i*(z+1)*(z+1)*(z*z*z*z)');
 
 test('exceptions', () => {
-  expect(() => evalComplex('(1+5')).toThrow('Closing bracket not found!');
-  expect(() => evalComplex('1-*5')).toThrow('Operand expected. Pos:3');
+  expect(() => C$('(1+5')).toThrow('Closing bracket not found!');
+  expect(() => C$('1-*5')).toThrow('Operand expected. Pos:3');
 });
 
 test('init', () => {
