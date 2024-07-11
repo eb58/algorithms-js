@@ -45,17 +45,16 @@ const lexParser = (input) => {
 
   const getIdentifier = () => ({
     token: tokens.ident,
-    name: getIdentOrNumber(isIdentifierChar),
-    strpos
+    name: getIdentOrNumber(isIdentifierChar)
   });
 
   const getNumber = () => ({
     token: tokens.number,
-    value: parseFloat(getIdentOrNumber(isNumberChar)),
-    strpos
+    value: parseFloat(getIdentOrNumber(isNumberChar))
   });
 
   return {
+    pos: () => strpos,
     getToken: () => {
       while (isSpace(input[strpos])) strpos++;
       if (strpos >= input.length) return { strpos, token: tokens.end };
@@ -64,10 +63,8 @@ const lexParser = (input) => {
       if (isLetter(c)) return getIdentifier();
       if (isDigit(c)) return getNumber();
       if (!mapCharToToken[c]) throw Error(`Char ${c} not allowed. Pos:${strpos}`);
-      return {
-        strpos: ++strpos,
-        token: mapCharToToken[c]
-      };
+      strpos++;
+      return { token: mapCharToToken[c] };
     }
   };
 };
@@ -111,17 +108,17 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
           return ident(expression());
         }
 
-        if (ident === undefined) throw Error(`Unknow identifier <${token.name}>. Pos:${token.strpos}`);
+        if (ident === undefined) throw Error(`Unknow identifier <${token.name}>. Pos:${lex.pos()}`);
         return ident;
       }
       if (token.token === tokens.lparen) {
         const ret = expression();
         if (token.token !== tokens.rparen) {
-          throw Error(`Closing bracket not found!. Pos:${token.strpos}`);
+          throw Error(`Closing bracket not found!. Pos:${lex.pos()}`);
         }
         return ret;
       }
-      throw Error(`Operand expected. Pos:${token.strpos}`);
+      throw Error(`Operand expected. Pos:${lex.pos()}`);
     };
 
     token = lex.getToken();
@@ -131,7 +128,7 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
   };
 
   const term = () => {
-    let val = operand();
+    const val = operand();
     if (token.token === tokens.times) {
       return ops.mul(val, term());
     } else if (token.token === tokens.divide) {
@@ -141,7 +138,7 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
   };
 
   const expression = () => {
-    let val = term();
+    const val = term();
     if (token.token === tokens.plus) {
       return ops.add(val, expression());
     } else if (token.token === tokens.minus) {
@@ -152,7 +149,7 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
 
   const lex = lexParser(s);
   let val = expression();
-  if (token.token != tokens.end) throw Error(`Unexpected symbol <${token.name}>. Pos:${token.strpos}`);
+  if (token.token != tokens.end) throw Error(`Unexpected symbol <${token.name}>. Pos:${lex.pos()}`);
 
   //params.length > 0 && console.log('VAL1', s, val, params, ops);
   val = eval(params.length > 0 ? `(${params.join(',')}) => ${val}` : val);
