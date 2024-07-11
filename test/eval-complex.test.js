@@ -15,24 +15,26 @@ test('exceptions', () => {
   expect(() => C$({ s: 7 })).toThrow('False initialisation of C$');
 });
 
-test('initcomplex', () => {
-  // init with numbers or object
+test('init complex with object', () => {
+  expect(C$({ r: 1, i: 1 })).toEqual({ r: 1, i: 1 });
+});
+
+test('init complex with numbers or object', () => {
   expect(C$(0, 0)).toEqual({ r: 0, i: 0 });
   expect(C$(-0, -0)).toEqual({ r: 0, i: 0 });
-
   expect(C$(1)).toEqual({ r: 1, i: 0 });
   expect(C$(1, 1)).toEqual({ r: 1, i: 1 });
-  expect(C$({ r: 1, i: 1 })).toEqual({ r: 1, i: 1 });
+});
 
-  // init with strings
-  expect(C$('+1')).toEqual(C$(1));
-  expect(C$('1')).toEqual(C$(1, 0));
-  expect(C$('1')).toEqual(C$(1));
-  expect(C$('-1')).toEqual(C$(-1));
+test('init complex with strings', () => {
+  expect(C$('+1')).toEqual({ r: 1, i: 0 });
+  expect(C$('1')).toEqual({ r: 1, i: 0 });
+  expect(C$('1')).toEqual({ r: 1, i: 0 });
+  expect(C$('-1')).toEqual({ r: -1, i: 0 });
 
-  expect(C$('+i')).toEqual(C$(0, 1));
-  expect(C$('i')).toEqual(C$(0, 1));
-  expect(C$('-i')).toEqual(C$(0, -1));
+  expect(C$('+i')).toEqual({ r: 0, i: 1 });
+  expect(C$('i')).toEqual({ r: 0, i: 1 });
+  expect(C$('-i')).toEqual({ r: 0, i: -1 });
   expect(C$('1+i')).toEqual({ r: 1, i: 1 });
 });
 
@@ -54,11 +56,11 @@ test('simple calculations', () => {
   expect(C$('(1+i)*5')).toEqual(C$(5, 5));
   expect(C$('pi*5')).toEqual(C$(5 * Math.PI));
 
-  expect(C$('2.4+i*3.2')).toEqual(C$(2.4, 3.2));
-  expect(C$('2.4-i*3.2')).toEqual(C$(2.4, -3.2));
+  expect(C$('2.4 + i*3.2')).toEqual(C$(2.4, 3.2));
+  expect(C$('2.4 - i*3.2')).toEqual(C$(2.4, -3.2));
   expect(C$('2.4')).toEqual(C$(2.4));
   expect(C$('-2.4')).toEqual(C$(-2.4));
-  expect(C$('-2.4-i*3.2')).toEqual(C$(-2.4, -3.2));
+  expect(C$('-2.4 - i*3.2')).toEqual(C$(-2.4, -3.2));
   expect(C$('-i*3.2')).toEqual(C$(0, -3.2));
 });
 
