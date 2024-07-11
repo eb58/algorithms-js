@@ -4,7 +4,7 @@
 
 // usage: log(() => callSomeComplicatedFunction(2, 4, 6))
 // log(() => sin(2))
-log = (f) => {
+const log = (f) => {
   const start = new Date().getTime();
   const res = f();
   const end = new Date().getTime();
@@ -12,18 +12,18 @@ log = (f) => {
   return res;
 };
 
-tryAction = (action, finalAction) => {
+const tryAction = (action, finalAction) => {
   try {
     action();
   } catch (e) {
     console.log('tryAction', e);
-    throw 'tryAction' + e;
+    throw Error('tryAction' + e);
   } finally {
-    finalAction && finalAction();
+    if (finalAction) finalAction();
   }
 };
 
-onCCAction = (doc, title, action) => {
+const onCCAction = (doc, title, action) => {
   const ccs = toArray(doc.selectContentControlsByTitle(title));
   if (ccs.length === 0) {
     tryAction(action);
@@ -33,12 +33,12 @@ onCCAction = (doc, title, action) => {
       cc.lockContent = cc.lockContentControl = false;
       tryAction(
         () => action(cc),
-        () => ([cc.lockContent, cc.lockContentControl] = keepState),
+        () => ([cc.lockContent, cc.lockContentControl] = keepState)
       );
     });
 };
 
-withOutScreenUpdating = (app, action) => {
+const withOutScreenUpdating = (app, action) => {
   const keep = app.screenUpdating;
   app.screenUpdating = false;
   tryAction(action, () => {
@@ -47,7 +47,7 @@ withOutScreenUpdating = (app, action) => {
 };
 
 // experimentell not working!!!
-logtor = (f) => {
+const logtor = (f) => {
   let lev = 0;
   const range = (n) => [...Array(n).keys()];
   const blanks = range(100)
@@ -65,7 +65,7 @@ logtor = (f) => {
   };
 };
 
-logtor = (f) => {
+const logtorX = (f) => {
   let lev = 0;
   const range = (n) => [...Array(n).keys()];
   const blanks = range(100)
