@@ -11,11 +11,13 @@ test('exceptions', () => {
   expect(() => C$('(1+5')).toThrow('Closing bracket not found!');
   expect(() => C$('1-*5')).toThrow('Operand expected. Pos:3');
   expect(() => C$('5+5(')).toThrow('Unexpected symbol. Pos:4');
+  
   expect(() => C$()).toThrow('False initialisation of C$');
   expect(() => C$({ s: 7 })).toThrow('False initialisation of C$');
 });
 
 test('init complex with object', () => {
+  expect(C$({ r: 0 })).toEqual({ r: 0, i: 0 });
   expect(C$({ r: 1, i: 1 })).toEqual({ r: 1, i: 1 });
 });
 
@@ -28,7 +30,6 @@ test('init complex with numbers or object', () => {
 
 test('init complex with strings', () => {
   expect(C$('+1')).toEqual({ r: 1, i: 0 });
-  expect(C$('1')).toEqual({ r: 1, i: 0 });
   expect(C$('1')).toEqual({ r: 1, i: 0 });
   expect(C$('-1')).toEqual({ r: -1, i: 0 });
 
@@ -74,6 +75,7 @@ test('simple calculations with variables', () => {
 
   const vars2 = { a: C$('2+2*i'), b: C$(3, 0) };
   expect(C$('a', vars2)).toEqual(C$(2, 2));
+  expect(C$('-a', vars2)).toEqual(C$(-2, -2));
   expect(C$('a+b', vars2)).toEqual(C$(5, 2));
   expect(C$('a*a', vars2)).toEqual(C$(0, 8));
   expect(C$('5*a', vars2)).toEqual(C$(10, 10));
@@ -96,6 +98,9 @@ test('complexFunction type 1', () => {
 
 test('complexFunction type 2', () => {
   const csqr = C$('(z) => z*z');
+  expect(C$('csqr(z)', { csqr, z: C$(0, 2) })).toEqual(C$(-4));
+  expect(C$('csqr(z)*csqr(z)', { csqr, z: C$(0, 2) })).toEqual(C$(16));
+
   const g = C$('(z) => z*z*(z-1)/(z+1)');
   const f = C$('(z) => -i*(z+1)*(z+1)*(z*z*z*z)');
   expect(C$('g(i)', { g })).toEqual(C$('-i'));
@@ -108,7 +113,6 @@ test('complexFunction type 2', () => {
   expect(C$('f(z)', { z: C$(1, 1), f })).toEqual(C$(-16, 12));
   expect(C$('f(z)', { z: C$(1, 1), f })).toEqual(C$(-16, 12));
 
-  expect(C$('csqr(z)*csqr(z)', { csqr, z: C$(0, 2) })).toEqual(C$(16, 0));
   expect(C$('f(z)*g(z)', { f, g, z: C$(0, 2) })).toEqual(C$(2.842170943040401e-14, -320));
 });
 

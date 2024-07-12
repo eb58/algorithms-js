@@ -19,10 +19,10 @@ const csops = {
   div: (c1, c2) => `cops.div(C$(${c1}), C$(${c2}))`
 };
 
-const tokens = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'lparen', 'rparen', 'end'].reduce(
-  (acc, s) => ({ ...acc, [s]: s }),
-  {}
-);
+const tokens = (() => {
+  const s = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'lparen', 'rparen', 'end'];
+  return s.reduce((acc, s) => ({ ...acc, [s]: s }), {});
+})();
 
 const lexParser = (input) => {
   let strpos = 0;
@@ -74,8 +74,8 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
   varsOrFcts = {
     ...varsOrFcts,
     i: ops === csops ? 'C$(0, 1)' : C$(0, 1),
-    e: ops === csops ? `C$(Math.E)` : C$(e),
-    pi: ops === csops ? `C$(Math.PI)` : C$(pi)
+    e: ops === csops ? `C$(${e})` : C$(e),
+    pi: ops === csops ? `C$(${pi})` : C$(pi)
   };
 
   let token;
@@ -144,23 +144,23 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
   let val = expression();
   if (token.token != tokens.end) throw Error(`Unexpected symbol. Pos:${lex.pos()}`);
 
-  // ops !== csops && console.log('VAL ###', s, val, varsOrFcts );
-  // ops === csops && console.log('VAL ***', s, val, params, varsOrFcts);
+  //** console.log('***', s, val, varsOrFcts, params || '' );
   val = ops !== csops ? val : eval(`(${params.join(',')}) => ${val}`);
-  // params.length > 0 && console.log('VAL2', val);
 
   return val;
 };
 
-const evalComplexWithVariables = (s, vars = {}) => doEval(s, vars, cops);
-const evalComplex = (s, vars = {}) => doEval(s.substring(s.indexOf('=>') + 2), vars, csops);
+const evalComplex = (s, vars = {}) => doEval(s, vars, cops);
+const evalComplexFunction = (s, vars = {}) => doEval(s.substring(s.indexOf('=>') + 2), vars, csops);
 
 const C$ = (r, i) => {
-  if (typeof r === 'object' && Object.keys(r).every((k) => k === 'r' || k === 'i')) return r; // C$({ r: 1, i: 1 })
-  if (typeof r === 'string' && typeof i === 'object') return evalComplexWithVariables(r, i); // C$("a+7+i", {a:C$('3+i')})
-  if (typeof r === 'string' && !r.includes('=>')) return evalComplexWithVariables(r, {}); // C$("3+i") ( returns value )
-  if (typeof r === 'string' && r.includes('=>')) return evalComplex(r); // C$("(z) => z*z") ( return function )
-  if (typeof r === 'number') return { r: !r ? 0 : r, i: !i ? 0 : i };
+  if (typeof r === 'number') return { r: r || 0, i: i || 0 }; // C$(1, 1)
+  if (typeof r === 'object' && Object.keys(r).every((k) => k === 'r' || k === 'i')) return { r: 0, i: 0, ...r }; // C$({ r: 1, i: 1 })
+  if (typeof r === 'string') {
+    if (typeof i === 'object') return evalComplex(r, i); // C$("a+7+i", {a:C$('3+i')})
+    if (r.includes('=>')) return evalComplexFunction(r); // C$("(z) => z*z") ( return function )
+    return evalComplex(r); // C$("3+i") ( returns value )
+  }
   throw Error(`False initialisation of C$`);
 };
 
