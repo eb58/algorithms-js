@@ -82,46 +82,39 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
   let params = [];
 
   const operand = () => {
-    const op = () => {
-      token = lex.getToken();
-      if (token.token === tokens.minus) return ops.neg(op());
-      if (token.token === tokens.plus) return op();
-      if (token.token === tokens.number) return ops.id(token.value);
-      if (token.token === tokens.ident) {
-        let varOrFct = varsOrFcts[token.name];
-
-        if (varOrFct) {
-          return typeof varOrFct === 'function' ? ((token = lex.getToken()), varOrFct(expression())) : varOrFct;
-        }
-        try {
-          varOrFct = eval(token.name); // try to get from environment
-        } catch (e) {}
-        if (varOrFct) {
-          return typeof varOrFct === 'function' ? ((token = lex.getToken()), varOrFct(expression())) : varOrFct;
-        }
-
-        // we use some variable in expression, but we dont know it
-        // -> it must be a free variable, i.e. a parameter
-        params = uniq([...params, token.name]);
-        return token.name;
-      }
-      if (token.token === tokens.lparen) {
-        const ret = expression();
-        if (token.token !== tokens.rparen) {
-          throw Error(`Closing bracket not found!. Pos:${lex.pos()}`);
-        }
-        return ret;
-      }
-      throw Error(`Operand expected. Pos:${lex.pos()}`);
-    };
-
-    const ret = op();
     token = lex.getToken();
-    return ret;
+    if (token.token === tokens.minus) return ops.neg(operand());
+    if (token.token === tokens.plus) return operand();
+    if (token.token === tokens.number) return ops.id(token.value);
+    if (token.token === tokens.lparen) {
+      const ret = expression();
+      if (token.token !== tokens.rparen) throw Error(`Closing bracket not found!. Pos:${lex.pos()}`);
+      return ret;
+    }
+    if (token.token === tokens.ident) {
+      let varOrFct = varsOrFcts[token.name];
+
+      if (varOrFct) {
+        return typeof varOrFct === 'function' ? ((token = lex.getToken()), varOrFct(expression())) : varOrFct;
+      }
+      try {
+        varOrFct = eval(token.name); // try to get from environment
+      } catch (e) {}
+      if (varOrFct) {
+        return typeof varOrFct === 'function' ? ((token = lex.getToken()), varOrFct(expression())) : varOrFct;
+      }
+
+      // we use some variable in expression, but we dont know it
+      // -> it must be a free variable, i.e. a parameter
+      params = uniq([...params, token.name]);
+      return token.name;
+    }
+    throw Error(`Operand expected. Pos:${lex.pos()}`);
   };
 
   const term = () => {
     const val = operand();
+    token = lex.getToken();
     if (token.token === tokens.times) {
       return ops.mul(val, term());
     } else if (token.token === tokens.divide) {
