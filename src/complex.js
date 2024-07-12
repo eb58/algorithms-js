@@ -151,14 +151,14 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
 };
 
 const evalComplex = (s, vars = {}) => doEval(s, vars, cops);
-const evalComplexFunction = (s, vars = {}) => doEval(s.substring(s.indexOf('=>') + 2), vars, csops);
+const evalComplexFunction = (s, vars = {}) => doEval(s, vars, csops);
 
 const C$ = (r, i) => {
   if (typeof r === 'number') return { r: r || 0, i: i || 0 }; // C$(1, 1)
   if (typeof r === 'object' && Object.keys(r).every((k) => k === 'r' || k === 'i')) return { r: 0, i: 0, ...r }; // C$({ r: 1, i: 1 })
   if (typeof r === 'string') {
     if (typeof i === 'object') return evalComplex(r, i); // C$("a+7+i", {a:C$('3+i')})
-    if (r.includes('=>')) return evalComplexFunction(r); // C$("(z) => z*z") ( return function )
+    if (r.includes('=>')) return evalComplexFunction(r.substring(r.indexOf('=>') + 2)); // C$("(z) => z*z") ( returns function )
     return evalComplex(r); // C$("3+i") ( returns value )
   }
   throw Error(`False initialisation of C$`);
