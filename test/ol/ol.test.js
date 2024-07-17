@@ -30,6 +30,7 @@ const {
   even,
   isInInterval,
   isLeapYear,
+  isPrime,
 
   // generate predicates
   gtPred,
@@ -167,6 +168,15 @@ test('isLeapYear', () => {
   expect(isLeapYear(2004)).toBe(true);
   expect(isLeapYear(2005)).toBe(false);
   expect(isLeapYear(2008)).toBe(true);
+});
+
+test('isPrime', () => {
+  expect(isPrime(2)).toBe(true);
+  expect(isPrime(3)).toBe(true);
+  expect(isPrime(4)).toBe(false);
+  expect(isPrime(10)).toBe(false);
+  expect(isPrime(17)).toBe(true);
+  expect(isPrime(25)).toBe(false);
 });
 
 test('combine predicates', () => {

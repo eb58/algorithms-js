@@ -34,6 +34,7 @@ const odd = (x) => x % 2 !== 0;
 const even = (x) => x % 2 === 0;
 const isInInterval = (x, a, b) => a <= x && x <= b;
 const isLeapYear = (x) => (x % 4 === 0 && x % 100 !== 0) || x % 400 === 0;
+const isPrime = (n) => n === 2 || rangeClosed(2, Math.ceil(Math.sqrt(n))).every((m) => n % m !== 0);
 
 // generate predicates
 // usage: [1,2,3,4,5].filter(gtPred(3)) // -> [4,5]
@@ -115,7 +116,7 @@ const max = (xs, proj = id) => xs.reduce((a, x) => (proj(x) > (proj || id)(a) ? 
 const min = (xs, proj = id) => xs.reduce((a, x) => (proj(x) < (proj || id)(a) ? x : a), xs[0]);
 
 const average = (xs) => xs.reduce(add) / xs.length;
-const median = (xs) => ((xs = xs.toSorted()), feedX(xs.length / 2, (mid) => (mid % 2 === 0 ? (xs[mid - 1] + xs[mid]) / 2:  xs[mid - 0.5] )));
+const median = (xs) => ((xs = xs.toSorted()), feedX(xs.length / 2, (mid) => (mid % 2 === 0 ? (xs[mid - 1] + xs[mid]) / 2 : xs[mid - 0.5])));
 const patch = (xs, idx, val) => xs.with(idx, val);
 const without = (xs, x) => xs.filter((y) => x !== y);
 const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx);
@@ -320,6 +321,7 @@ const ol = {
   even,
   isInInterval,
   isLeapYear,
+  isPrime,
 
   // generate predicates
   gtPred,
