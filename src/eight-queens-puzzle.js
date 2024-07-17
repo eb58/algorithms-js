@@ -1,4 +1,4 @@
-module.exports = solveEightQueens = (N) => {
+const solveEightQueens = (N) => {
   const range = (n) => [...Array(n).keys()]
   const ininterval = (x, a, b) => a <= x && x <= b
   const infield = (r, c) => ininterval(r, 0, N - 1) && ininterval(c, 0, N - 1)
@@ -39,3 +39,5 @@ module.exports = solveEightQueens = (N) => {
     range(N)
   )
 }
+
+module.exports = solveEightQueens
