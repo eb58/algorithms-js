@@ -223,6 +223,20 @@ test('sum of arrays', () => {
   expect(sum(interval(1, 100).range())).toBe(5050);
 });
 
+test('average of arrays', () => {
+  expect(average([1])).toBe(1);
+  expect(average([1, 2, 3])).toBe(2);
+  expect(average(interval(1, 3).range())).toBe(2);
+});
+
+test('median of arrays', () => {
+  expect(median([1])).toBe(1);
+  expect(median([1, 2, 3])).toBe(2);
+  expect(median([1, 2, 3, 4])).toBe(2.5);
+  expect(median([1, 2, 3, 4, 40])).toBe(3);
+  expect(median(interval(1, 3).range())).toBe(2);
+});
+
 test('without', () => {
   expect(without([], 2)).toEqual([]);
   expect(without([3], 2)).toEqual([3]);
@@ -238,9 +252,9 @@ test('withoutIndex', () => {
 });
 
 test('shuffle & sort', () => {
-  const xs = range(30);
+  const xs = range(300);
   const ys = shuffle([...xs]);
-  console.log(ys);
+  // console.log(ys);
   expect(xs).not.toEqual(ys);
   expect(xs).toEqual(sort(ys, cmpNumbers));
 });

@@ -105,15 +105,17 @@ const rangeFilled = (n, val = 0) => range(n).map(() => val);
 
 const sum = (xs) => xs.reduce(add, 0);
 const prod = (xs) => xs.reduce(mul, 1);
+
+// min + max
 // persons     = [ {name:"Max", age: 59}, {name:"Hans", age: 19}, {name:"Johannes", age: 29}]
-// oldest      = max(persons,p=> p.age) # -> {name:"Max", age: 59}
-// youngest    = min(persons,p=> p.age) # -> {name:"Hans", age: 19}
-// longestName = max(persons,p => p.name.length) # -> {name:"Max", age: 59}
-const max = (xs, proj) => xs.reduce((a, x) => ((proj || id)(x) > (proj || id)(a) ? x : a), xs[0]);
-const min = (xs, proj) => xs.reduce((a, x) => ((proj || id)(x) < (proj || id)(a) ? x : a), xs[0]);
+// oldest      = max( persons, p => p.age ) # -> {name:"Max", age: 59}
+// youngest    = min( persons, p => p.age ) # -> {name:"Hans", age: 19}
+// longestName = max( persons, p => p.name.length ) # -> {name:"Max", age: 59}
+const max = (xs, proj = id) => xs.reduce((a, x) => (proj(x) > (proj || id)(a) ? x : a), xs[0]);
+const min = (xs, proj = id) => xs.reduce((a, x) => (proj(x) < (proj || id)(a) ? x : a), xs[0]);
 
 const average = (xs) => xs.reduce(add) / xs.length;
-const median = (xs) => ((xs = xs.toSorted()), feedX(xs.length / 2, (mid) => (mid % 1 ? xs[mid - 0.5] : (xs[mid - 1] + xs[mid]) / 2)));
+const median = (xs) => ((xs = xs.toSorted()), feedX(xs.length / 2, (mid) => (mid % 2 === 0 ? (xs[mid - 1] + xs[mid]) / 2:  xs[mid - 0.5] )));
 const patch = (xs, idx, val) => xs.with(idx, val);
 const without = (xs, x) => xs.filter((y) => x !== y);
 const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx);
