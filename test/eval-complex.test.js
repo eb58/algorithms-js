@@ -1,8 +1,8 @@
 const C$ = require('../src/complex');
 
-//test('simple for debug', () => {
-//  expect(C$('PI*5')).toEqual({ r: Math.PI * 5, i: 0 });
-//});
+test('simple for debug', () => {
+  expect(C$('pi*5')).toEqual({ r: Math.PI * 5, i: 0 });
+});
 
 test('exceptions', () => {
   expect(() => C$('')).toThrow('Operand expected. Pos:0');
