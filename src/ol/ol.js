@@ -83,6 +83,12 @@ const comparerByKey = (key) => comparer((o) => o[key]);
 const randomInRange = (min, max) => Math.random() * (max - min) + min;
 const randomIntInRange = (min, max) => Math.floor(randomInRange(min, max + 1));
 
+// randomArray(3, 1,2) // i.e. -> [  1.469331797388123,  1.9114774409909974,  1.0951408786565546]
+const randomArray = (n, min, max) => range(n).map(() => randomInRange(min, max));
+
+// randomIntArray(4, -1, 4) // [ 4, -1, 2, 3]
+const randomIntArray = (n, min, max) => range(n).map(() => randomIntInRange(min, max));
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // arrays
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -91,24 +97,32 @@ const randomIntInRange = (min, max) => Math.floor(randomInRange(min, max + 1));
 // range(5).map(inc)   // [1,2,3,4,5]
 // range(5).map(()=>0) // [0,0,0,0,0]
 const range = (n) => [...Array(n).keys()];
+const rangeClosed = (a, b) => range(b - a + 1).map((x) => x + a);
 
 // rangeFilled(3)       // [0, 0, 0]
 // rangeFilled(3,'a')   // ['a', 'a', 'a']
 const rangeFilled = (n, val = 0) => range(n).map(() => val);
 
-// randomArray(3, 1,2) // i.e. -> [  1.469331797388123,  1.9114774409909974,  1.0951408786565546]
-const randomArray = (n, min, max) => range(n).map(() => randomInRange(min, max));
-
-// randomIntArray(4, -1, 4) // [ 4, -1, 2, 3]
-const randomIntArray = (n, min, max) => range(n).map(() => randomIntInRange(min, max));
 const sum = (xs) => xs.reduce(add, 0);
 const prod = (xs) => xs.reduce(mul, 1);
+// persons     = [ {name:"Max", age: 59}, {name:"Hans", age: 19}, {name:"Johannes", age: 29}]
+// oldest      = max(persons,p=> p.age) # -> {name:"Max", age: 59}
+// youngest    = min(persons,p=> p.age) # -> {name:"Hans", age: 19}
+// longestName = max(persons,p => p.name.length) # -> {name:"Max", age: 59}
+const max = (xs, proj) => xs.reduce((a, x) => ((proj || id)(x) > (proj || id)(a) ? x : a), xs[0]);
+const min = (xs, proj) => xs.reduce((a, x) => ((proj || id)(x) < (proj || id)(a) ? x : a), xs[0]);
+
+const average = (xs) => xs.reduce(add) / xs.length;
+const median = (xs) => ((xs = xs.toSorted()), feedX(xs.length / 2, (mid) => (mid % 1 ? xs[mid - 0.5] : (xs[mid - 1] + xs[mid]) / 2)));
 const patch = (xs, idx, val) => xs.with(idx, val);
 const without = (xs, x) => xs.filter((y) => x !== y);
 const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx);
-const sort = (xs, cmp) => (xs.sort(cmp), xs);
+const sort = (xs, cmp) => xs.toSorted(cmp);
 const shuffle = (xs) => xs.reduce((xs, x, i) => (feedX(randomIntInRange(0, xs.length - 1), (j) => ([xs[i], xs[j]] = [xs[j], x])), xs), xs);
 const flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flatten(o) : o), []);
+const uniq = (xs) => Array.from(new Set(xs));
+const uniqBy = (xs, proj) => Object.values(xs.reduce((a, v) => ({ ...a, [proj(v)]: v }), {}));
+
 const add2obj = (o, k, v) => ((o[k] = [...(o[k] || []), v]), o);
 const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {});
 
@@ -120,15 +134,22 @@ const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {});
 // zip(men, women, (a,b) => ({ 'husband': a, 'wife': b }) ) // -> [{"husband":"hugo","wife":"anna"}, {"husband":"hans","wife":"lena"}]
 const zip = (xs, ys, f) => xs.map((x, i) => (f ? f(x, ys[i]) : [x, ys[i]]));
 
-const uniq = (xs) => Array.from(new Set(xs));
-const uniqBy = (xs, proj) => Object.values(xs.reduce((a, v) => ({ ...a, [proj(v)]: v }), {}));
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// vector
+///////////////////////////////////////////////////////////////////////////////////////////////////
+const vadd = (v1, v2) => zip(v1, v2, add);
+const vsqrdist = (v1, v2) => zip(v1, v2, (x, y) => (x - y) ** 2);
+const vdist = (v1, v2) => Math.sqrt(vsqrdist(v1, v2));
 
-// persons     = [ {name:"Max", age: 59}, {name:"Hans", age: 19}, {name:"Johannes", age: 29}]
-// oldest      = max(persons,p=> p.age) # -> {name:"Max", age: 59}
-// youngest    = min(persons,p=> p.age) # -> {name:"Hans", age: 19}
-// longestName = max(persons,p => p.name.length) # -> {name:"Max", age: 59}
-const max = (xs, proj) => xs.reduce((a, x) => ((proj || id)(x) > (proj || id)(a) ? x : a), xs[0]);
-const min = (xs, proj) => xs.reduce((a, x) => ((proj || id)(x) < (proj || id)(a) ? x : a), xs[0]);
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// helpers
+///////////////////////////////////////////////////////////////////////////////////////////////////
+const timer = () => {
+  const start = new Date();
+  return {
+    elapsedTime: () => (new Date() - start) / 1000
+  };
+};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // interval
@@ -160,37 +181,38 @@ const num = (x) => ({
 
 const array = (xs) => ({
   sum: () => sum(xs),
+  prod: () => prod(xs),
+  max: () => max(xs),
+  min: () => min(xs),
+  average: () => average(xs),
+  median: () => median(xs),
+
+  patch: (x) => patch(xs, x),
   without: (x) => without(xs, x),
   withoutIndex: (idx) => withoutIndex(idx),
+  shuffle: () => shuffle(xs),
+  flatten: () => flatten(xs),
+  uniq: () => uniq(xs),
+  uniqBy: (proj) => uniqBy(xs, proj),
+
+  groupBy: (proj) => groupBy(xs, proj),
+  zip: (ys, f) => zip(xs, ys, f),
+
   initial: () => xs.slice(0, -1),
   head: () => [xs[0]],
   tail: () => xs.slice(1),
   rest: () => xs.slice(1),
   first: () => xs[0],
   last: () => xs[xs.length - 1],
-  max: () => max(xs),
-  min: () => min(xs),
-  groupBy: (proj) => groupBy(xs, proj),
-  uniq: () => uniq(xs),
   unite: (ys) => uniq([...xs, ...ys]),
-  uniqBy: (proj) => uniqBy(xs, proj),
   xor: (ys) => [...xs, ...ys].filter((x) => !(xs.includes(x) && ys.includes(x))),
   intersect: (ys) => xs.filter((x) => ys.includes(x)),
   subtract: (ys) => xs.filter((x) => !ys.includes(x)),
-  isSubsetOf: (ys) => ys.every((x) => xs.includes(x)),
-  tap: (f) => (f(xs), xs),
   greaterThen: (a) => xs.filter(gtPred(a)),
   lesserThen: (a) => xs.filter(ltPred(a)),
-  shuffle: () => shuffle(xs),
-  flatten: () => flatten(xs)
+  isSubsetOf: (ys) => ys.every((x) => xs.includes(x)),
+  tap: (f) => (f(xs), xs)
 });
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// vector
-///////////////////////////////////////////////////////////////////////////////////////////////////
-const vadd = (v1, v2) => zip(v1, v2, add);
-const vsqrdist = (v1, v2) => zip(v1, v2, (x, y) => (x - y) ** 2);
-const vdist = (v1, v2) => Math.sqrt(vsqrdist(v1, v2));
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // matrix
@@ -204,80 +226,6 @@ const matrix = {
   translate: (mat, dr, dc, defVal = 0) => range(mat.length).map((r) => range(mat[0].length).map((c) => mat[r - dr]?.[c - dc] || defVal)),
   rotate90: (mat) => mat[0].map((_, idx) => mat.map((r) => r[r.length - idx - 1])),
   rotateN90: (mat, n) => range(n).reduce(matrix.rotate90, mat)
-};
-
-const timer = () => {
-  const start = new Date();
-  return {
-    elapsedTime: () => (new Date() - start) / 1000
-  };
-};
-
-const ol = {
-  clone,
-  swap,
-  id,
-  abs,
-  sqr,
-  cube,
-  fac,
-  fib,
-  gcd,
-  add,
-  sum,
-  inc,
-  dec,
-  without,
-  withoutIndex,
-  range,
-  zip,
-  rangeFilled,
-  randomArray,
-  randomIntArray,
-  randomInRange,
-  randomIntInRange,
-  feedX,
-  call,
-  eq,
-  lt,
-  lte,
-  gt,
-  gte,
-  odd,
-  even,
-  isInInterval,
-  isLeapYear,
-  not,
-  or,
-  and,
-  xor,
-  comb,
-  every,
-  some,
-  gtPred,
-  gtePred,
-  ltPred,
-  ltePred,
-  add2obj,
-  groupBy,
-  cmp,
-  comparer,
-  comparerByKey,
-  cmpNumbers,
-  sort,
-  uniq,
-  uniqBy,
-  flatten,
-  shuffle,
-  vadd,
-  vdist,
-  min,
-  max,
-  timer
-};
-
-const sparseMatrix = {
-  fromMatrix: (m) => map((row) => row.reduce((acc, v, idx) => (v ? [...acc, idx] : acc), []))
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -341,6 +289,98 @@ const bitset = {
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+const ol = {
+  // numerical functions
+  abs,
+  add,
+  inc,
+  dec,
+  mul,
+  sqr,
+  cube,
+  gcd,
+  fac,
+  fib,
+
+  // technical functions
+  id,
+  feedX,
+  call,
+  swap,
+  clone,
+
+  // predicates
+  eq,
+  lt,
+  lte,
+  gt,
+  gte,
+  odd,
+  even,
+  isInInterval,
+  isLeapYear,
+
+  // generate predicates
+  gtPred,
+  gtePred,
+  ltPred,
+  ltePred,
+
+  // combine predicates
+  not,
+  or,
+  and,
+  xor,
+  comb,
+  every,
+  some,
+
+  // compare
+  cmp,
+  cmpNumbers,
+  comparer,
+  comparerByKey,
+
+  // random
+  randomArray,
+  randomIntArray,
+  randomInRange,
+  randomIntInRange,
+
+  // arrays
+  range,
+  rangeClosed,
+  rangeFilled,
+
+  sum,
+  prod,
+  max,
+  min,
+  average,
+  median,
+  patch,
+  without,
+  withoutIndex,
+  sort,
+  shuffle,
+  flatten,
+  uniq,
+  uniqBy,
+
+  add2obj,
+  groupBy,
+
+  zip,
+
+  // vector
+  vadd,
+  vsqrdist,
+  vdist,
+
+  // helpers
+  timer
+};
+
 if (typeof module !== 'undefined')
   module.exports = {
     ol,
