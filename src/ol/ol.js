@@ -123,8 +123,7 @@ const flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flat
 const uniq = (xs) => Array.from(new Set(xs));
 const uniqBy = (xs, proj) => Object.values(xs.reduce((a, v) => ({ ...a, [proj(v)]: v }), {}));
 
-const add2obj = (o, k, v) => ((o[k] = [...(o[k] || []), v]), o);
-const groupBy = (xs, proj) => xs.reduce((a, v) => add2obj(a, proj(v), v), {});
+const groupBy = (xs, proj) => xs.reduce((a, v) => feedX(proj(v), (k) => ((a[k] = [...(a[k] || []), v]), a)), {});
 
 // zip examples
 // zip([1,2,3], [4,5,6])  // -> [[1,4],[2,5],[3,6]]
@@ -367,7 +366,6 @@ const ol = {
   uniq,
   uniqBy,
 
-  add2obj,
   groupBy,
 
   zip,
