@@ -115,6 +115,8 @@ const prod = (xs) => xs.reduce(mul, 1);
 const max = (xs, proj = id) => xs.reduce((a, x) => (proj(x) > (proj || id)(a) ? x : a), xs[0]);
 const min = (xs, proj = id) => xs.reduce((a, x) => (proj(x) < (proj || id)(a) ? x : a), xs[0]);
 
+const randomElem = (xs) => xs[Math.floor(Math.random() * xs.length)];
+
 const average = (xs) => xs.reduce(add) / xs.length;
 const median = (xs) => ((xs = xs.toSorted()), feedX(xs.length / 2, (mid) => (mid % 2 === 0 ? (xs[mid - 1] + xs[mid]) / 2 : xs[mid - 0.5])));
 const patch = (xs, idx, val) => xs.with(idx, val);
@@ -359,6 +361,7 @@ const ol = {
   prod,
   max,
   min,
+  randomElem,
   average,
   median,
   patch,
