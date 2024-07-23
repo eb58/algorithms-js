@@ -73,7 +73,7 @@ const cmpNumbers = (x, y) => x - y;
 //   {title: "Wallenstein", author: "Schiller"},
 // ];
 // const cmpByTitle = comparer(o => o.title);
-// books.sort(cmpByName)) -> array sorted by title
+// books.sort(cmpByTitle)) -> array sorted by title
 const comparer = (proj) => (x, y) => cmp(proj(x), proj(y));
 // just a shortcut for comparer for objects
 const comparerByKey = (key) => comparer((o) => o[key]);
