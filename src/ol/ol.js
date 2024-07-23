@@ -112,8 +112,8 @@ const prod = (xs) => xs.reduce(mul, 1);
 // oldest      = max( persons, p => p.age ) # -> {name:"Max", age: 59}
 // youngest    = min( persons, p => p.age ) # -> {name:"Hans", age: 19}
 // longestName = max( persons, p => p.name.length ) # -> {name:"Max", age: 59}
-const max = (xs, proj = id) => xs.reduce((a, x) => (proj(x) > (proj || id)(a) ? x : a), xs[0]);
-const min = (xs, proj = id) => xs.reduce((a, x) => (proj(x) < (proj || id)(a) ? x : a), xs[0]);
+const max = (xs, proj = id) => xs.reduce((a, x) => (proj(x) > proj(a) ? x : a), xs[0]);
+const min = (xs, proj = id) => xs.reduce((a, x) => (proj(x) < proj(a) ? x : a), xs[0]);
 
 const randomElem = (xs) => xs[Math.floor(Math.random() * xs.length)];
 
