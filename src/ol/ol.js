@@ -191,7 +191,7 @@ const array = (xs) => ({
   average: () => average(xs),
   median: () => median(xs),
 
-  patch: (x) => patch(xs, x),
+  patch: (idx, val) => patch(xs, idx, val),
   without: (x) => without(xs, x),
   withoutIndex: (idx) => withoutIndex(idx),
   shuffle: () => shuffle(xs),
