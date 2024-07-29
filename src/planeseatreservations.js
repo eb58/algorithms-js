@@ -7,18 +7,18 @@ const solution1 = (N, reservations) => {
   const makeRow = (r) =>
     'ABCDEFGHIK'
       .split('')
-      .map((c) => (reservations.includes(r + 1 + c) ? 'X' : c))
+      .map((c) => (reservations.includes(r + c) ? 'X' : c))
       .join('') // Mache ein X an alle belegten Sitze
   const countPossibleInRow = (r) => r.includes('ABC') + (r.includes('DEF') || r.includes('EFG')) + r.includes('HIK')
-  return range(N)
+  return range(N).map(x=>x+1)
     .map((r) => makeRow(r))
     .reduce((sum, r) => sum + countPossibleInRow(r), 0)
 }
 
 const solution2 = (N, reservations) => {
-  const check = (triple, r) => triple.split('').every((c) => !reservations.includes(r + 1 + c))
-  const countPossibleInRow = (r) => check('ABC', r) + (check('DEF', r) || check('EFG', r)) + check('HIK', r)
-  return range(N).reduce((sum, r) => sum + countPossibleInRow(r), 0)
+  const check = (triple, r) => triple.split('').every((c) => !reservations.includes(r + c))
+  const countTriplesInRow = (r) => check('ABC', r) + (check('DEF', r) || check('EFG', r)) + check('HIK', r)
+  return range(N).map(x=>x+1).reduce((sum, r) => sum + countTriplesInRow(r), 0)
 }
 
 const adjustSol = (f) => (N, reservationsAsString) => f(N, reservationsAsString.split(' '))
