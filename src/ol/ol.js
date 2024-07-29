@@ -73,7 +73,7 @@ const cmpNumbers = (x, y) => x - y;
 //   {title: "Wallenstein", author: "Schiller"},
 // ];
 // const cmpByTitle = comparer(o => o.title);
-// books.sort(cmpByName)) -> array sorted by title
+// books.sort(cmpByTitle)) -> array sorted by title
 const comparer = (proj) => (x, y) => cmp(proj(x), proj(y));
 // just a shortcut for comparer for objects
 const comparerByKey = (key) => comparer((o) => o[key]);
@@ -112,8 +112,8 @@ const prod = (xs) => xs.reduce(mul, 1);
 // oldest      = max( persons, p => p.age ) # -> {name:"Max", age: 59}
 // youngest    = min( persons, p => p.age ) # -> {name:"Hans", age: 19}
 // longestName = max( persons, p => p.name.length ) # -> {name:"Max", age: 59}
-const max = (xs, proj = id) => xs.reduce((a, x) => (proj(x) > (proj || id)(a) ? x : a), xs[0]);
-const min = (xs, proj = id) => xs.reduce((a, x) => (proj(x) < (proj || id)(a) ? x : a), xs[0]);
+const max = (xs, proj = id) => xs.reduce((a, x) => (proj(x) > proj(a) ? x : a), xs[0]);
+const min = (xs, proj = id) => xs.reduce((a, x) => (proj(x) < proj(a) ? x : a), xs[0]);
 
 const randomElem = (xs) => xs[Math.floor(Math.random() * xs.length)];
 
@@ -191,7 +191,7 @@ const array = (xs) => ({
   average: () => average(xs),
   median: () => median(xs),
 
-  patch: (x) => patch(xs, x),
+  patch: (idx, val) => patch(xs, idx, val),
   without: (x) => without(xs, x),
   withoutIndex: (idx) => withoutIndex(idx),
   shuffle: () => shuffle(xs),
