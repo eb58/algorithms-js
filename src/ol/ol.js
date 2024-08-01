@@ -53,12 +53,12 @@ const or = (f, g) => (x) => f(x) || g(x);
 const xor = (f, g) => (x) => !!(f(x) ^ g(x));
 const every =
   (...fs) =>
-  (x) =>
-    fs.every((f) => f(x));
+    (x) =>
+      fs.every((f) => f(x));
 const some =
   (...fs) =>
-  (x) =>
-    fs.some((f) => f(x));
+    (x) =>
+      fs.some((f) => f(x));
 const comb = (f, g) => (x) => f(g(x));
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -139,13 +139,6 @@ const groupBy = (xs, proj) => xs.reduce((a, v) => feedX(proj(v), (k) => ((a[k] =
 const zip = (xs, ys, f) => xs.map((x, i) => (f ? f(x, ys[i]) : [x, ys[i]]));
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// vector
-///////////////////////////////////////////////////////////////////////////////////////////////////
-const vadd = (v1, v2) => zip(v1, v2, add);
-const vsqrdist = (v1, v2) => zip(v1, v2, (x, y) => (x - y) ** 2);
-const vdist = (v1, v2) => Math.sqrt(vsqrdist(v1, v2));
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 // helpers
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 const timer = () => {
@@ -219,17 +212,26 @@ const array = (xs) => ({
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
+// vector
+///////////////////////////////////////////////////////////////////////////////////////////////////
+const vadd = (v1, v2) => zip(v1, v2, add);
+const vsqrdist = (v1, v2) => zip(v1, v2, (x, y) => (x - y) ** 2);
+const vdist = (v1, v2) => Math.sqrt(vsqrdist(v1, v2));
+const vscalar = (v1,v2) => sum(zip(v1, v2, mul));
+const vnorm = (v) => Math.sqrt(vscalar(v,v));
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
 // matrix
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 const matrix = {
-  clone: (mat) => mat.map((r) => [...r]),
-  reshape: (xs, dim) => xs.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, []),
-  redim: (mat, nrows, ncols, defVal = 0) => range(nrows).map((r) => range(ncols).map((c) => mat[r]?.[c] || defVal)),
-  makeQuadratic: (mat, defVal = 0) => feedX(Math.max(mat.length, mat[0].length), (dim) => matrix.redim(mat, dim, dim, defVal)),
-  transpose: (mat) => mat[0].map((_, ci) => mat.map((r) => r[ci])),
-  translate: (mat, dr, dc, defVal = 0) => range(mat.length).map((r) => range(mat[0].length).map((c) => mat[r - dr]?.[c - dc] || defVal)),
-  rotate90: (mat) => mat[0].map((_, idx) => mat.map((r) => r[r.length - idx - 1])),
-  rotateN90: (mat, n) => range(n).reduce(matrix.rotate90, mat)
+  clone: (m) => m.map((r) => [...r]),
+  reshape: (m, dim) => m.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, []),
+  redim: (m, nrows, ncols, defVal = 0) => range(nrows).map((r) => range(ncols).map((c) => m[r]?.[c] || defVal)),
+  makeQuadratic: (m, defVal = 0) => feedX(Math.max(m.length, m[0].length), (dim) => matrix.redim(m, dim, dim, defVal)),
+  transpose: (m) => m[0].map((_, i) => m.map((r) => r[i])),
+  translate: (m, dr, dc, defVal = 0) => range(m.length).map((r) => range(m[0].length).map((c) => m[r - dr]?.[c - dc] || defVal)),
+  rotate90: (m) => m[0].map((_, idx) => m.map((r) => r[r.length - idx - 1])),
+  rotateN90: (m, n) => range(n).reduce(matrix.rotate90, m)
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -381,6 +383,8 @@ const ol = {
   vadd,
   vsqrdist,
   vdist,
+  vscalar,
+  vnorm,
 
   // helpers
   timer
