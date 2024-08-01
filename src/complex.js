@@ -7,7 +7,7 @@ const cops = {
   add: (c1, c2) => C$(c1.r + c2.r, c1.i + c2.i),
   sub: (c1, c2) => C$(c1.r - c2.r, c1.i - c2.i),
   mul: (c1, c2) => C$(c1.r * c2.r - c1.i * c2.i, c1.r * c2.i + c1.i * c2.r),
-  div: (c1, c2) => feedx(c2.r * c2.r + c2.i * c2.i, (x) => C$((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x))
+  div: (c1, c2) => feedx(c2.r * c2.r + c2.i * c2.i, (x) => C$((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x)),
 };
 
 const csops = {
@@ -73,6 +73,7 @@ const doEval = (s, varsOrFcts = {}, ops = csops) => {
   const [pi, e] = [Math.PI, Math.E];
   varsOrFcts = {
     ...varsOrFcts,
+    sqr: (z) => cops.mul(z,z),
     i: ops === csops ? 'C$(0, 1)' : C$(0, 1),
     e: ops === csops ? `C$(${e})` : C$(e),
     pi: ops === csops ? `C$(${pi})` : C$(pi)

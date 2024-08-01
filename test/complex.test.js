@@ -11,7 +11,7 @@ test('exceptions', () => {
   expect(() => C$('(1+5')).toThrow('Closing bracket not found!');
   expect(() => C$('1-*5')).toThrow('Operand expected. Pos:3');
   expect(() => C$('5+5(')).toThrow('Unexpected symbol. Pos:4');
-  
+
   expect(() => C$()).toThrow('False initialisation of C$');
   expect(() => C$({ s: 7 })).toThrow('False initialisation of C$');
 });
@@ -144,17 +144,16 @@ test('complexFunction type 3', () => {
   expect(C$('(a) => a*a*a')(2)).toEqual(C$(8));
 });
 
-test('external variables or functions', () => {
-  const csqr = C$('(z) => z*z');
-  const g = C$('(z) => z*z*(z-1)/(z+1)');
-  const f = C$('(z) => -i*(z+1)*(z+1)*(z*z*z*z)');
+test('external variables and functions ', () => {
+  const sqr = (z) => C$('z*z', { z });
+  const f1 = (z) => C$('sqr(z)', { z });
+  const f2 = (z) => C$('f1(z)+1', { z, f1 });
+  const f3 = (z) => C$('-i*(z+1)*(z+1)*(z*z*z*z)', { z });
 
-  xcsqr = csqr;
-  a = 3;
-  // console.log('XXX', C$('csqr(a)'));
-  ff = f;
-  gg = g;
-  z = C$(0, 2);
-  expect(C$('xcsqr(a)')).toEqual(C$(9));
-  expect(C$('ff(z)')).toEqual({ r: 64, i: 48 });
+  expect(sqr(C$('2*i'))).toEqual(C$(-4));
+  expect(f1(C$('2*i'))).toEqual(C$(-4));
+  expect(f2(C$('2*i'))).toEqual(C$(-3));
+
+  const b = C$(0, 2);
+  expect(C$('f3(b)', { b, f3 })).toEqual({ r: 64, i: 48 });
 });
