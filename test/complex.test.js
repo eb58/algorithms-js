@@ -145,12 +145,14 @@ test('complexFunction type 3', () => {
 });
 
 test('external variables and functions ', () => {
-  const sqr = (z) => C$('z*z', { z });
   const f1 = (z) => C$('sqr(z)', { z });
   const f2 = (z) => C$('f1(z)+1', { z, f1 });
   const f3 = (z) => C$('-i*(z+1)*(z+1)*(z*z*z*z)', { z });
+  const cube = (z) => C$('z*z*z', { z });
 
-  expect(sqr(C$('2*i'))).toEqual(C$(-4));
+  expect(C$('sqr(2*i)')).toEqual(C$(-4));
+  expect(C$('cube(2*i)',{cube})).toEqual(C$(0,-8));
+
   expect(f1(C$('2*i'))).toEqual(C$(-4));
   expect(f2(C$('2*i'))).toEqual(C$(-3));
 

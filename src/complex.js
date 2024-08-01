@@ -152,9 +152,9 @@ const C$ = (() => {
     if (typeof r === 'number') return { r: r || 0, i: i || 0 }; // C$(1, 1)
     if (typeof r === 'object' && Object.keys(r).every((k) => k === 'r' || k === 'i')) return { r: 0, i: 0, ...r }; // C$({ r: 1, i: 1 })
     if (typeof r === 'string') {
-      if (typeof i === 'object') return evalComplex(r, i); // C$("a+7+i", {a:C$('3+i')})
-      if (r.includes('=>')) return evalComplexFunction(r.substring(r.indexOf('=>') + 2)); // C$("(z) => z*z") ( returns function )
-      return evalComplex(r); // C$("3+i") ( returns value )
+      if (r.includes('=>')) return evalComplexFunction(r.substring(r.indexOf('=>') + 2)); // C$("(z) => z*z") -> returns function 
+      if (typeof i === 'object') return evalComplex(r, i); // const a = C$(3,1); C$("a+7", {a}) -> returns value
+      return evalComplex(r); // C$("3+i") -> returns value
     }
     throw Error(`False initialisation of C$`);
   };
