@@ -15,6 +15,7 @@ test('exceptions', () => {
   expect(() => C$('(1+5')).toThrow('Closing bracket not found!');
   expect(() => C$('1-*5')).toThrow('Operand expected. Pos:3');
   expect(() => C$('5+5(')).toThrow('Unexpected symbol. Pos:4');
+  expect(() => C$('pow(3,2')).toThrow('Closing bracket not found! Pos:7');
 
   expect(() => C$()).toThrow('False initialisation of C$');
   expect(() => C$({ s: 7 })).toThrow('False initialisation of C$');
@@ -162,10 +163,11 @@ test('exponential z**2 ', () => {
 });
 
 test('functions with several parameters ', () => {
-  const pow = (z, n) => range(n.r - 1).reduce((res) => C$('res*z', { res, z }), C$(z));
+  const pow = (z, n) => range(n.r - 1).reduce((res) => C$('res*z', { res, z }), z);
   const f = (z1, z2) => C$('z1+z2', { z1, z2 });
 
   expect(C$('f(3,4)', { f })).toEqual(C$(7));
   expect(C$('2+2+csqr(3)', { csqr })).toEqual(C$(13));
   expect(C$('pow(3,2)', { pow })).toEqual(C$(9));
+  expect(C$('pow(3,2)')).toEqual(C$(9));
 });

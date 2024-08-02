@@ -69,6 +69,7 @@ const C$ = (() => {
     varsOrFcts = {
       ...varsOrFcts,
       sqr: (z) => cops.mul(z, z),
+      pow: (z,n) => cops.pow(z,n),
       i: C$(0, 1),
       e: C$(Math.E),
       pi: C$(Math.PI)
@@ -92,6 +93,7 @@ const C$ = (() => {
         token = lex.getToken();
         const expressions = [expression()];
         while (token.token == tokens.comma) expressions.push(expression());
+        if (token.token !== tokens.rparen) throw Error(`Closing bracket not found! Pos:${lex.pos()}`);
         return valOrFct(...expressions);
       }
       throw Error(`Operand expected. Pos:${lex.pos()}`);
