@@ -160,6 +160,7 @@ test('exponential z**2 ', () => {
   expect(C$('z**2 * 2', { z: C$('3') })).toEqual(C$(18));
   expect(C$('z**2 + 2', { z: C$('3') })).toEqual(C$(11));
   expect(C$('1 + z**2 *2 + 2', { z: C$('3') })).toEqual(C$(21));
+  expect(C$('z^2 * 2', { z: C$('3') })).toEqual(C$(18));
 });
 
 test('functions with several parameters ', () => {

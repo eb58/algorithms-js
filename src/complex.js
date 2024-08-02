@@ -24,6 +24,7 @@ const C$ = (() => {
       '/': tokens.divide,
       '(': tokens.lparen,
       ')': tokens.rparen,
+      '^': tokens.pow,
       ',': tokens.comma
     };
 
