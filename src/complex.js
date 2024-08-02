@@ -3,16 +3,15 @@ const C$ = (() => {
   const range = (n) => [...Array(n).keys()];
 
   const cops = {
-    id: (c) => C$(c),
     neg: (c) => C$(-c.r, -c.i),
     add: (c1, c2) => C$(c1.r + c2.r, c1.i + c2.i),
     sub: (c1, c2) => C$(c1.r - c2.r, c1.i - c2.i),
     mul: (c1, c2) => C$(c1.r * c2.r - c1.i * c2.i, c1.r * c2.i + c1.i * c2.r),
     div: (c1, c2) => feedx(c2.r * c2.r + c2.i * c2.i, (x) => C$((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x)),
-    pow: (c, n) => (n === 0 ? C$(1) : range(n - 1).reduce((res) => cops.mul(res, c), c))
+    pow: (c, n) => (n.r === 0 ? C$(1) : range(n.r - 1).reduce((res) => cops.mul(res, c), c))
   };
 
-  const tokenStrings = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'pow', 'lparen', 'rparen', 'end'];
+  const tokenStrings = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'pow', 'lparen', 'rparen', 'comma', 'end'];
   const tokens = tokenStrings.reduce((acc, s) => ({ ...acc, [s]: s }), {});
 
   const lexParser = (input) => {
@@ -24,7 +23,8 @@ const C$ = (() => {
       '*': tokens.times,
       '/': tokens.divide,
       '(': tokens.lparen,
-      ')': tokens.rparen
+      ')': tokens.rparen,
+      ',': tokens.comma
     };
 
     const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_';
@@ -79,7 +79,7 @@ const C$ = (() => {
       token = lex.getToken();
       if (token.token === tokens.minus) return cops.neg(operand());
       if (token.token === tokens.plus) return operand();
-      if (token.token === tokens.number) return cops.id(token.value);
+      if (token.token === tokens.number) return C$(token.value);
       if (token.token === tokens.lparen) {
         const ret = expression();
         if (token.token !== tokens.rparen) throw Error(`Closing bracket not found!. Pos:${lex.pos()}`);
@@ -88,7 +88,11 @@ const C$ = (() => {
       if (token.token === tokens.ident) {
         const valOrFct = varsOrFcts[token.name];
         if (!valOrFct) throw Error(`Unknown identifier ${token.name}. Pos:${lex.pos()}`);
-        return typeof valOrFct === 'function' ? ((token = lex.getToken()), valOrFct(expression())) : C$(valOrFct);
+        if (typeof valOrFct !== 'function') return C$(valOrFct);
+        token = lex.getToken();
+        const expressions = [expression()];
+        while (token.token == tokens.comma) expressions.push(expression());
+        return valOrFct(...expressions);
       }
       throw Error(`Operand expected. Pos:${lex.pos()}`);
     };
@@ -96,7 +100,7 @@ const C$ = (() => {
     const term = () => {
       const val = operand();
       token = lex.getToken();
-      return token.token !== tokens.pow ? val : cops.pow(val, term().r);
+      return token.token !== tokens.pow ? val : cops.pow(val, term());
     };
 
     const factor = () => {
