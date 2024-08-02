@@ -1,95 +1,17 @@
 const { ol, num, interval, array } = require('../../src/ol/ol');
+console.log( ol )
 
 const {
-  // numerical functions
-  abs,
-  add,
-  inc,
-  dec,
-  mul,
-  sqr,
-  cube,
-  gcd,
-  fac,
-  fib,
-
-  // technical functions
-  id,
-  feedX,
-  call,
-  swap,
-  clone,
-
-  // predicates
-  eq,
-  lt,
-  lte,
-  gt,
-  gte,
-  odd,
-  even,
-  isInInterval,
-  isLeapYear,
-  isPrime,
-
-  // generate predicates
-  gtPred,
-  gtePred,
-  ltPred,
-  ltePred,
-
-  // combine predicates
-  not,
-  or,
-  and,
-  xor,
-  comb,
-  every,
-  some,
-
-  // compare
-  cmp,
-  cmpNumbers,
-  comparer,
-  comparerByKey,
-
-  // random
-  randomArray,
-  randomIntArray,
-  randomInRange,
-  randomIntInRange,
-
-  // arrays
-  range,
-  rangeClosed,
-  rangeFilled,
-
-  sum,
-  prod,
-  max,
-  min,
-  average,
-  median,
-  patch,
-  without,
-  withoutIndex,
-  sort,
-  shuffle,
-  flatten,
-  uniq,
-  uniqBy,
-
-  groupBy,
-
-  zip,
-
-  // vector
-  vadd,
-  vsqrdist,
-  vdist,
-
-  // helpers
-  timer
+  abs, add, inc, dec, mul, sqr, cube, gcd, fac, fib, // numerical functions
+  id, feedX, call, swap, clone,  // technical functions
+  eq, lt, lte, gt, gte, odd, even, isInInterval, isLeapYear, isPrime, // predicates
+  gtPred, gtePred, ltPred, ltePred, // generate predicates
+  not, or, and, xor, comb, every, some, // combine predicates
+  cmpNumbers, cmp, comparer, comparerByKey, // compare
+  randomArray, randomIntArray, randomInRange, randomIntInRange, // random
+  range, rangeClosed, rangeFilled, // arrays
+  sum, prod, max, min, randomElem, average, median, patch, without, withoutIndex, sort, shuffle, flatten, uniq, uniqBy, groupBy, zip, // arrays
+  timer, // helpers
 } = ol;
 
 test('simple', () => {
@@ -193,9 +115,6 @@ test('combine predicates', () => {
   expect(some(isLeapYear, even)(1800)).toBe(true);
 });
 
-test('vector functions', () => {
-  expect(vadd([1, 3], [1, 7])).toEqual([2, 10]);
-});
 
 test('range', () => {
   expect(range(0)).toEqual([]);

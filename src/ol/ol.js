@@ -1,152 +1,162 @@
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// numerical functions
-///////////////////////////////////////////////////////////////////////////////////////////////////
-const abs = (x) => (x >= 0 ? x : -x);
-const add = (a, b) => a + b;
-const inc = (x) => x + 1;
-const dec = (x) => x - 1;
-const mul = (a, b) => a * b;
-const sqr = (x) => x ** 2;
-const cube = (x) => x ** 3;
+const ol = (() => {
 
-const gcd = (a, b) => (a % b === 0 ? b : gcd(b, a % b));
-const fac = (x) => prod(range(x).map(inc));
-const fib = (x) => (x <= 2 ? 1 : fib(x - 1) + fib(x - 2));
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  // numerical functions
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  const abs = (x) => (x >= 0 ? x : -x);
+  const add = (a, b) => a + b;
+  const inc = (x) => x + 1;
+  const dec = (x) => x - 1;
+  const mul = (a, b) => a * b;
+  const sqr = (x) => x ** 2;
+  const cube = (x) => x ** 3;
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// technical functions
-///////////////////////////////////////////////////////////////////////////////////////////////////
-const id = (x) => x;
-const feedX = (x, f) => f(x);
-const call = (f, ...args) => f(...args);
-const swap = (x, y) => [y, x];
-const clone = (o) => JSON.parse(JSON.stringify(o));
+  const gcd = (a, b) => (a % b === 0 ? b : gcd(b, a % b));
+  const fac = (x) => prod(range(x).map(inc));
+  const fib = (x) => (x <= 2 ? 1 : fib(x - 1) + fib(x - 2));
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// predicates
-///////////////////////////////////////////////////////////////////////////////////////////////////
-const eq = (x, y) => x === y;
-const lt = (x, y) => x < y;
-const lte = (x, y) => x <= y;
-const gt = (x, y) => x > y;
-const gte = (x, y) => x >= y;
-const odd = (x) => x % 2 !== 0;
-const even = (x) => x % 2 === 0;
-const isInInterval = (x, a, b) => a <= x && x <= b;
-const isLeapYear = (x) => (x % 4 === 0 && x % 100 !== 0) || x % 400 === 0;
-const isPrime = (n) => n === 2 || rangeClosed(2, Math.ceil(Math.sqrt(n))).every((m) => n % m !== 0);
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  // technical functions
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  const id = (x) => x;
+  const feedX = (x, f) => f(x);
+  const call = (f, ...args) => f(...args);
+  const swap = (x, y) => [y, x];
+  const clone = (o) => JSON.parse(JSON.stringify(o));
 
-// generate predicates
-// usage: [1,2,3,4,5].filter(gtPred(3)) // -> [4,5]
-const gtPred = (x) => (y) => y > x;
-const gtePred = (x) => (y) => y >= x;
-const ltPred = (x) => (y) => y < x;
-const ltePred = (x) => (y) => y <= x;
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  // predicates
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  const eq = (x, y) => x === y;
+  const lt = (x, y) => x < y;
+  const lte = (x, y) => x <= y;
+  const gt = (x, y) => x > y;
+  const gte = (x, y) => x >= y;
+  const odd = (x) => x % 2 !== 0;
+  const even = (x) => x % 2 === 0;
+  const isInInterval = (x, a, b) => a <= x && x <= b;
+  const isLeapYear = (x) => (x % 4 === 0 && x % 100 !== 0) || x % 400 === 0;
+  const isPrime = (n) => n === 2 || rangeClosed(2, Math.ceil(Math.sqrt(n))).every((m) => n % m !== 0);
 
-// combine predicates
-// const { not, and, or, gtPred } = ol;
-// [1,2,3,4,5].filter(not(gtPred(3))) # -> [1,2,3]
-// [1,2,3,4,5].filter(and(gtPred(3),ltPred(5))) # -> [4]
-const not = (f) => (x) => !f(x);
-const and = (f, g) => (x) => f(x) && g(x);
-const or = (f, g) => (x) => f(x) || g(x);
-const xor = (f, g) => (x) => !!(f(x) ^ g(x));
-const every =
-  (...fs) =>
-    (x) =>
-      fs.every((f) => f(x));
-const some =
-  (...fs) =>
-    (x) =>
-      fs.some((f) => f(x));
-const comb = (f, g) => (x) => f(g(x));
+  // generate predicates
+  // usage: [1,2,3,4,5].filter(gtPred(3)) // -> [4,5]
+  const gtPred = (x) => (y) => y > x;
+  const gtePred = (x) => (y) => y >= x;
+  const ltPred = (x) => (y) => y < x;
+  const ltePred = (x) => (y) => y <= x;
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// compare
-///////////////////////////////////////////////////////////////////////////////////////////////////
-const cmp = (x, y) => (x === y ? 0 : x < y ? -1 : +1);
-const cmpNumbers = (x, y) => x - y;
-// comparer: generate compare function
-// const books = [
-//   {title: "Faust", author: "Goethe"},
-//   {title: "Die Räuber", author: "Schiller"},
-//   {title: "Wallenstein", author: "Schiller"},
-// ];
-// const cmpByTitle = comparer(o => o.title);
-// books.sort(cmpByTitle)) -> array sorted by title
-const comparer = (proj) => (x, y) => cmp(proj(x), proj(y));
-// just a shortcut for comparer for objects
-const comparerByKey = (key) => comparer((o) => o[key]);
+  // combine predicates
+  // const { not, and, or, gtPred } = ol;
+  // [1,2,3,4,5].filter(not(gtPred(3))) # -> [1,2,3]
+  // [1,2,3,4,5].filter(and(gtPred(3),ltPred(5))) # -> [4]
+  const not = (f) => (x) => !f(x);
+  const and = (f, g) => (x) => f(x) && g(x);
+  const or = (f, g) => (x) => f(x) || g(x);
+  const xor = (f, g) => (x) => !!(f(x) ^ g(x));
+  const every = (...fs) => (x) => fs.every((f) => f(x));
+  const some = (...fs) => (x) => fs.some((f) => f(x));
+  const comb = (f, g) => (x) => f(g(x));
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// random
-///////////////////////////////////////////////////////////////////////////////////////////////////
-const randomInRange = (min, max) => Math.random() * (max - min) + min;
-const randomIntInRange = (min, max) => Math.floor(randomInRange(min, max + 1));
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  // compare
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  const cmpNumbers = (x, y) => x - y;
+  const cmp = (x, y) => (x === y ? 0 : x < y ? -1 : +1);
+  // comparer: generate compare function
+  // const books = [
+  //   {title: "Faust", author: "Goethe"},
+  //   {title: "Die Räuber", author: "Schiller"},
+  //   {title: "Wallenstein", author: "Schiller"},
+  // ];
+  // const cmpByTitle = comparer(o => o.title);
+  // books.sort(cmpByTitle)) -> array sorted by title
+  const comparer = (proj) => (x, y) => cmp(proj(x), proj(y));
+  // comparerByKey: just a shortcut for comparer for objects
+  // books.sort(comparerByKey('title))) -> array sorted by title
+  const comparerByKey = (key) => comparer((o) => o[key]);
 
-// randomArray(3, 1,2) // i.e. -> [  1.469331797388123,  1.9114774409909974,  1.0951408786565546]
-const randomArray = (n, min, max) => range(n).map(() => randomInRange(min, max));
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  // random
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  const randomInRange = (min, max) => Math.random() * (max - min) + min;
+  const randomIntInRange = (min, max) => Math.floor(randomInRange(min, max + 1));
 
-// randomIntArray(4, -1, 4) // [ 4, -1, 2, 3]
-const randomIntArray = (n, min, max) => range(n).map(() => randomIntInRange(min, max));
+  // randomArray(3, 1,2) // i.e. -> [  1.469331797388123,  1.9114774409909974,  1.0951408786565546]
+  const randomArray = (n, min, max) => range(n).map(() => randomInRange(min, max));
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// arrays
-///////////////////////////////////////////////////////////////////////////////////////////////////
+  // randomIntArray(4, -1, 4) // [ 4, -1, 2, 3]
+  const randomIntArray = (n, min, max) => range(n).map(() => randomIntInRange(min, max));
 
-// range(3)            // [0,1,2]
-// range(5).map(inc)   // [1,2,3,4,5]
-// range(5).map(()=>0) // [0,0,0,0,0]
-const range = (n) => [...Array(n).keys()];
-const rangeClosed = (a, b) => range(b - a + 1).map((x) => x + a);
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  // arrays
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-// rangeFilled(3)       // [0, 0, 0]
-// rangeFilled(3,'a')   // ['a', 'a', 'a']
-const rangeFilled = (n, val = 0) => range(n).map(() => val);
+  // range(3)            // [0,1,2]
+  // range(5).map(inc)   // [1,2,3,4,5]
+  // range(5).map(()=>0) // [0,0,0,0,0]
+  const range = (n) => [...Array(n).keys()];
+  const rangeClosed = (a, b) => range(b - a + 1).map((x) => x + a);
 
-const sum = (xs) => xs.reduce(add, 0);
-const prod = (xs) => xs.reduce(mul, 1);
+  // rangeFilled(3)       // [0, 0, 0]
+  // rangeFilled(3,'a')   // ['a', 'a', 'a']
+  const rangeFilled = (n, val = 0) => range(n).map(() => val);
 
-// min + max
-// persons     = [ {name:"Max", age: 59}, {name:"Hans", age: 19}, {name:"Johannes", age: 29}]
-// oldest      = max( persons, p => p.age ) # -> {name:"Max", age: 59}
-// youngest    = min( persons, p => p.age ) # -> {name:"Hans", age: 19}
-// longestName = max( persons, p => p.name.length ) # -> {name:"Max", age: 59}
-const max = (xs, proj = id) => xs.reduce((a, x) => (proj(x) > proj(a) ? x : a), xs[0]);
-const min = (xs, proj = id) => xs.reduce((a, x) => (proj(x) < proj(a) ? x : a), xs[0]);
+  const sum = (xs) => xs.reduce(add, 0);
+  const prod = (xs) => xs.reduce(mul, 1);
 
-const randomElem = (xs) => xs[Math.floor(Math.random() * xs.length)];
+  // min + max
+  // persons     = [ {name:"Max", age: 59}, {name:"Hans", age: 19}, {name:"Johannes", age: 29}]
+  // oldest      = max( persons, p => p.age ) # -> {name:"Max", age: 59}
+  // youngest    = min( persons, p => p.age ) # -> {name:"Hans", age: 19}
+  // longestName = max( persons, p => p.name.length ) # -> {name:"Max", age: 59}
+  const max = (xs, proj = id) => xs.reduce((a, x) => (proj(x) > proj(a) ? x : a), xs[0]);
+  const min = (xs, proj = id) => xs.reduce((a, x) => (proj(x) < proj(a) ? x : a), xs[0]);
 
-const average = (xs) => xs.reduce(add) / xs.length;
-const median = (xs) => ((xs = xs.toSorted()), feedX(xs.length / 2, (mid) => (mid % 2 === 0 ? (xs[mid - 1] + xs[mid]) / 2 : xs[mid - 0.5])));
-const patch = (xs, idx, val) => xs.with(idx, val);
-const without = (xs, x) => xs.filter((y) => x !== y);
-const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx);
-const sort = (xs, cmp) => xs.toSorted(cmp);
-const shuffle = (xs) => xs.reduce((xs, x, i) => (feedX(randomIntInRange(0, xs.length - 1), (j) => ([xs[i], xs[j]] = [xs[j], x])), xs), xs);
-const flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flatten(o) : o), []);
-const uniq = (xs) => Array.from(new Set(xs));
-const uniqBy = (xs, proj) => Object.values(xs.reduce((a, v) => ({ ...a, [proj(v)]: v }), {}));
+  const randomElem = (xs) => xs[Math.floor(Math.random() * xs.length)];
 
-const groupBy = (xs, proj) => xs.reduce((a, v) => feedX(proj(v), (k) => ((a[k] = [...(a[k] || []), v]), a)), {});
+  const average = (xs) => xs.reduce(add) / xs.length;
+  const median = (xs) => ((xs = xs.toSorted()), feedX(xs.length / 2, (mid) => (mid % 2 === 0 ? (xs[mid - 1] + xs[mid]) / 2 : xs[mid - 0.5])));
+  const patch = (xs, idx, val) => xs.with(idx, val);
+  const without = (xs, x) => xs.filter((y) => x !== y);
+  const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx);
+  const sort = (xs, cmp) => xs.toSorted(cmp);
+  const shuffle = (xs) => xs.reduce((xs, x, i) => (feedX(randomIntInRange(0, xs.length - 1), (j) => ([xs[i], xs[j]] = [xs[j], x])), xs), xs);
+  const flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flatten(o) : o), []);
+  const uniq = (xs) => Array.from(new Set(xs));
+  const uniqBy = (xs, proj) => Object.values(xs.reduce((a, v) => ({ ...a, [proj(v)]: v }), {}));
 
-// zip examples
-// zip([1,2,3], [4,5,6])  // -> [[1,4],[2,5],[3,6]]
-// zip([1,2,3], [4,5,6], add ) // -> [5,7,9]
-//    men   = [{name:'hugo', age:36 }, {name:'hans', age:37 }]
-//    women = [{name:'anna', age:35 }, {name:'lena', age:27 }]
-// zip(men, women, (a,b) => ({ 'husband': a, 'wife': b }) ) // -> [{"husband":"hugo","wife":"anna"}, {"husband":"hans","wife":"lena"}]
-const zip = (xs, ys, f) => xs.map((x, i) => (f ? f(x, ys[i]) : [x, ys[i]]));
+  const groupBy = (xs, proj) => xs.reduce((a, v) => feedX(proj(v), (k) => ((a[k] = [...(a[k] || []), v]), a)), {});
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// helpers
-///////////////////////////////////////////////////////////////////////////////////////////////////
-const timer = () => {
-  const start = new Date();
-  return {
-    elapsedTime: () => (new Date() - start) / 1000
+  // zip examples
+  // zip([1,2,3], [4,5,6])  // -> [[1,4],[2,5],[3,6]]
+  // zip([1,2,3], [4,5,6], add ) // -> [5,7,9]
+  //    men   = [{name:'hugo', age:36 }, {name:'hans', age:37 }]
+  //    women = [{name:'anna', age:35 }, {name:'lena', age:27 }]
+  // zip(men, women, (a,b) => ({ 'husband': a, 'wife': b }) ) // -> [{"husband":"hugo","wife":"anna"}, {"husband":"hans","wife":"lena"}]
+  const zip = (xs, ys, f) => xs.map((x, i) => (f ? f(x, ys[i]) : [x, ys[i]]));
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  // helpers
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  const timer = () => {
+    const start = new Date();
+    return {
+      elapsedTime: () => (new Date() - start) / 1000
+    };
   };
-};
+  return {
+    abs, add, inc, dec, mul, sqr, cube, gcd, fac, fib, // numerical functions
+    id, feedX, call, swap, clone,  // technical functions
+    eq, lt, lte, gt, gte, odd, even, isInInterval, isLeapYear, isPrime, // predicates
+    gtPred, gtePred, ltPred, ltePred, // generate predicates
+    not, or, and, xor, comb, every, some, // combine predicates
+    cmpNumbers, cmp, comparer, comparerByKey, // compare
+    randomArray, randomIntArray, randomInRange, randomIntInRange, // random
+    range, rangeClosed, rangeFilled, // arrays
+    sum, prod, max, min, randomElem, average, median, patch, without, withoutIndex, sort, shuffle, flatten, uniq, uniqBy, groupBy, zip, // arrays
+    timer, // helpers
+  };
+})()
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // interval
@@ -161,8 +171,8 @@ const interval = (a, b) => ({
   inc: (x) => (x >= b ? b : x + 1),
   dec: (x) => (x <= a ? a : x - 1),
 
-  random: () => randomInRange(a, b),
-  randomInt: () => randomIntInRange(a, b)
+  random: () => ol.randomInRange(a, b),
+  randomInt: () => ol.randomIntInRange(a, b)
 });
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -170,30 +180,30 @@ const interval = (a, b) => ({
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 const num = (x) => ({
-  abs: () => abs(x),
-  sqr: () => sqr(x),
-  cube: () => cube(x),
-  isInInterval: (a, b) => isInInterval(x, a, b)
+  abs: () => ol.abs(x),
+  sqr: () => ol.sqr(x),
+  cube: () => ol.cube(x),
+  isInInterval: (a, b) => ol.isInInterval(x, a, b)
 });
 
 const array = (xs) => ({
-  sum: () => sum(xs),
-  prod: () => prod(xs),
-  max: () => max(xs),
-  min: () => min(xs),
-  average: () => average(xs),
-  median: () => median(xs),
+  sum: () => ol.sum(xs),
+  prod: () => ol.prod(xs),
+  max: () => ol.max(xs),
+  min: () => ol.min(xs),
+  average: () => ol.average(xs),
+  median: () => ol.median(xs),
 
-  patch: (idx, val) => patch(xs, idx, val),
-  without: (x) => without(xs, x),
-  withoutIndex: (idx) => withoutIndex(idx),
-  shuffle: () => shuffle(xs),
-  flatten: () => flatten(xs),
-  uniq: () => uniq(xs),
-  uniqBy: (proj) => uniqBy(xs, proj),
+  patch: (idx, val) => ol.patch(xs, idx, val),
+  without: (x) => ol.without(xs, x),
+  withoutIndex: (idx) =>ol.withoutIndex(idx),
+  shuffle: () => ol.shuffle(xs),
+  flatten: () => ol.flatten(xs),
+  uniq: () => ol.uniq(xs),
+  uniqBy: (proj) => ol.uniqBy(xs, proj),
 
-  groupBy: (proj) => groupBy(xs, proj),
-  zip: (ys, f) => zip(xs, ys, f),
+  groupBy: (proj) => ol.groupBy(xs, proj),
+  zip: (ys, f) => ol.zip(xs, ys, f),
 
   initial: () => xs.slice(0, -1),
   head: () => [xs[0]],
@@ -201,7 +211,7 @@ const array = (xs) => ({
   rest: () => xs.slice(1),
   first: () => xs[0],
   last: () => xs[xs.length - 1],
-  unite: (ys) => uniq([...xs, ...ys]),
+  unite: (ys) => ol.uniq([...xs, ...ys]),
   xor: (ys) => [...xs, ...ys].filter((x) => !(xs.includes(x) && ys.includes(x))),
   intersect: (ys) => xs.filter((x) => ys.includes(x)),
   subtract: (ys) => xs.filter((x) => !ys.includes(x)),
@@ -214,11 +224,14 @@ const array = (xs) => ({
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // vector
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-const vadd = (v1, v2) => zip(v1, v2, add);
-const vsqrdist = (v1, v2) => zip(v1, v2, (x, y) => (x - y) ** 2);
-const vdist = (v1, v2) => Math.sqrt(vsqrdist(v1, v2));
-const vscalar = (v1,v2) => sum(zip(v1, v2, mul));
-const vnorm = (v) => Math.sqrt(vscalar(v,v));
+
+const vector = {
+  vadd: (v1, v2) => ol.zip(v1, v2, ol.add),
+  vsqrdist: (v1, v2) => ol.zip(v1, v2, (x, y) => (x - y) ** 2),
+  vdist: (v1, v2) => Math.sqrt(vector.vsqrdist(v1, v2)),
+  vscalar: (v1, v2) => ol.sum(ol.zip(v1, v2, mul)),
+  vnorm: (v) => Math.sqrt(vector.vscalar(v, v)),
+}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // matrix
@@ -226,12 +239,12 @@ const vnorm = (v) => Math.sqrt(vscalar(v,v));
 const matrix = {
   clone: (m) => m.map((r) => [...r]),
   reshape: (m, dim) => m.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, []),
-  redim: (m, nrows, ncols, defVal = 0) => range(nrows).map((r) => range(ncols).map((c) => m[r]?.[c] || defVal)),
-  makeQuadratic: (m, defVal = 0) => feedX(Math.max(m.length, m[0].length), (dim) => matrix.redim(m, dim, dim, defVal)),
+  redim: (m, nrows, ncols, defVal = 0) => ol.range(nrows).map((r) => ol.range(ncols).map((c) => m[r]?.[c] || defVal)),
+  makeQuadratic: (m, defVal = 0) => ol.feedX(Math.max(m.length, m[0].length), (dim) => matrix.redim(m, dim, dim, defVal)),
   transpose: (m) => m[0].map((_, i) => m.map((r) => r[i])),
-  translate: (m, dr, dc, defVal = 0) => range(m.length).map((r) => range(m[0].length).map((c) => m[r - dr]?.[c - dc] || defVal)),
+  translate: (m, dr, dc, defVal = 0) => ol.range(m.length).map((r) => ol.range(m[0].length).map((c) => m[r - dr]?.[c - dc] || defVal)),
   rotate90: (m) => m[0].map((_, idx) => m.map((r) => r[r.length - idx - 1])),
-  rotateN90: (m, n) => range(n).reduce(matrix.rotate90, m)
+  rotateN90: (m, n) => ol.range(n).reduce(matrix.rotate90, m)
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -260,7 +273,7 @@ const bitset = {
   rm: (bs, v) => bs & ~(1 << v),
   set: (bs, n, v) => bs | ((v ? 1 : 0) << n),
   isEmpty: (bs) => bs === 0,
-  sum: (bs) => bitset.toArray(bs).reduce(add, 0),
+  sum: (bs) => bitset.toArray(bs).reduce(ol.add, 0),
   union: (bs1, bs2) => bs1 | bs2,
   intersection: (bs1, bs2) => bs1 & bs2,
   diff: (bs1, bs2) => bs1 & ~bs2,
@@ -295,100 +308,6 @@ const bitset = {
 };
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-const ol = {
-  // numerical functions
-  abs,
-  add,
-  inc,
-  dec,
-  mul,
-  sqr,
-  cube,
-  gcd,
-  fac,
-  fib,
-
-  // technical functions
-  id,
-  feedX,
-  call,
-  swap,
-  clone,
-
-  // predicates
-  eq,
-  lt,
-  lte,
-  gt,
-  gte,
-  odd,
-  even,
-  isInInterval,
-  isLeapYear,
-  isPrime,
-
-  // generate predicates
-  gtPred,
-  gtePred,
-  ltPred,
-  ltePred,
-
-  // combine predicates
-  not,
-  or,
-  and,
-  xor,
-  comb,
-  every,
-  some,
-
-  // compare
-  cmp,
-  cmpNumbers,
-  comparer,
-  comparerByKey,
-
-  // random
-  randomArray,
-  randomIntArray,
-  randomInRange,
-  randomIntInRange,
-
-  // arrays
-  range,
-  rangeClosed,
-  rangeFilled,
-
-  sum,
-  prod,
-  max,
-  min,
-  randomElem,
-  average,
-  median,
-  patch,
-  without,
-  withoutIndex,
-  sort,
-  shuffle,
-  flatten,
-  uniq,
-  uniqBy,
-
-  groupBy,
-
-  zip,
-
-  // vector
-  vadd,
-  vsqrdist,
-  vdist,
-  vscalar,
-  vnorm,
-
-  // helpers
-  timer
-};
 
 if (typeof module !== 'undefined')
   module.exports = {
@@ -397,5 +316,6 @@ if (typeof module !== 'undefined')
     interval,
     array,
     bitset,
+    vector,
     matrix
   };
