@@ -124,8 +124,7 @@ const C$ = (() => {
     const term = () => {
       const val = operand();
       token = lex.getToken();
-      if (token.token === tokens.pow) return ops.pow(val, term().r);
-      return val;
+      return token.token !== tokens.pow ? val : ops.pow(val, term().r);
     };
 
     const factor = () => {
