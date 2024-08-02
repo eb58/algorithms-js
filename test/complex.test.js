@@ -1,5 +1,8 @@
 const C$ = require('../src/complex');
 
+const csqr = (z) => C$('z*z', { z });
+const I = C$(0, 1);
+
 test('simple for debug', () => {
   expect(C$('pi*5')).toEqual({ r: Math.PI * 5, i: 0 });
 });
@@ -83,26 +86,22 @@ test('simple calculations with variables', () => {
 
 test('complexFunction type 1', () => {
   // call functions of form (z) => f(z) e.g. csqr = z => C$(z*z)
-  const csqr = C$('(z) => z*z');
-  const I = C$(0, 1);
-
   expect(csqr(1)).toEqual(C$(1));
   expect(csqr(2)).toEqual(C$(4));
   expect(csqr(I)).toEqual(C$(-1));
   expect(csqr('2*i')).toEqual(C$(-4));
 
-  const g = C$('z => z*z*(z-1)/(z+1)');
+  const g = (z) => C$('z*z*(z-1)/(z+1)', { z });
   expect(g('2*i')).toEqual(C$(-2.4, -3.2));
   expect(g('i')).toEqual(C$(0, -1));
 });
 
 test('complexFunction type 2', () => {
-  const csqr = C$('(z) => z*z');
   expect(C$('csqr(z)', { csqr, z: C$(0, 2) })).toEqual(C$(-4));
   expect(C$('csqr(z)*csqr(z)', { csqr, z: C$(0, 2) })).toEqual(C$(16));
 
-  const g = C$('(z) => z*z*(z-1)/(z+1)');
-  const f = C$('(z) => -i*(z+1)*(z+1)*(z*z*z*z)');
+  const g = (z) => C$('z*z*(z-1)/(z+1)', { z });
+  const f = (z) => C$('-i*(z+1)*(z+1)*(z*z*z*z)', { z });
   expect(C$('g(i)', { g })).toEqual(C$('-i'));
   expect(C$('g(1)', { g })).toEqual(C$('0'));
   expect(C$('g(2*i)', { g })).toEqual(C$('-2.4-i*3.2'));
@@ -117,31 +116,17 @@ test('complexFunction type 2', () => {
 });
 
 test('complexFunction type 3', () => {
-  const I = C$(0, 1);
+  const f1 = (a) => C$('a+2', { a });
+  const f2 = (a, b) => C$(' a+b', { a, b });
+  const f3 = (a, b) => C$(' a*b', { a, b });
 
-  // functions with unbound parameters
-  // then C$ return a function, with as many paramters
-  // as unbound vars are found in expression
-  // C$('z => z+2') -> (z) => z+2
-  // C$('(a,b) => a*b') -> (a,b) => a*b
-  // not working with functions yet: => C$('csqr(a)')(1) does not work!
+  expect(f1(1)).toEqual(C$(3));
+  expect(f3(I, I)).toEqual(C$(-1));
+  expect(f2(I, I)).toEqual(C$(0, 2));
 
-  expect(C$('(a) => a+2')(1)).toEqual(C$(3));
-  expect(C$('(a, b) => a*b')(I, I)).toEqual(C$(-1));
-  expect(C$('(a, b) => a+b')(I, I)).toEqual(C$(0, 2));
-
-  expect(C$('a => i*a')(I)).toEqual(C$(-1));
-  expect(C$('a => 2*a')(I)).toEqual(C$(0, 2));
-  expect(C$('a => a*a')(I)).toEqual(C$(-1));
-  expect(C$('a => 2*a')(C$(3, 1))).toEqual(C$(6, 2));
-  expect(C$('a => a*a')(3)).toEqual(C$(9, 0));
-  expect(C$('a => 2*a')(C$('3+i'))).toEqual(C$(6, 2));
-
-  expect(C$('(z1, z2) => z1+z2')(1, I)).toEqual(C$(1, 1));
-
-  expect(C$('(a, b, c) => a*(b-c)')(3, 5, 1)).toEqual(C$(12));
-  expect(C$('(a, b, c) => a*(b+c)')(C$(3), C$(5), C$(1))).toEqual(C$(18));
-  expect(C$('(a) => a*a*a')(2)).toEqual(C$(8));
+  expect(((a) => C$('i*a', { a }))(I)).toEqual(C$(-1));
+  expect(((a) => C$('2*a', { a }))(I)).toEqual(C$(0, 2));
+  expect(((z1, z2) => C$('z1+z2', { z1, z2 }))(1, I)).toEqual(C$(1, 1));
 });
 
 test('external variables and functions ', () => {
@@ -151,10 +136,10 @@ test('external variables and functions ', () => {
   const cube = (z) => C$('z*z*z', { z });
 
   expect(C$('sqr(2*i)')).toEqual(C$(-4));
-  expect(C$('cube(2*i)',{cube})).toEqual(C$(0,-8));
+  expect(C$('cube(2*i)', { cube })).toEqual(C$(0, -8));
 
-  expect(f1(C$('2*i'))).toEqual(C$(-4));
-  expect(f2(C$('2*i'))).toEqual(C$(-3));
+  expect(f1('2*i')).toEqual(C$(-4));
+  expect(f2('2*i')).toEqual(C$(-3));
 
   const b = C$(0, 2);
   expect(C$('f3(b)', { b, f3 })).toEqual({ r: 64, i: 48 });
@@ -167,10 +152,10 @@ test('exponential z**2 ', () => {
   expect(C$('2**1')).toEqual(C$(2));
   expect(C$('2**2')).toEqual(C$(4));
   expect(C$('3**3')).toEqual(C$(27));
-  expect(C$('z**2', {z:C$(3)})).toEqual(C$(9));
-  expect(C$('z**2', {z:C$('3*i')})).toEqual(C$(-9));
-  expect(C$('2*z**2', {z:C$('3')})).toEqual(C$(18));
-  expect(C$('z**2 * 2', {z:C$('3')})).toEqual(C$(18));
-  expect(C$('z**2 + 2', {z:C$('3')})).toEqual(C$(11));
-  expect(C$('1 + z**2 *2 + 2', {z:C$('3')})).toEqual(C$(21));
+  expect(C$('z**2', { z: C$(3) })).toEqual(C$(9));
+  expect(C$('z**2', { z: C$('3*i') })).toEqual(C$(-9));
+  expect(C$('2*z**2', { z: C$('3') })).toEqual(C$(18));
+  expect(C$('z**2 * 2', { z: C$('3') })).toEqual(C$(18));
+  expect(C$('z**2 + 2', { z: C$('3') })).toEqual(C$(11));
+  expect(C$('1 + z**2 *2 + 2', { z: C$('3') })).toEqual(C$(21));
 });
