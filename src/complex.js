@@ -108,7 +108,7 @@ const C$ = (() => {
         }
         try {
           varOrFct = eval(token.name); // try to get from environment
-        } catch (e) { }
+        } catch (e) {}
         if (varOrFct) {
           return typeof varOrFct === 'function' ? ((token = lex.getToken()), varOrFct(expression())) : varOrFct;
         }
@@ -124,14 +124,19 @@ const C$ = (() => {
     const term = () => {
       const val = operand();
       token = lex.getToken();
-      if (token.token === tokens.times) return ops.mul(val, term());
-      if (token.token === tokens.divide) return ops.div(val, term());
       if (token.token === tokens.pow) return ops.pow(val, term().r);
       return val;
     };
 
-    const expression = () => {
+    const factor = () => {
       const val = term();
+      if (token.token === tokens.times) return ops.mul(val, factor());
+      if (token.token === tokens.divide) return ops.div(val, factor());
+      return val;
+    };
+
+    const expression = () => {
+      const val = factor();
       if (token.token === tokens.plus) return ops.add(val, expression());
       if (token.token === tokens.minus) return ops.sub(val, expression());
       return val;
