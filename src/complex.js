@@ -1,6 +1,7 @@
 const C$ = (() => {
   const feedx = (x, f) => f(x);
   const uniq = (xs) => Array.from(new Set(xs));
+  const range = (n) => [...Array(n).keys()];
 
   const cops = {
     id: (c) => C$(c),
@@ -9,6 +10,7 @@ const C$ = (() => {
     sub: (c1, c2) => C$(c1.r - c2.r, c1.i - c2.i),
     mul: (c1, c2) => C$(c1.r * c2.r - c1.i * c2.i, c1.r * c2.i + c1.i * c2.r),
     div: (c1, c2) => feedx(c2.r * c2.r + c2.i * c2.i, (x) => C$((c1.r * c2.r + c1.i * c2.i) / x, (c1.i * c2.r - c1.r * c2.i) / x)),
+    pow: (c, n) => (n === 0 ? C$(1) : range(n - 1).reduce((res) => cops.mul(res, c), c))
   };
 
   const csops = {
@@ -17,11 +19,12 @@ const C$ = (() => {
     add: (c1, c2) => `cops.add(C$(${c1}), C$(${c2}))`,
     sub: (c1, c2) => `cops.sub(C$(${c1}), C$(${c2}))`,
     mul: (c1, c2) => `cops.mul(C$(${c1}), C$(${c2}))`,
-    div: (c1, c2) => `cops.div(C$(${c1}), C$(${c2}))`
+    div: (c1, c2) => `cops.div(C$(${c1}), C$(${c2}))`,
+    pow: (c, n) => `cops.pow(${c},${n})`
   };
 
   const tokens = (() => {
-    const s = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'lparen', 'rparen', 'end'];
+    const s = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'pow', 'lparen', 'rparen', 'end'];
     return s.reduce((acc, s) => ({ ...acc, [s]: s }), {});
   })();
 
@@ -63,8 +66,12 @@ const C$ = (() => {
         const c = input[strpos];
         if (isLetter(c)) return getIdentifier();
         if (isDigit(c)) return getNumber();
+        if (c === '*' && input[strpos + 1] === '*') {
+          strpos += 2;
+          return { token: tokens.pow };
+        }
         if (!mapCharToToken[c]) throw Error(`Char ${c} not allowed. Pos:${strpos}`);
-        if (strpos <= input.length) strpos++;
+        if (strpos < input.length) strpos++;
         return { token: mapCharToToken[c] };
       }
     };
@@ -117,21 +124,16 @@ const C$ = (() => {
     const term = () => {
       const val = operand();
       token = lex.getToken();
-      if (token.token === tokens.times) {
-        return ops.mul(val, term());
-      } else if (token.token === tokens.divide) {
-        return ops.div(val, term());
-      }
+      if (token.token === tokens.times) return ops.mul(val, term());
+      if (token.token === tokens.divide) return ops.div(val, term());
+      if (token.token === tokens.pow) return ops.pow(val, term().r);
       return val;
     };
 
     const expression = () => {
       const val = term();
-      if (token.token === tokens.plus) {
-        return ops.add(val, expression());
-      } else if (token.token === tokens.minus) {
-        return ops.sub(val, expression());
-      }
+      if (token.token === tokens.plus) return ops.add(val, expression());
+      if (token.token === tokens.minus) return ops.sub(val, expression());
       return val;
     };
 
@@ -152,7 +154,7 @@ const C$ = (() => {
     if (typeof r === 'number') return { r: r || 0, i: i || 0 }; // C$(1, 1)
     if (typeof r === 'object' && Object.keys(r).every((k) => k === 'r' || k === 'i')) return { r: 0, i: 0, ...r }; // C$({ r: 1, i: 1 })
     if (typeof r === 'string') {
-      if (r.includes('=>')) return evalComplexFunction(r.substring(r.indexOf('=>') + 2)); // C$("(z) => z*z") -> returns function 
+      if (r.includes('=>')) return evalComplexFunction(r.substring(r.indexOf('=>') + 2)); // C$("(z) => z*z") -> returns function
       if (typeof i === 'object') return evalComplex(r, i); // const a = C$(3,1); C$("a+7", {a}) -> returns value
       return evalComplex(r); // C$("3+i") -> returns value
     }

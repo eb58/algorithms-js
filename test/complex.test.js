@@ -159,3 +159,14 @@ test('external variables and functions ', () => {
   const b = C$(0, 2);
   expect(C$('f3(b)', { b, f3 })).toEqual({ r: 64, i: 48 });
 });
+
+test('exponential z**2 ', () => {
+  expect(C$('1**0')).toEqual(C$(1));
+  expect(C$('1**1')).toEqual(C$(1));
+  expect(C$('1**2')).toEqual(C$(1));
+  expect(C$('2**1')).toEqual(C$(2));
+  expect(C$('2**2')).toEqual(C$(4));
+  expect(C$('3**3')).toEqual(C$(27));
+  expect(C$('z**2', {z:C$(3)})).toEqual(C$(9));
+  expect(C$('z**2', {z:C$('3*i')})).toEqual(C$(-9));
+});
