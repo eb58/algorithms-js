@@ -31,7 +31,7 @@ const magicSquare = (N, idxNotForNumberOne) => {
     combsBS.forEach((combi) => {
       const newAvailableNumbers = availableNumbers.filter((x) => !combi.includes(x))
       const newGoodCombinations = goodCombinations.filter((combi) => combi.every(x => newAvailableNumbers.includes(x)))
-      const perms =  perm(combi)
+      const perms = perm(combi)
       perms.forEach((perm) => {
         setRow(square, rowDef.row, perm)
         combineToMagicSquare(square.slice(), newAvailableNumbers, newGoodCombinations, rowsDef, i + 1)
@@ -62,7 +62,6 @@ const magic3x3Solver = () => {
     { row: [3], restriction: (xs, sq) => sum(xs) === MN - sq[0] - sq[6] },
   ])
 }
-
 
 const magic4x4Solver1 = () => {
   const magic4x4 = magicSquare(4, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
