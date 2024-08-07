@@ -16,6 +16,21 @@ const ol = (() => {
   const fib = (x) => (x <= 2 ? 1 : fib(x - 1) + fib(x - 2));
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
+  // string functions
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+  const blanks = (n) => range(n).map(() => ' ').join('');
+  const indent = (s, lev, opts) => feedX({ fillChars: '   ', prompt: '', ...opts }, opts => range(lev).map(() => opts.fillChars).join('') + opts.prompt + s)
+  // const randomColor = () =>      '#A2F0D9'
+  // https://www.kaggle.com/code/parulpandey/10-useful-string-methods-in-python
+  // https://www.pythonmorsels.com/string-methods/#the-most-useful-string-methods
+  // const center  = (s, length, fillchar = ' ') => 
+  // const count = (s, searchVal ) =>  
+  // ljust( ) and rjust( )¶
+  // string.zfill(width)
+
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
   // technical functions
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   const id = (x) => x;
@@ -150,6 +165,7 @@ const ol = (() => {
   };
   return {
     abs, add, inc, dec, mul, sqr, cube, gcd, fac, fib, // numerical functions
+    blanks, indent, // string functions
     id, feedX, call, swap, clone,  // technical functions
     eq, lt, lte, gt, gte, odd, even, isInInterval, isLeapYear, isPrime, // predicates
     gtPred, gtePred, ltPred, ltePred, // generate predicates

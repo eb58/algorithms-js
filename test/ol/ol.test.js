@@ -1,8 +1,8 @@
 const { ol, num, interval, array } = require('../../src/ol/ol');
-console.log( ol )
 
 const {
   abs, add, inc, dec, mul, sqr, cube, gcd, fac, fib, // numerical functions
+  blanks, indent,
   id, feedX, call, swap, clone,  // technical functions
   eq, lt, lte, gt, gte, odd, even, isInInterval, isLeapYear, isPrime, // predicates
   gtPred, gtePred, ltPred, ltePred, // generate predicates
@@ -13,6 +13,16 @@ const {
   sum, prod, max, min, randomElem, average, median, patch, without, withoutIndex, sort, shuffle, flatten, uniq, uniqBy, groupBy, zip, // arrays
   timer, // helpers
 } = ol;
+
+
+test('string functions', () => {
+  expect(blanks(0)).toEqual('');
+  expect(blanks(3)).toEqual('   ');
+  expect(indent("Das ist nur ein Test", 1)).toEqual("   Das ist nur ein Test");
+  expect(indent("Das ist nur ein Test", 2)).toEqual("      Das ist nur ein Test");
+  expect(indent("Das ist nur ein Test", 2, { fillChars: '##', prompt: '> ' })).toEqual("####> Das ist nur ein Test");
+});
+
 
 test('simple', () => {
   expect(id('a')).toEqual('a');
