@@ -3,23 +3,23 @@
 // Compute number of remaining triples of adjacent seats.
 const range = (n) => [...Array(n).keys()]
 
-const solution1 = (N, reservations) => {
+const solution1 = (N, reservationsAsString) => feedX(reservationsAsString.split(' '), reservations => {
   const makeRow = (r) =>
     'ABCDEFGHIK'
       .split('')
       .map((c) => (reservations.includes(r + c) ? 'X' : c))
       .join('') // Mache ein X an alle belegten Sitze
   const countPossibleInRow = (r) => r.includes('ABC') + (r.includes('DEF') || r.includes('EFG')) + r.includes('HIK')
-  return range(N).map(x=>x+1)
+  return range(N).map(x => x + 1)
     .map((r) => makeRow(r))
     .reduce((sum, r) => sum + countPossibleInRow(r), 0)
-}
+})
 
-const solution2 = (N, reservations) => {
+const solution2 = (N, reservationsAsString) => feedX(reservationsAsString.split(' '), reservations => {
   const check = (triple, r) => triple.split('').every((c) => !reservations.includes(r + c))
   const countTriplesInRow = (r) => check('ABC', r) + (check('DEF', r) || check('EFG', r)) + check('HIK', r)
-  return range(N).map(x=>x+1).reduce((sum, r) => sum + countTriplesInRow(r), 0)
-}
+  return range(N).reduce((sum, r) => sum + countTriplesInRow(r + 1), 0)
+})
 
 const adjustSol = (f) => (N, reservationsAsString) => f(N, reservationsAsString.split(' '))
 
@@ -34,4 +34,4 @@ const test = (sol) =>
   sol(12, '1A 1B 2D 2E 2F') === 34 &&
   sol(12, '11A 11B 2D 2E 2F') === 34
 
-test(adjustSol(solution1)) && test(adjustSol(solution2))
+test(solution1) && test(solution2)

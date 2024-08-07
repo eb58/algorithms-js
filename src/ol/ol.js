@@ -138,6 +138,10 @@ const ol = (() => {
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   // helpers
   ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+  // niemand braucht uuid()!!!
+  const uid = (prefix = '') => prefix + randomInRange(1_000_000, 9_999_999) + new Date().getTime();
+
   const timer = () => {
     const start = new Date();
     return {
@@ -154,7 +158,7 @@ const ol = (() => {
     randomArray, randomIntArray, randomInRange, randomIntInRange, // random
     range, rangeClosed, rangeFilled, // arrays
     sum, prod, max, min, randomElem, average, median, patch, without, withoutIndex, sort, shuffle, flatten, uniq, uniqBy, groupBy, zip, // arrays
-    timer, // helpers
+    uid, timer, // helpers
   };
 })()
 
@@ -196,7 +200,7 @@ const array = (xs) => ({
 
   patch: (idx, val) => ol.patch(xs, idx, val),
   without: (x) => ol.without(xs, x),
-  withoutIndex: (idx) =>ol.withoutIndex(idx),
+  withoutIndex: (idx) => ol.withoutIndex(idx),
   shuffle: () => ol.shuffle(xs),
   flatten: () => ol.flatten(xs),
   uniq: () => ol.uniq(xs),

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang='de'>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <title>Mandelbrot</title>
+</head>
+
+<body>
+    <canvas id="myCanvas" width="500" height="500"></canvas>
+    <script>
+        const range = (n) => [...Array(n).keys()];
+
+        const ZOOM_FACTOR = 0.3
+        const NCOLORS = 20
+        const COLORS = range(NCOLORS).map(() => range(3).map(() => Math.floor(Math.random() * 256)))
+
+        const canvas = document.getElementById("myCanvas");
+        const WIDTH = canvas.width;
+        const HEIGHT = canvas.height;
+
+        const ctx = canvas.getContext("2d");
+        const canvasData = ctx.getImageData(0, 0, WIDTH, HEIGHT);
+
+        const setPixel = (x, y, rgb = [0, 0, 0]) => {
+            const index = (x + y * WIDTH) * 4;
+            canvasData.data[index + 0] = rgb[0];
+            canvasData.data[index + 1] = rgb[1];
+            canvasData.data[index + 2] = rgb[2];
+            canvasData.data[index + 3] = 255;
+        }
+
+        const cadd = (c1, c2) => ({ r: c1.r + c2.r, i: c1.i + c2.i })
+        const csqr = (c) => ({ r: Math.pow(c.r, 2) - Math.pow(c.i, 2), i: 2 * c.r * c.i })
+
+        const colVal = (c) => {
+            const MAX_ITERATIONS = 100;
+            let [z, n] = [c, 0];
+            while (++n < MAX_ITERATIONS && z.r * z.r + z.i * z.i <= 4) z = cadd(csqr(z), c)
+            return n >= MAX_ITERATIONS ? [255, 255, 255] : COLORS[n % NCOLORS]
+        }
+
+        const computeImage = (topLeft, bottomRight) => {
+            const dx = (bottomRight.r - topLeft.r) / WIDTH;
+            const dy = (bottomRight.i - topLeft.i) / HEIGHT;
+            return range(WIDTH).map(r => range(HEIGHT).map(c => colVal({ r: topLeft.r + r * dx, i: topLeft.i + c * dy })))
+        }
+
+        let [topLeft, bottomRight] = [{ r: -2.05, i: 1.15 }, { r: 0.6, i: -1.15 }]
+        computeImage(topLeft, bottomRight).forEach((r, ri) => r.forEach((c, ci) => setPixel(ri, ci, c)))
+        ctx.putImageData(canvasData, 0, 0);
+
+        canvas.addEventListener('dblclick', e => {
+            const [x, y] = [e.offsetX, e.offsetY]
+            const getRelativePoint = (pixel, s, e, d) => s + (pixel / d) * (e - s)
+
+            const w = (bottomRight.r - topLeft.r) * ZOOM_FACTOR
+            const h = (bottomRight.i - topLeft.i) * ZOOM_FACTOR
+            const center = {
+                r: getRelativePoint(x, topLeft.r, bottomRight.r, WIDTH),
+                i: getRelativePoint(y, topLeft.i, bottomRight.i, HEIGHT)
+            }
+
+            topLeft = { r: center.r - w / 2, i: center.i - h / 2 };
+            bottomRight = { r: center.r + w / 2, i: center.i + h / 2 };
+            console.log(x, y, JSON.stringify([topLeft, bottomRight]))
+            computeImage(topLeft, bottomRight).forEach((r, ri) => r.forEach((c, ci) => setPixel(ri, ci, c)))
+            ctx.putImageData(canvasData, 0, 0);
+        })
+    </script>
+</body>
+
+</html>
