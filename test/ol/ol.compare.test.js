@@ -1,4 +1,4 @@
-const { cmp, cmpNumbers, comparer, comparerByKey } = require('../../src/ol/ol').ol;
+const { cmp, cmpNumbers, comparer, comparerByKey } = require('../../src/ol').ol;
 
 test('cmp', () => {
   expect(cmp(1, 1)).toBe(0);

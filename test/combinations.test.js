@@ -1,4 +1,4 @@
-const { range } = require('../src/ol/ol').ol;
+const { range } = require('../src/ol').ol;
 const combs = require('../src/combinations');
 const combinations = Object.keys(combs).map(k => combs[k]);
 

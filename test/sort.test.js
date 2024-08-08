@@ -1,4 +1,4 @@
-const { range, cmp, comparerByKey } = require('../src/ol/ol').ol;
+const { range, cmp, comparerByKey } = require('../src/ol').ol;
 const qsorts = require('../src/sorting/qsort');
 const mergesort = require('../src/sorting/mergesort');
 

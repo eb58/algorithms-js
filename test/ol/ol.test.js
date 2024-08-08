@@ -1,4 +1,4 @@
-const { ol, num, interval, array } = require('../../src/ol/ol');
+const { ol, num, interval, array } = require('../../src/ol');
 
 const {
   abs, add, inc, dec, mul, sqr, cube, gcd, fac, fib, // numerical functions

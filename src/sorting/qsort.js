@@ -1,4 +1,4 @@
-const { feedX, randomElem } = require('../ol/ol').ol;
+const { feedX, randomElem } = require('../ol').ol;
 
 const qsort = (a) => a.length <= 1 ? a : [
   ...qsort(a.filter((n) => n < a[0])),

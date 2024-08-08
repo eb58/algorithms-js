@@ -1,5 +1,5 @@
-const { range, rangeFilled, zip, add } = require('./ol/ol').ol;
-const bitset = require('./ol/ol').bitset;
+const { range, rangeFilled, zip, add } = require('./ol').ol;
+const bitset = require('./ol').bitset;
 
 const noConflict = (cover, cond) => zip(cover, cond, add).every((x) => x <= 1);
 

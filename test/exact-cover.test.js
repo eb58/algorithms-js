@@ -1,5 +1,5 @@
 const dlx_solve = require('../src/dlx');
-const { matrix, ol } = require('../src/ol/ol');
+const { matrix, ol } = require('../src/ol');
 const { shuffle, range } = ol;
 const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = matrix;
 

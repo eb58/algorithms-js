@@ -1,5 +1,5 @@
 //  PENTOMINO
-const { matrix, ol } = require('../ol/ol');
+const { matrix, ol } = require('../ol');
 const { range, zip, uniqBy } = ol;
 const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = matrix;
 
