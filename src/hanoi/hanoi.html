@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+
+<head>
+   <title>Towers of Hanoi</title>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <script src="https://cdn.jsdelivr.net/npm/raphael@2.3.0/raphael.js"></script>
+   <script src="./hanoi.js"></script>
+   <script src="./hanoiview.js"></script>
+</head>
+
+<body>
+   <script>
+      const n = 3;
+      const res = hanoi(n);
+      const view = hanoiview(n);
+      res.forEach((m, i) => setTimeout(() => view.drawModel(m), i * 1000))
+   </script>
+</body>
+
+</html>
