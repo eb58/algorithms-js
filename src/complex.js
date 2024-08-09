@@ -127,7 +127,7 @@ const C$ = (() => {
   return (r, i) => {
     if (typeof r === 'number') return { r: r || 0, i: i || 0 }; // C$(1, 1)
     if (typeof r === 'object' && Object.keys(r).every((k) => k === 'r' || k === 'i')) return { r: 0, i: 0, ...r }; // C$({ r: 1, i: 1 })
-    if (typeof r === 'string') return evalComplex(r, i || {}); // C$("3+i") -> returns value
+    if (typeof r === 'string') return evalComplex(r, i || {}); // C$("3+i") ->
     throw Error(`False initialisation of C$ ${r} ${i || ''}`);
   };
 })();
