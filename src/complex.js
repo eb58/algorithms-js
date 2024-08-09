@@ -11,13 +11,13 @@ const C$ = (() => {
     pow: (c, n) => (n.r === 0 ? C$(1) : range(n.r - 1).reduce((res) => cops.mul(res, c), c))
   };
 
-  const tokenStrings = ['ident', 'number', 'minus', 'plus', 'times', 'divide', 'pow', 'lparen', 'rparen', 'comma', 'end'];
-  const tokens = tokenStrings.reduce((acc, s) => ({ ...acc, [s]: s }), {});
+  const tokenStrings = Object.freeze(['ident', 'number', 'minus', 'plus', 'times', 'divide', 'pow', 'lparen', 'rparen', 'comma', 'end']);
+  const tokens = Object.freeze(tokenStrings.reduce((acc, s) => ({ ...acc, [s]: s }), {}));
 
   const lexParser = (input) => {
     let strpos = 0;
 
-    const mapCharToToken = {
+    const mapCharToToken = Object.freeze({
       '+': tokens.plus,
       '-': tokens.minus,
       '*': tokens.times,
@@ -26,7 +26,7 @@ const C$ = (() => {
       ')': tokens.rparen,
       '^': tokens.pow,
       ',': tokens.comma
-    };
+    });
 
     const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_';
     const isDigit = (c) => c >= '0' && c <= '9';
@@ -36,17 +36,18 @@ const C$ = (() => {
     const getIdentOrNumber = (qualifier) => (qualifier(input[strpos]) ? input[strpos++] + getIdentOrNumber(qualifier) : '');
 
     const getIdentifier = () => ({
+      strpos,
       token: tokens.ident,
-      name: getIdentOrNumber(isIdentifierChar)
+      name: getIdentOrNumber(isIdentifierChar),
     });
 
     const getNumber = () => ({
+      strpos,
       token: tokens.number,
       value: parseFloat(getIdentOrNumber(isNumberChar))
     });
 
     return {
-      pos: () => strpos,
       getToken: () => {
         while (isSpace(input[strpos])) strpos++;
         if (strpos >= input.length) return { strpos, token: tokens.end };
@@ -54,13 +55,10 @@ const C$ = (() => {
         const c = input[strpos];
         if (isLetter(c)) return getIdentifier();
         if (isDigit(c)) return getNumber();
-        if (c === '*' && input[strpos + 1] === '*') {
-          strpos += 2;
-          return { token: tokens.pow };
-        }
+        if (c === '*' && input[strpos + 1] === '*') return ({ strpos: strpos += 2,token: tokens.pow })
         if (!mapCharToToken[c]) throw Error(`Char ${c} not allowed. Pos:${strpos}`);
         if (strpos < input.length) strpos++;
-        return { token: mapCharToToken[c] };
+        return { strpos, token: mapCharToToken[c] };
       }
     };
   };
@@ -70,7 +68,7 @@ const C$ = (() => {
     varsOrFcts = {
       ...varsOrFcts,
       sqr: (z) => cops.mul(z, z),
-      pow: (z,n) => cops.pow(z,n),
+      pow: (z, n) => cops.pow(z, n),
       i: C$(0, 1),
       e: C$(Math.E),
       pi: C$(Math.PI)
@@ -84,20 +82,20 @@ const C$ = (() => {
       if (token.token === tokens.number) return C$(token.value);
       if (token.token === tokens.lparen) {
         const ret = expression();
-        if (token.token !== tokens.rparen) throw Error(`Closing bracket not found!. Pos:${lex.pos()}`);
+        if (token.token !== tokens.rparen) throw Error(`Closing bracket not found!. Pos:${token.strpos}`);
         return ret;
       }
       if (token.token === tokens.ident) {
         const valOrFct = varsOrFcts[token.name];
-        if (!valOrFct) throw Error(`Unknown identifier ${token.name}. Pos:${lex.pos()}`);
+        if (!valOrFct) throw Error(`Unknown identifier ${token.name}. Pos:${token.strpos}`);
         if (typeof valOrFct !== 'function') return C$(valOrFct);
         token = lex.getToken();
         const expressions = [expression()];
         while (token.token == tokens.comma) expressions.push(expression());
-        if (token.token !== tokens.rparen) throw Error(`Closing bracket not found! Pos:${lex.pos()}`);
+        if (token.token !== tokens.rparen) throw Error(`Closing bracket not found! Pos:${token.strpos}`);
         return valOrFct(...expressions);
       }
-      throw Error(`Operand expected. Pos:${lex.pos()}`);
+      throw Error(`Operand expected. Pos:${token.strpos}`);
     };
 
     const term = () => {
@@ -121,7 +119,7 @@ const C$ = (() => {
     };
 
     const val = expression();
-    if (token.token != tokens.end) throw Error(`Unexpected symbol. Pos:${lex.pos()}`);
+    if (token.token != tokens.end) throw Error(`Unexpected symbol. Pos:${token.strpos}`);
     //** console.log('***', s, val, varsOrFcts, params || '' );
     return val;
   };
