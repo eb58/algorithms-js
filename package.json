@@ -15,6 +15,7 @@
    "author": "eb",
    "contributors": [],
    "scripts": {
+      "ts-test": "tsc &&  node ./ts-built/test.js",
       "test": "jest --watchAll",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "sudoku": "node src/sudoku/sudoku3.js",
@@ -28,6 +29,7 @@
       "dlxlib": "^1.0.3"
    },
    "devDependencies": {
+      "typescript": "^5.5.4",
       "jest": "29.7.0",
       "prettier": "3.2.5"
    }

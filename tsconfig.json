@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "outDir": "ts-built",
+    "module": "commonjs",
+    "target": "ES2023"
+  },
+  "include": ["**/*"],
+  "exclude": ["node_modules", "**/*.spec.ts"]
+}
