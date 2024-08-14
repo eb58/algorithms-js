@@ -1,5 +1,5 @@
-range = n => [...Array(n).keys()];
-clone = o => JSON.parse(JSON.stringify(o));
+const range = n => [...Array(n).keys()];
+const clone = o => JSON.parse(JSON.stringify(o));
 
 const hanoi1 = (n) => {
    const h = (n, l, c, r) => {

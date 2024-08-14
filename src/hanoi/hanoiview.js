@@ -7,7 +7,7 @@ const hanoiview = (h) => { // h = number of bricks
       .attr({ fill: "#fff", stroke: "#000" });
 
    const drawPole = (n) => {
-      paper = papers[n];
+      const paper = papers[n];
       paper.rect(wBrick / 2 - 5, 10, 10, hPole).attr("fill", "#000"); // pole
       paper.rect(0, hPole, wBrick, 30).attr("fill", "#000"); // bottom plate
 
@@ -15,7 +15,7 @@ const hanoiview = (h) => { // h = number of bricks
    const drawTower = (n, arr) => {
       if (papers[n] === null)
          papers[n] = Raphael(30 + n * (wBrick + 5), 30, (wBrick + 50), hPole + 60);
-      paper = papers[n];
+      const paper = papers[n];
       paper.clear();
       paper.rect(0, 0, wBrick, hPole + 30).attr({ fill: "#eee", stroke: "#000" });
       drawPole(n);
