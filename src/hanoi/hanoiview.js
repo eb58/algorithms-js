@@ -1,35 +1,21 @@
-const hanoiview = (h) => { // h = number of bricks
-   const [wBrick, hBrick] = [250, 30];
-   const hPole = hBrick * (h + 1);
-   const papers = [null, null, null];
-   Raphael(20, 20, 3 * (wBrick + 10), hPole + 80)
-      .rect(0, 0, 3 * (wBrick + 10), hPole + 50)
-      .attr({ fill: "#fff", stroke: "#000" });
+const hanoiview = (N) => { // N = number of bricks
+   const [wBrick, hBrick, hPlate] = [150, 30, 10];
+   const hPole = hBrick * (N + 1);
 
-   const drawPole = (n) => {
-      const paper = papers[n];
-      paper.rect(wBrick / 2 - 5, 10, 10, hPole).attr("fill", "#000"); // pole
-      paper.rect(0, hPole, wBrick, 30).attr("fill", "#000"); // bottom plate
-
-   }
-   const drawTower = (n, arr) => {
-      if (papers[n] === null)
-         papers[n] = Raphael(30 + n * (wBrick + 5), 30, (wBrick + 50), hPole + 60);
-      const paper = papers[n];
-      paper.clear();
-      paper.rect(0, 0, wBrick, hPole + 30).attr({ fill: "#eee", stroke: "#000" });
-      drawPole(n);
-      arr.forEach((v, i) => { // draw Bricks
-         const w = v * wBrick / h;
-         const l = (wBrick - w) / 2;
-         const t = hPole - (i + 1) * hBrick;
-         paper.rect(l, t, w, hBrick).attr("fill", "#c00");
+   const drawTower = (n, tower) => {
+      const paper = Raphael(30 + n * (wBrick + 10), 15, wBrick, hPole + hPlate);
+      paper.rect(0, 0, wBrick, hPole).attr({ fill: "lightgrey" }); // draw background
+      paper.rect(wBrick / 2 - 5, 5, 10, hPole).attr("fill", "black"); // pole
+      paper.rect(0, hPole, wBrick, hPlate).attr("fill", "black"); // bottom plate
+      tower.forEach((v, i) => { // draw bricks
+         const w = v * wBrick / N;
+         const left = (wBrick - w) / 2;
+         const top = hPole - (i + 1) * hBrick;
+         paper.rect(left, top, w, hBrick).attr("fill", "red");
       });
    }
 
-   const drawModel = m => (drawTower(0, m.l), drawTower(1, m.c), drawTower(2, m.r))
-
    return {
-      drawModel
+      drawModel: m => (drawTower(0, m.l), drawTower(1, m.c), drawTower(2, m.r))
    };
 };
