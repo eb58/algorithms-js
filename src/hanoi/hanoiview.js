@@ -16,6 +16,6 @@ const hanoiview = (N) => { // N = number of bricks
    }
 
    return {
-      drawModel: m => (drawTower(0, m.l), drawTower(1, m.c), drawTower(2, m.r))
+      drawModel: m => { drawTower(0, m.l); drawTower(1, m.c); drawTower(2, m.r); }
    };
 };
