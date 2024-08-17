@@ -11,7 +11,7 @@ const hanoi1 = (n) => {
       if (n === 0) return                 // nothing to do
       h(n - 1, { ...m, c: m.r, r: m.c }); // move top n-1 elements of left to center via right
       m.r.push(m.l.pop());                // take off top element of 'from'
-      result.push(clone(t));              // just keep track of move 
+      result.push(clone(t));              // just keep track of state 
       h(n - 1, { ...m, l: m.c, c: m.l }); // move top n-1 elements of center to right via left
 
    }
