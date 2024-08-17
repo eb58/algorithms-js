@@ -41,9 +41,7 @@ const onCCAction = (doc, title, action) => {
 const withOutScreenUpdating = (app, action) => {
   const keep = app.screenUpdating;
   app.screenUpdating = false;
-  tryAction(action, () => {
-    app.screenUpdating = keep;
-  });
+  tryAction(action, () => app.screenUpdating = keep);
 };
 
 // experimentell not working!!!
