@@ -154,15 +154,11 @@ const ol = (() => {
   // helpers
   ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-  // niemand braucht uuid()!!!
-  const uid = (prefix = '') => prefix + randomInRange(1_000_000, 9_999_999) + new Date().getTime();
+  // nobody needs uuid() !!!
+  const uid = (prefix = '') => prefix + randomInRange(1_000_000, 9_999_999) + Date.now();
 
-  const timer = () => {
-    const start = new Date();
-    return {
-      elapsedTime: () => (new Date() - start) / 1000
-    };
-  };
+  const timer = (start = Date.now()) => ({ elapsedTime: () => (Date.now() - start) / 1000 })
+
   return {
     abs, add, inc, dec, mul, sqr, cube, gcd, fac, fib, // numerical functions
     blanks, indent, // string functions
@@ -267,6 +263,21 @@ const matrix = {
   rotateN90: (m, n) => ol.range(n).reduce(matrix.rotate90, m)
 };
 
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+// caching
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+const simpleCache = (c = {}) => ({ add: (key, val) => c[key] = val, get: key => c[key] })
+
+const cache = (ttl = 1, c = {}) => ({ // ttl = time to live in secs - 0 meaning never 
+  add: (key, val) => c[key] = { val, validUntil: Date.now() + (ttl || 3600 * 1000) * 1000 }, // 3600 * 1000 -> 1000 hours -> expiring almost never1
+  get: key => Date.now() < c[key]?.validUntil ? c[key].val : undefined,
+  cleaner: () => c = Object.keys(c).filter(k => c[k].validUntil >= Date.now()).reduce((acc, k) => ({ ...acc, [k]: c[k] }), {})
+})
+
+const memoize = (f, c = cache()) => (x) => c.get(x) === undefined ? c.add(x, f(x)).val : c.get(x)
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // bitset
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -337,5 +348,8 @@ if (typeof module !== 'undefined')
     array,
     bitset,
     vector,
-    matrix
+    matrix,
+    simpleCache,
+    cache,
+    memoize
   };
