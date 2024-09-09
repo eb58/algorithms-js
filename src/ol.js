@@ -159,6 +159,31 @@ const ol = (() => {
 
   const timer = (start = Date.now()) => ({ elapsedTime: () => (Date.now() - start) / 1000 })
 
+  // usage:   log(() => callSomeComplicatedFunction(2, 4, 6))
+  // example: log(() => sin(2))
+  const log = (f) => {
+    const t = timer()
+    const res = f();
+    console.log('res:', res, 'time:', t.elapsedTime());
+    return res;
+  };
+
+  /* Example:
+  let fib = (x) => (x <= 2 ? 1 : fib(x - 1) + fib(x - 2));  // 'let' not 'const' for recursive functions!
+  fib  = logtor(fib)
+  fib(8)
+  */
+  const logtor = (f, lev = 0) => (args) => {
+    console.log(blanks(lev++) + '>', f.name, 'args=', args);
+    const t = timer()
+    const res = f(args);
+    console.log(blanks(lev--) + '<', f.name, 'res=', res, 'time', t.elapsedTime());
+    return res;
+  };
+
+
+
+
   return {
     abs, add, inc, dec, mul, sqr, cube, gcd, fac, fib, // numerical functions
     blanks, indent, // string functions
@@ -170,7 +195,7 @@ const ol = (() => {
     randomArray, randomIntArray, randomInRange, randomIntInRange, // random
     range, rangeClosed, rangeFilled, // arrays
     sum, prod, max, min, randomElem, average, median, patch, without, withoutIndex, sort, shuffle, flatten, uniq, uniqBy, groupBy, zip, // arrays
-    uid, timer, // helpers
+    uid, timer, log, logtor, logtorWithLevel // helpers
   };
 })()
 
