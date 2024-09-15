@@ -19,7 +19,8 @@ const ol = (() => {
   // string functions
   ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-  const blanks = (n) => range(n).map(() => ' ').join('');
+  const repeat = ( s, n ) => range(n).map(() => s).join(''); 
+  const blanks = (n) => ol.repeat( ' ', n)
   const indent = (s, lev, opts) => feedX({ fillChars: '   ', prompt: '', ...opts }, opts => range(lev).map(() => opts.fillChars).join('') + opts.prompt + s)
   // const randomColor = () =>      '#A2F0D9'
   // https://www.kaggle.com/code/parulpandey/10-useful-string-methods-in-python
@@ -181,12 +182,9 @@ const ol = (() => {
     return res;
   };
 
-
-
-
   return {
     abs, add, inc, dec, mul, sqr, cube, gcd, fac, fib, // numerical functions
-    blanks, indent, // string functions
+    repeat, blanks, indent, // string functions
     id, feedX, call, swap, clone,  // technical functions
     eq, lt, lte, gt, gte, odd, even, isInInterval, isLeapYear, isPrime, // predicates
     gtPred, gtePred, ltPred, ltePred, // generate predicates
@@ -195,7 +193,7 @@ const ol = (() => {
     randomArray, randomIntArray, randomInRange, randomIntInRange, // random
     range, rangeClosed, rangeFilled, // arrays
     sum, prod, max, min, randomElem, average, median, patch, without, withoutIndex, sort, shuffle, flatten, uniq, uniqBy, groupBy, zip, // arrays
-    uid, timer, log, logtor, logtorWithLevel // helpers
+    uid, timer, log, logtor // helpers
   };
 })()
 
@@ -288,15 +286,14 @@ const matrix = {
   rotateN90: (m, n) => ol.range(n).reduce(matrix.rotate90, m)
 };
 
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // caching
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 const simpleCache = (c = {}) => ({ add: (key, val) => c[key] = val, get: key => c[key] })
 
-const cache = (ttl = 1, c = {}) => ({ // ttl = time to live in secs - 0 meaning never 
-  add: (key, val) => c[key] = { val, validUntil: Date.now() + (ttl || 3600 * 1000) * 1000 }, // 3600 * 1000 -> 1000 hours -> expiring almost never1
+const cache = (ttl = 1, c = {}) => ({ // ttl = time to live in secs - 0 meaning live forever 
+  add: (key, val) => c[key] = { val, validUntil: Date.now() + (ttl || 3600 * 1000) * 1000 }, // 3600 * 1000 -> 1000 hours -> living almost forever!
   get: key => Date.now() < c[key]?.validUntil ? c[key].val : undefined,
   cleaner: () => c = Object.keys(c).filter(k => c[k].validUntil >= Date.now()).reduce((acc, k) => ({ ...acc, [k]: c[k] }), {})
 })

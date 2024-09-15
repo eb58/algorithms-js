@@ -2,7 +2,7 @@ const { ol, num, interval, array } = require('../../src/ol');
 
 const {
   abs, add, inc, dec, mul, sqr, cube, gcd, fac, fib, // numerical functions
-  blanks, indent,
+  repeat, blanks, indent, // string functions
   id, feedX, call, swap, clone,  // technical functions
   eq, lt, lte, gt, gte, odd, even, isInInterval, isLeapYear, isPrime, // predicates
   gtPred, gtePred, ltPred, ltePred, // generate predicates
@@ -16,6 +16,10 @@ const {
 
 
 test('string functions', () => {
+  expect(repeat('a',0)).toEqual('');
+  expect(repeat('a',1)).toEqual('a');
+  expect(repeat('a',10)).toEqual('aaaaaaaaaa');
+
   expect(blanks(0)).toEqual('');
   expect(blanks(3)).toEqual('   ');
   expect(indent("Das ist nur ein Test", 1)).toEqual("   Das ist nur ein Test");
