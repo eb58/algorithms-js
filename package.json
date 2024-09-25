@@ -16,6 +16,7 @@
    "contributors": [],
    "scripts": {
       "ts-test": "tsc &&  node ./ts-built/test.js",
+      "index-card-app": "tsc",
       "test": "jest --watchAll",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "sudoku": "node src/sudoku/sudoku3.js",

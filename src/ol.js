@@ -19,8 +19,8 @@ const ol = (() => {
   // string functions
   ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-  const repeat = ( s, n ) => range(n).map(() => s).join(''); 
-  const blanks = (n) => ol.repeat( ' ', n)
+  const repeat = (s, n) => range(n).map(() => s).join('');
+  const blanks = (n) => ol.repeat(' ', n)
   const indent = (s, lev, opts) => feedX({ fillChars: '   ', prompt: '', ...opts }, opts => range(lev).map(() => opts.fillChars).join('') + opts.prompt + s)
   // const randomColor = () =>      '#A2F0D9'
   // https://www.kaggle.com/code/parulpandey/10-useful-string-methods-in-python
@@ -164,7 +164,7 @@ const ol = (() => {
   // example: log(() => sin(2))
   const log = (f) => {
     const t = timer()
-    const res = f();
+    const res = f(args);
     console.log('res:', res, 'time:', t.elapsedTime());
     return res;
   };
@@ -174,14 +174,13 @@ const ol = (() => {
   fib  = logtor(fib)
   fib(8)
   */
-  const logtor = (f, lev = 0) => (args) => {
-    console.log(blanks(lev++) + '>', f.name, 'args=', args);
+  const logtor = (f, cnt = 0, lev = 0) => (args) => {
+    console.log(repeat("..", lev++) + f.name, 'args:' + args);
     const t = timer()
     const res = f(args);
-    console.log(blanks(lev--) + '<', f.name, 'res=', res, 'time', t.elapsedTime());
+    console.log(repeat("..", --lev) + 'res:', res, '# of calls:', ++cnt, 'time:' + t.elapsedTime());
     return res;
   };
-
   return {
     abs, add, inc, dec, mul, sqr, cube, gcd, fac, fib, // numerical functions
     repeat, blanks, indent, // string functions

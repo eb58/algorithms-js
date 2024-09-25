@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang='de'>
+
+<head>
+    <meta http-equiv="Content-Type" content="text/html" charset=UTF-8" name="Karteikarten" />
+    <title>Karteikarten</title>
+
+    <script src='https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js'></script>
+    <script src='https://cdn.jsdelivr.net/gh/eb58/algorithms-js/src/ol.js'></script>
+    <script src='../../../../ebtable/public_html/javascript/mx.js'></script>
+    <script src='../../../../ebtable/public_html/javascript/ebtable.js'></script>
+    <script src='./IndexCard.js'></script>
+    <script src='./IndexCards.js'></script>
+</head>
+
+<body>
+    <div id="grid"></div>
+    <script>
+        const basketTestdata = [
+  ['Wolpertinger', '31.08.1915', 'Herder, Johann Gottfried', 5],
+  ['Yeti        ', '31.08.2016', 'Lichtenberg, Georg Christoph ', 31],
+  ['Esel        ', '05.08.2011', 'Liebig, Ellen,', 1],
+  ['Affe        ', '10.06.2013', 'Heine, Heinrich', 2],
+  ['Maus        ', '15.09.2014', 'Manne, Antonia', 4],
+  ['Hase        ', '15.09.2014', 'Liebig, Gustav', 8],
+  ['Hund        ', '31.08.2015', 'Mann, Heinrich Gustav Friedhelm Egon Friedrich August', 16],
+  ['Fliege      ', '31.08.2009', 'Mann, Thomas', 0],
+  ['Biene       ', '31.08.2001', 'Lessing, Gottfried', 7],
+  ['Hummel      ', '01.08.1759', 'Schiller, Friedrich', 0],
+  ['Wespe       ', '31.06.1900', 'Storm, Theodor', 0],
+  ['Karpfen     ', '31.08.2009', 'Mann, Thomas', 0],
+  ['Forelle     ', '31.08.2001', 'Lessing, Gottfried', 7],
+  ['Einhorn     ', '04.11.2017', 'Goethe, Johann Wolfgang', 63],
+  ['Einhorn     ', '04.11.2017', 'Göthe2, Johann Wolfgang', 63],
+  ['Einhorn     ', '04.11.2017', 'Gothe1, Johann Wolfgang', 63],
+  ['Einhorn     ', '04.11.2017', 'Gothe3, Johann Wolfgang', 63],
+  ['Einhorn     ', '04.11.2017', 'Gathe, Johann Wolfgang', 63],
+  ['Einhorn     ', '04.11.2017', 'Guthe, Johann Wolfgang', 63],
+  ['Lindwurm    ', '31.12.2018', 'Schiller, Friedrich', 255]
+];
+        const opts = {
+            bodyWidth: '700px',
+            flags: {
+                withClearFilterButton: true,
+                filter: true
+            },
+            columns: [
+                { name: 'topic', match: 'contains', sortorder: 'desc', },
+                { name: 'text', width: '150px', css: 'text-align: center' },
+                { name: 'sss', width: '150px', css: 'text-align: center' },
+                { name: 'te', width: '150px', css: 'text-align: center' },
+            ],
+            sortcolname: 'topic',
+            selectionCol: true
+        };
+        $(() => {
+            const model = new IndexCards();
+            model.addCard(new IndexCard("TEST1", "fhdjfhdkjfhdjf hdkjfh", ['tag1', 'tag2']))
+            model.addCard(new IndexCard("TEST2", "asdakglhgglkhj jjhrekj rjke hdkjfh", ['tag2', 'tag3']))
+            const data = model.getAllIndexCards().map(c => [c.getText(), c.getTopic()])
+            console.log(data);
+            $('#grid').ebtable(opts, basketTestdata);
+        });
+    </script>
+</body>
+
+</html>
