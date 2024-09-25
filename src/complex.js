@@ -55,7 +55,7 @@ const C$ = (() => {
         const c = input[strpos];
         if (isLetter(c)) return getIdentifier();
         if (isDigit(c)) return getNumber();
-        if (c === '*' && input[strpos + 1] === '*') return ({ strpos: strpos += 2,token: tokens.pow })
+        if (c === '*' && input[strpos + 1] === '*') return ({ strpos: strpos += 2, token: tokens.pow })
         if (!mapCharToToken[c]) throw Error(`Char ${c} not allowed. Pos:${strpos}`);
         if (strpos < input.length) strpos++;
         return { strpos, token: mapCharToToken[c] };
@@ -105,16 +105,20 @@ const C$ = (() => {
     };
 
     const factor = () => {
-      const val = term();
-      if (token.token === tokens.times) return cops.mul(val, factor());
-      if (token.token === tokens.divide) return cops.div(val, factor());
+      let val = term();
+      while (token.token === tokens.times || token.token === tokens.divide) {
+        if (token.token === tokens.times) val = cops.mul(val, term());
+        if (token.token === tokens.divide) val = cops.div(val, term());
+      }
       return val;
     };
 
     const expression = () => {
-      const val = factor();
-      if (token.token === tokens.plus) return cops.add(val, expression());
-      if (token.token === tokens.minus) return cops.sub(val, expression());
+      let val = factor();
+      while (token.token === tokens.plus || token.token === tokens.minus) {
+        if (token.token === tokens.plus) val = cops.add(val, factor());
+        if (token.token === tokens.minus) val = cops.sub(val, factor());
+      }
       return val;
     };
 

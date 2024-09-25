@@ -78,12 +78,16 @@ test('simple calculations with variables', () => {
   expect(C$('a*b', vars1)).toEqual(C$(21));
   expect(C$('(a)+(b)', vars1)).toEqual(C$(10));
 
-  const vars2 = { a: C$('2+2*i'), b: C$(3, 0) };
+  const vars2 = { a: C$('2+2*i'), b: C$(3, 0), c: C$(7) };
   expect(C$('a', vars2)).toEqual(C$(2, 2));
   expect(C$('-a', vars2)).toEqual(C$(-2, -2));
   expect(C$('a+b', vars2)).toEqual(C$(5, 2));
   expect(C$('a*a', vars2)).toEqual(C$(0, 8));
   expect(C$('5*a', vars2)).toEqual(C$(10, 10));
+  expect(C$('a + b - a', vars2)).toEqual(C$('b', vars2));
+  expect(C$('a + b - 2*a', vars2)).toEqual(C$('b-a', vars2));
+  expect(C$('a - b + c', vars2)).toEqual(C$('(a - b) + c', vars2));
+
 });
 
 test('complexFunction type 1', () => {
@@ -109,7 +113,7 @@ test('complexFunction type 2', () => {
   expect(C$('g(2*i)', { g })).toEqual(C$('-2.4-i*3.2'));
 
   expect(C$('g(z)', { z: C$(9), g })).toEqual(C$(64.8));
-  expect(C$('g(z)', { z: C$(9, 1), g })).toEqual(C$(63.8019801980198, 16.019801980198018));
+  expect(C$('g(z)', { z: C$(9, 1), g })).toEqual(C$(63.801980198019805, 16.019801980198018));
 
   expect(C$('f(z)', { z: C$(1, 1), f })).toEqual(C$(-16, 12));
   expect(C$('f(z)', { z: C$(1, 1), f })).toEqual(C$(-16, 12));
