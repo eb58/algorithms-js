@@ -16,10 +16,6 @@ const {
 
 
 test('string functions', () => {
-  expect(repeat('a',0)).toEqual('');
-  expect(repeat('a',1)).toEqual('a');
-  expect(repeat('a',10)).toEqual('aaaaaaaaaa');
-
   expect(blanks(0)).toEqual('');
   expect(blanks(3)).toEqual('   ');
   expect(indent("Das ist nur ein Test", 1)).toEqual("   Das ist nur ein Test");

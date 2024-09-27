@@ -1,4 +1,4 @@
-const { cache, memoize } = require('../../src/ol');
+const { cache } = require('../../src/ol');
 
 test('cache add + get + validity', () => {
     const c = cache()
@@ -11,6 +11,7 @@ test('cache add + get + validity', () => {
 test('cache cleaner', () => {
     const c = cache()
     c.add('a', 'test')
+    setInterval(c.cleaner, 1000).unref();
     expect(c.get('a')).toBe('test')
     setTimeout(() => expect(c.cleaner().length).toBe(1), 500).unref()
     setTimeout(() => expect(c.cleaner().length).toBe(0), 1000).unref()

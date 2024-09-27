@@ -19,8 +19,7 @@ const ol = (() => {
   // string functions
   ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-  const repeat = (s, n) => range(n).map(() => s).join('');
-  const blanks = (n) => ol.repeat(' ', n)
+  const blanks = (n) => ' '.repeat(n)
   const indent = (s, lev, opts) => feedX({ fillChars: '   ', prompt: '', ...opts }, opts => range(lev).map(() => opts.fillChars).join('') + opts.prompt + s)
   // const randomColor = () =>      '#A2F0D9'
   // https://www.kaggle.com/code/parulpandey/10-useful-string-methods-in-python
@@ -175,15 +174,15 @@ const ol = (() => {
   fib(8)
   */
   const logtor = (f, cnt = 0, lev = 0) => (args) => {
-    console.log(repeat("..", lev++) + f.name, 'args:' + args);
+    console.log('..'.repeat(lev++) + f.name, 'args:' + args);
     const t = timer()
     const res = f(args);
-    console.log(repeat("..", --lev) + 'res:', res, '# of calls:', ++cnt, 'time:' + t.elapsedTime());
+    console.log('..'.repeat(--lev) + 'res:', res, '# of calls:', ++cnt, 'time:' + t.elapsedTime());
     return res;
   };
   return {
     abs, add, inc, dec, mul, sqr, cube, gcd, fac, fib, // numerical functions
-    repeat, blanks, indent, // string functions
+    blanks, indent, // string functions
     id, feedX, call, swap, clone,  // technical functions
     eq, lt, lte, gt, gte, odd, even, isInInterval, isLeapYear, isPrime, // predicates
     gtPred, gtePred, ltPred, ltePred, // generate predicates
@@ -267,7 +266,7 @@ const vector = {
   vadd: (v1, v2) => ol.zip(v1, v2, ol.add),
   vsqrdist: (v1, v2) => ol.zip(v1, v2, (x, y) => (x - y) ** 2),
   vdist: (v1, v2) => Math.sqrt(vector.vsqrdist(v1, v2)),
-  vscalar: (v1, v2) => ol.sum(ol.zip(v1, v2, mul)),
+  vscalar: (v1, v2) => ol.sum(ol.zip(v1, v2, ol.mul)),
   vnorm: (v) => Math.sqrt(vector.vscalar(v, v)),
 }
 
