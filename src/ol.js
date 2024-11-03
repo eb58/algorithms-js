@@ -275,7 +275,7 @@ const vector = {
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 const matrix = {
   clone: (m) => m.map((r) => [...r]),
-  reshape: (m, dim) => m.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, []),
+  reshape: (m, dimr, dimc = m.length / dimr) => range(dimr).map((n,i) => m.slice(i*dimc, (i+1)*dimc)),
   redim: (m, nrows, ncols, defVal = 0) => ol.range(nrows).map((r) => ol.range(ncols).map((c) => m[r]?.[c] || defVal)),
   makeQuadratic: (m, defVal = 0) => ol.feedX(Math.max(m.length, m[0].length), (dim) => matrix.redim(m, dim, dim, defVal)),
   transpose: (m) => m[0].map((_, i) => m.map((r) => r[i])),
@@ -288,7 +288,6 @@ const matrix = {
 // caching
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-const simpleCache = (c = {}) => ({ add: (key, val) => c[key] = val, get: key => c[key] })
 
 const cache = (ttl = 1, c = {}) => ({ // ttl = time to live in secs - 0 meaning live forever 
   add: (key, val) => c[key] = { val, validUntil: Date.now() + (ttl || 3600 * 1000) * 1000 }, // 3600 * 1000 -> 1000 hours -> living almost forever!
@@ -297,6 +296,25 @@ const cache = (ttl = 1, c = {}) => ({ // ttl = time to live in secs - 0 meaning 
 })
 
 const memoize = (f, c = cache()) => (x) => c.get(x) === undefined ? c.add(x, f(x)).val : c.get(x)
+
+
+
+
+const simpleCache = (c = {}) => ({ add: (key, val) => c[key] = val, get: key => c[key] })
+const memoizeX = (f, insertCondition = () => true, hash = x => x, c = simpleCache()) => (...args) => {
+  const h = hash(...args);
+  if (c.get(h) !== undefined) return c.get(h)
+  const val = f(...args);
+  return insertCondition(...args) ? c.add(h, val) : val
+}
+
+fib = (x) => (x <= 2 ? 1 : fib(x - 1) + fib(x - 2));
+
+fib(5)
+
+fib = memoizeX(fib)
+fib(10)
+
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // bitset
