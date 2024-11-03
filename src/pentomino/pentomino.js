@@ -61,19 +61,6 @@ const pentomino = () => {
       (acc, [s, tiles]) => [...acc, ...tiles.map((tile) => [...encodeTile(tile), ...encodeSymbol(s)])],
       [],
     );
-
-    // const x = problem.filter( r => r.filter(x=>x==1).length !== 6).length;
-    // console.log( "XXX", x)
-
-    // require('fs').writeFileSync(
-    //   '/tmp/my1.json',
-    //   JSON.stringify(
-    //     problem.map((x) => x.join('')),
-    //     0,
-    //     2,
-    //   ),
-    // );
-
     const solutions = dlxSolve(problem);
 
     // Map solutions from DLX back to boards
