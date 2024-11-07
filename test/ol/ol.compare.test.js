@@ -16,25 +16,24 @@ test('cmpNumbers', () => {
 });
 
 test('comparer', () => {
-  const cmpByTitle = comparer(o=>o.title);
+  const cmpByTitle = comparer(o => o.title);
 
   const books = [
-    {title: "Faust", author: "Goethe"},
-    {title: "Die Räuber", author: "Schiller"},
-    {title: "Wallenstein", author: "Schiller"},
+    { title: 'Faust', author: 'Goethe' },
+    { title: 'Die Räuber', author: 'Schiller' },
+    { title: 'Wallenstein', author: 'Schiller' }
   ];
 
   expect(books.toSorted(cmpByTitle)).toEqual([
-    {title: "Die Räuber", author: "Schiller"},
-    {title: "Faust", author: "Goethe"},
-    {title: "Wallenstein", author: "Schiller"},
+    { title: 'Die Räuber', author: 'Schiller' },
+    { title: 'Faust', author: 'Goethe' },
+    { title: 'Wallenstein', author: 'Schiller' }
   ]);
 
   expect(books.toSorted(comparerByKey('author'))).toEqual([
-    {title: "Faust", author: "Goethe"},
-    {title: "Die Räuber", author: "Schiller"},
-    {title: "Wallenstein", author: "Schiller"},
+    { title: 'Faust', author: 'Goethe' },
+    { title: 'Die Räuber', author: 'Schiller' },
+    { title: 'Wallenstein', author: 'Schiller' }
   ]);
-
 
 });
