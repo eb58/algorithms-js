@@ -3,7 +3,7 @@ const { matrix, ol } = require('../src/ol');
 const { shuffle, range } = ol;
 const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = matrix;
 
-const solve = require('../src/exact-cover');
+const solve = require('../src/experimental/exact-cover');
 
 test('exactCover 1', () => {
   const constraints = [
@@ -58,7 +58,7 @@ test('exactCover 3', () => {
       }
     }
     const ret = constraints;
-    console.log(ret.length, ret[0].length);
+    // console.log(ret.length, ret[0].length);
     return ret;
   };
 

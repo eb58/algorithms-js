@@ -22,7 +22,7 @@ sorts.forEach((sort) =>
 );
 
 sorts.forEach((sort) =>
-  test('test-set2 quicksort objects ' + sort.name, () => {
+  test('test-set2 sort objects ' + sort.name, () => {
     const cmp = comparerByKey('a');
     const arr = [{ a: 99 }, { a: 88 }, { a: 10 }, { a: 111 }, { a: 37 }];
     expect(sort(arr, cmp)).toEqual([{ a: 10 }, { a: 37 }, { a: 88 }, { a: 99 }, { a: 111 }]);
@@ -30,7 +30,7 @@ sorts.forEach((sort) =>
 );
 
 sorts.forEach((sort) =>
-  test('test-set3 quicksort strings ' + sort.name, () => {
+  test('test-set3 sort strings ' + sort.name, () => {
     const arr = ['b', 'a'];
     expect(sort(arr, cmp)).toEqual(['a', 'b']);
     expect(sort('das ist ein test'.split(''), cmp).join('')).toBe('   adeeiinsssttt');

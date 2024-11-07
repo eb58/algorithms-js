@@ -1,26 +1,83 @@
 const { ol, num, interval, array } = require('../../src/ol');
 
 const {
-  abs, add, inc, dec, mul, sqr, cube, gcd, fac, fib, // numerical functions
-  repeat, blanks, indent, // string functions
-  id, feedX, call, swap, clone,  // technical functions
-  eq, lt, lte, gt, gte, odd, even, isInInterval, isLeapYear, isPrime, // predicates
-  gtPred, gtePred, ltPred, ltePred, // generate predicates
-  not, or, and, xor, comb, every, some, // combine predicates
-  cmpNumbers, cmp, comparer, comparerByKey, // compare
-  randomArray, randomIntArray, randomInRange, randomIntInRange, // random
-  range, rangeClosed, rangeFilled, // arrays
-  sum, prod, max, min, randomElem, average, median, patch, without, withoutIndex, sort, shuffle, flatten, uniq, uniqBy, groupBy, zip, // arrays
-  timer, // helpers
+  abs,
+  add,
+  inc,
+  dec,
+  mul,
+  sqr,
+  cube,
+  gcd,
+  fac,
+  fib, // numerical functions
+  repeat,
+  blanks,
+  indent, // string functions
+  id,
+  feedX,
+  call,
+  swap,
+  clone,  // technical functions
+  eq,
+  lt,
+  lte,
+  gt,
+  gte,
+  odd,
+  even,
+  isInInterval,
+  isLeapYear,
+  isPrime, // predicates
+  gtPred,
+  gtePred,
+  ltPred,
+  ltePred, // generate predicates
+  not,
+  or,
+  and,
+  xor,
+  comb,
+  every,
+  some, // combine predicates
+  cmpNumbers,
+  cmp,
+  comparer,
+  comparerByKey, // compare
+  randomArray,
+  randomIntArray,
+  randomInRange,
+  randomIntInRange, // random
+  range,
+  rangeClosed,
+  rangeFilled, // arrays
+  sum,
+  prod,
+  max,
+  min,
+  randomElem,
+  average,
+  median,
+  patch,
+  without,
+  withoutIndex,
+  sort,
+  shuffle,
+  flatten,
+  uniq,
+  uniqBy,
+  groupBy,
+  zip, // arrays
+  timer // helpers
 } = ol;
 
 
 test('string functions', () => {
   expect(blanks(0)).toEqual('');
   expect(blanks(3)).toEqual('   ');
-  expect(indent("Das ist nur ein Test", 1)).toEqual("   Das ist nur ein Test");
-  expect(indent("Das ist nur ein Test", 2)).toEqual("      Das ist nur ein Test");
-  expect(indent("Das ist nur ein Test", 2, { fillChars: '##', prompt: '> ' })).toEqual("####> Das ist nur ein Test");
+  expect(indent('Das ist nur ein Test', 1)).toEqual('   Das ist nur ein Test');
+  expect(indent('Das ist nur ein Test', 2)).toEqual('      Das ist nur ein Test');
+  expect(indent('Das ist nur ein Test', 2, { fillChars: '##', prompt: '> ' })).toEqual('####> Das ist nur ein Test');
 });
 
 
@@ -64,6 +121,20 @@ test('randomIntInRange', () => {
     expect(x).toBeGreaterThanOrEqual(1);
     expect(x).toBeLessThanOrEqual(6);
   }
+});
+
+test('randomElement', () => {
+  const N = 6;
+  const M = 1000;
+  const stat = {};
+  for (let i = 0; i < M; i++) {
+    const x = randomElem(range(N));
+    stat[x] = stat[x] ? stat[x] + 1 : 1;
+    expect(x).toBeGreaterThanOrEqual(0);
+    expect(x).toBeLessThanOrEqual(5);
+  }
+  range(N).forEach(n => expect(stat[n+'']).toBeGreaterThanOrEqual(M / 20));
+  range(N).forEach(n => expect(stat[n+'']).toBeLessThanOrEqual(M / 2));
 });
 
 test('fibonacci', () => {
