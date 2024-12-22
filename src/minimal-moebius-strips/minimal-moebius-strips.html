@@ -2,138 +2,153 @@
 <html lang='de'>
 
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>Non-Orientable Minimal Surfaces</title>
-    <script src="https://cdn.plot.ly/plotly-2.34.0.min.js"></script>
-    <script src='https://cdn.jsdelivr.net/gh/eb58/algorithms-js/src/ol.js'></script>
-    <script src='https://cdn.jsdelivr.net/gh/eb58/algorithms-js/src/tokenizer.js'></script>
-    <script src='https://cdn.jsdelivr.net/gh/eb58/algorithms-js/src/complex.js'></script>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>Non-Orientable Minimal Surfaces</title>
+  <script src="https://cdn.plot.ly/plotly-2.34.0.min.js"></script>
+  <script src='https://cdn.jsdelivr.net/gh/eb58/algorithms-js/src/ol.js'></script>
+  <script src='https://cdn.jsdelivr.net/gh/eb58/algorithms-js/src/tokenizer.js'></script>
+  <script src='https://cdn.jsdelivr.net/gh/eb58/algorithms-js/src/complex.js'></script>
 </head>
 
 <body>
-    <div id="div1"></div>
-    <div id="div2"></div>
-    <div id="div3"></div>
-    <div id="div4"></div>
-    <div id="div5"></div>
-    <div id="div6"></div>
-    <div id="div7"></div>
-    <script>
-        const { range } = ol
-        const { vadd } = vector
-        const evalWeierstrass = (f, g, grid) => {
-            // cf. https://en.wikipedia.org/wiki/Weierstrass-Enneper_parameterization or https://de.wikipedia.org/wiki/Enneper-Weierstraß-Konstruktion
-            const Phis = {
-                Phi1: (z) => C$('f(z) * (1 - g(z)^2) * (1/2)', { f, g, z }),  //   f(1-g²)/2
-                Phi2: (z) => C$('f(z) * (1 + g(z)^2) * (i/2)', { f, g, z }),  // i*f(1+g²)/2
-                Phi3: (z) => C$('f(z) * g(z)', { f, g, z })                   //         f*g
-            }
+<button onclick="Catenoid()">Catenoid</button>
+<button onclick="TwistedCatenoid()">Twisted Catenoid</button>
+<button onclick="Trefoil()">Trefoil</button>
+<button onclick="Cobra()">Cobra</button>
+<button onclick="DoubleTrefoil()">Double Trefoil</button>
+<button onclick="UFO()">UFO</button>
 
-            const lineIntegral = (phi, z1, z2) => C$('phi((z1 + z2)/2) * (z2 - z1)', { phi, z1, z2 })
-            const weierstrass = (za, ze) => Object.values(Phis).map(phi => lineIntegral(phi, za, ze).r)
+<div id="div1"></div>
+<script>
+  const { range } = ol
+  const { vadd } = vector
+  const evalWeierstrass = (f, g, grid) => {
+    // cf. https://en.wikipedia.org/wiki/Weierstrass-Enneper_parameterization
+    const Phis = {
+      Phi1: (z) => C$('f(z) * (1 - g(z)^2) * (1/2)', { f, g, z }),  //   f(1-g²)/2
+      Phi2: (z) => C$('f(z) * (1 + g(z)^2) * (i/2)', { f, g, z }),  // i*f(1+g²)/2
+      Phi3: (z) => C$('f(z) * g(z)', { f, g, z })                   //         f*g
+    }
 
-            // calculate data
-            // 1) init data with [0,0,0]
-            const data = range(grid.length).map(() => range(grid[0].length).map(() => [0, 0, 0]))
-            // 2) calculate data along the outer circle of the grid
-            for (let i = 0; i < grid.length - 1; i++) data[i + 1][0] = vadd(data[i][0], weierstrass(grid[i][0], grid[i + 1][0]))
-            // 3) now calculate data along the radial axises
-            for (let i = 0; i < grid.length; i++) for (let j = 0; j < grid[0].length - 1; j++)
-                data[i][j + 1] = vadd(data[i][j], weierstrass(grid[i][j], grid[i][j + 1]))
-            return [...data, ...matrix.transpose(data)];
-        }
+    const lineIntegral = (phi, z1, z2) => C$('phi((z1 + z2)/2) * (z2 - z1)', { phi, z1, z2 })
+    const weierstrass = (za, ze) => Object.values(Phis).map(phi => lineIntegral(phi, za, ze).r)
 
-        const circleGrid = (r1, r2) => { // parameter area: circular ring around 0
-            const [w1, w2, GRIDSIZE_R, GRIDSIZE_W] = [0, 4 * Math.PI, 50, 300]
-            const xinc = (r2 - r1) / GRIDSIZE_R
-            const yinc = (w2 - w1) / GRIDSIZE_W
-            return range(GRIDSIZE_R + 1).map(n => range(GRIDSIZE_W + 1).map((m) => C$((r1 + n * xinc) * Math.cos(yinc * m), (r1 + n * xinc) * Math.sin(yinc * m))))
-        }
+    // calculate data
+    // 1) init data with [0,0,0]
+    const data = range(grid.length).map(() => range(grid[0].length).map(() => [0, 0, 0]))
+    // 2) calculate data along the outer circle of the grid
+    for (let i = 0; i < grid.length - 1; i++) data[i + 1][0] = vadd(data[i][0], weierstrass(grid[i][0], grid[i + 1][0]))
+    // 3) now calculate data along the radial axes
+    for (let i = 0; i < grid.length; i++) for (let j = 0; j < grid[0].length - 1; j++)
+      data[i][j + 1] = vadd(data[i][j], weierstrass(grid[i][j], grid[i][j + 1]))
+    return [...data, ...matrix.transpose(data)]
+  }
 
-        ////////////////////////////////////////////////////////
-        ///            Classical Minimal Surfaces            /// 
-        ////////////////////////////////////////////////////////
+  const circleGrid = (r1, r2) => { // parameter area: circular ring around 0
+    const [w1, w2, GRIDSIZE_R, GRIDSIZE_W] = [0, 4 * Math.PI, 50, 300]
+    const xinc = (r2 - r1) / GRIDSIZE_R
+    const yinc = (w2 - w1) / GRIDSIZE_W
+    return range(GRIDSIZE_R + 1).map(n => range(GRIDSIZE_W + 1).map((m) => C$((r1 + n * xinc) * Math.cos(yinc * m), (r1 + n * xinc) * Math.sin(yinc * m))))
+  }
 
-        const circularRing = () => circleGrid(0.5, 1).map(row => row.map(z => [z.r, z.i, 0]))
+  ////////////////////////////////////////////////////////
+  ///            Classical Minimal Surfaces            ///
+  ////////////////////////////////////////////////////////
 
-        const catenoid = () => {
-            const g = z => z
-            const f = z => C$('-2/z^2', { z })
-            return evalWeierstrass(f, g, circleGrid(0.3, 3));
-        }
+  const circularRing = () => circleGrid(0.5, 1).map(row => row.map(z => [z.r, z.i, 0]))
 
-        ////////////////////////////////////////////////////////
-        ///    Minimal Surfaces That Are  Moebius Strips     /// 
-        ///           from my diploma thesis 1988            ///
-        ////////////////////////////////////////////////////////
+  const catenoid = () => {
+    const g = z => z
+    const f = z => C$('-2/z^2', { z })
+    return evalWeierstrass(f, g, circleGrid(0.3, 3))
+  }
 
-        const S39 = (m, r1 = 1, r2 = 1.2) => { // Page 39 Example 1
-            const g = z => C$('z^(m-2) * (z-1)*(z-i) / (z+1)*(z+i)', { z, m })
-            const f = z => C$('(z+1)^2 * (z+i)^2 / z^(m+1)', { z, m })
-            return () => evalWeierstrass(f, g, circleGrid(r1, r2));
-        }
+  ////////////////////////////////////////////////////////
+  ///    Minimal Surfaces That Are Moebius Strips      ///
+  ///           from my diploma thesis 1988            ///
+  ////////////////////////////////////////////////////////
 
-        const cobra5 = S39(5, 1.0, 1.20) // Page 39 m=5 -> Page 74 
-        const cobra7 = S39(7, 1.0, 1.10) // Page 39 m=7 
-        const cobra9 = S39(9, 1.0, 1.05) // Page 39 m=9  
+  const S39 = (m, r1 = 1, r2 = 1.2) => { // Page 39 Example 1
+    const g = z => C$('z^(m-2) * (z-1)*(z-i) / (z+1)*(z+i)', { z, m })
+    const f = z => C$('(z+1)^2 * (z+i)^2 / z^(m+1)', { z, m })
+    return () => evalWeierstrass(f, g, circleGrid(r1, r2))
+  }
 
-        const S41 = (m, n, r1 = 1.0, r2 = 1.2) => {
-            // Page 41 Example 3  m >= 3 odd, n odd (if n even its a minimal surface but not a moebius strip!)
-            const g = z => C$('z^(m-n)*(z^n-1) / (z^n+1)', { z, m, n });
-            const f = z => C$('i*(z^n+1)^2 / z^(m+1)', { z, m, n })
-            return () => evalWeierstrass(f, g, circleGrid(r1, r2),);
-        }
+  const cobra5 = S39(5, 1.0, 1.20) // Page 39 m=5 -> Page 74
+  const cobra7 = S39(7, 1.0, 1.10) // Page 39 m=7
+  const cobra9 = S39(9, 1.0, 1.05) // Page 39 m=9
 
-        const S41_3_1 = S41(3, 1, 1., 2.0)       // m=3, n=1 (see also Page 32 m=3)  -> Page 70
-        const S41_5_1 = S41(5, 1, 1.0, 1.1)      // m=5, n=1 -> Page 72 (self penetration) ufo
-        const S41_5_3 = S41(5, 3, 1.0, 1.5)      // m=5, m=3 -> Page 73 / trifoil
-        const S41_7_1 = S41(7, 1, 1.1, 1.20)     // m=7, m=1 (self penetration with r1 = 1.0!)
-        const S41_7_3 = S41(7, 3, 1.1, 1.20)     // m=7, m=3 (self penetration withi r1 = 1.0!)
-        const S41_7_5 = S41(7, 5, 1.0, 1.25)     // m=7, m=5 (five times twisted moebius strip / 5-foil )
-        const S41_9_7 = S41(9, 7, 1.0, 1.2)      // m=9, m=7 (seven times twisted moebius strip / 7-foil )
-        const S41_11_9 = S41(13, 11, 1.0, 1.2)   // m=9, m=7 (eleven times twisted  moebius strip / 11-foil )
+  const S41 = (m, n, r1 = 1.0, r2 = 1.2) => {
+    // Page 41 Example 3  m >= 3 odd, n odd (if n even it is a minimal surface but not a moebius strip!)
+    const g = z => C$('z^(m-n)*(z^n-1) / (z^n+1)', { z, m, n })
+    const f = z => C$('i*(z^n+1)^2 / z^(m+1)', { z, m, n })
+    return () => evalWeierstrass(f, g, circleGrid(r1, r2))
+  }
 
-        const S41_13_5 = S41(13, 5, 1.12, 1.15) // play with parameters r1, r2
-        const S41_13_7 = S41(13, 7, 1.12, 1.15)
-        const S41_13_9 = S41(13, 9, 1.1, 1.15)
+  const S41_3_1 = S41(3, 1, 1., 2.0)       // m=3, n=1 (see also Page 32 m=3)  -> Page 70
+  const S41_5_1 = S41(5, 1, 1.0, 1.1)      // m=5, n=1 -> Page 72 (self penetration) ufo
+  const S41_5_3 = S41(5, 3, 1.0, 1.5)      // m=5, m=3 -> Page 73 / trifoil
+  const S41_7_1 = S41(7, 1, 1.1, 1.20)     // m=7, m=1 (self penetration with r1 = 1.0!)
+  const S41_7_3 = S41(7, 3, 1.1, 1.20)     // m=7, m=3 (self penetration with r1 = 1.0!)
+  const S41_7_5 = S41(7, 5, 1.0, 1.25)     // m=7, m=5 (five times twisted moebius strip / 5-foil )
+  const S41_9_7 = S41(9, 7, 1.0, 1.2)      // m=9, m=7 (seven times twisted moebius strip / 7-foil )
+  const S41_11_9 = S41(13, 11, 1.0, 1.2)   // m=9, m=7 (eleven times twisted  moebius strip / 11-foil )
 
-        const S42 = (r1 = 1.5, r2 = 2.0) => {  // Page 42  
-            const a = -5 + 2 * Math.sqrt(15)
-            const g = z => C$('z^3 * (z^2 - a) / (a*z^2 - 1)', { a, z })
-            const f = z => C$('i * (a*z^2 - 1)^2 /  (z^2 * (z-1)^4 * (z+1)^4)', { a, z })
-            return evalWeierstrass(f, g, circleGrid(1.5, 2.0),);
-        }
+  const S41_13_5 = S41(13, 5, 1.12, 1.15)  // play with parameters r1, r2
+  const S41_13_7 = S41(13, 7, 1.12, 1.15)
+  const S41_13_9 = S41(13, 9, 1.1, 1.15)
 
-        const renderSurface = (title, surface, div) => {
+  const S42 = (r1 = 1.5, r2 = 2.0) => {  // Page 42
+    const a = -5 + 2 * Math.sqrt(15)
+    const g = z => C$('z^3 * (z^2 - a) / (a*z^2 - 1)', { a, z })
+    const f = z => C$('i * (a*z^2 - 1)^2 /  (z^2 * (z-1)^4 * (z+1)^4)', { a, z })
+    return evalWeierstrass(f, g, circleGrid(1.5, 2.0))
+  }
 
-            const layout = {
-                showlegend: false,
-                scene: {
-                    //camera: { eye: { x: 0, y: 1.5, z: 0 } },
-                    bgcolor: '#222'
-                },
-                height: 1000,
-            };
+  const renderSurface = (title, surface, div) => {
 
-            const lineType = {
-                type: 'scatter3d',
-                mode: 'lines',
-                color: 'black',
-                line: { width: 3 }
-            }
+    const layout = {
+      showlegend: false,
+      scene: {
+        // camera: { eye: { x: 0, y: 1.5, z: 0 } },
+        bgcolor: '#222'
+      },
+      height: 600
+    }
 
-            const mapForPlotly = row => ({ ...lineType, x: row.map(r => r[0]), y: row.map(r => r[1]), z: row.map((r) => r[2]) })
-            Plotly.newPlot(div, surface().map(mapForPlotly), { ...layout, title });
-        }
+    const lineType = {
+      type: 'scatter3d',
+      mode: 'lines',
+      color: 'black',
+      line: { width: 3 }
+    }
 
-        // renderSurface('Circular Ring', circularRing, 'div1');
-        // renderSurface('Catenoid', catenoid, 'div2');
-        renderSurface('Twisted Catenoid', S41_3_1, 'div3');
-        // renderSurface('UFO', S41_5_1, 'div4');
-        renderSurface('Trefoil', S41_5_3, 'div5');
-        renderSurface('Cobra', cobra5, 'div6');
-        renderSurface('Double Trefoil', S41(5, 3, 1.1, 1.5), 'div7');
-    </script>
+    const mapForPlotly = row => ({
+      ...lineType,
+      x: row.map(r => r[0]),
+      y: row.map(r => r[1]),
+      z: row.map((r) => r[2])
+    })
+    Plotly.newPlot(div, surface().map(mapForPlotly), { ...layout, title })
+  }
+
+  // renderSurface('Circular Ring', circularRing, 'div1');
+  // renderSurface('Catenoid', catenoid, 'div2');
+  // renderSurface('Twisted Catenoid', S41_3_1, 'div3');
+  // renderSurface('UFO', S41_5_1, 'div4');
+  //renderSurface('Trefoil', S41_5_3, 'div5');
+  // renderSurface('Cobra', cobra5, 'div6');
+  // renderSurface('Double Trefoil', S41(5, 3, 1.1, 1.5), 'div7');
+
+  const Catenoid = () => renderSurface('Catenoid', catenoid, 'div1')
+  const TwistedCatenoid = () => renderSurface('Twisted Catenoid', S41_3_1, 'div1')
+  const Trefoil = () => renderSurface('Trefoil', S41_5_3, 'div1')
+  const Cobra = () => renderSurface('Cobra', cobra5, 'div1')
+  const DoubleTrefoil = () => renderSurface('Double Trefoil', S41(5, 3, 1.1, 1.5), 'div1')
+  const UFO = () => renderSurface('UFO', S41_5_1, 'div1')
+
+  renderSurface('Twisted Catenoid', S41_3_1, 'div1')
+</script>
 </body>
 
 </html>
