@@ -63,11 +63,7 @@ const genSparseMatrix = (matrix) => {
     let last = null
     for (let col = 0; col < matrix[row].length; col++) {
       if (matrix[row][col]) {
-        const node = {}
-        node.row = row
-        node.column = columns[col]
-        node.up = columns[col].up
-        node.down = columns[col]
+        const node = { row, column: columns[col], up: columns[col].up, down: columns[col] }
         if (last) {
           node.left = last
           node.right = last.right
