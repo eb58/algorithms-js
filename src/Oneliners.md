@@ -24,9 +24,9 @@ Funktionieren reicht nicht!
 
 Warum habe ich die Sprache Javascript gewählt? Sicher hat Javascript eine ganze Reihe von Defiziten. Aber wenn man sich auf die guten Teile beschränkt (->Crockford, Javscript The Good Parts), dann kann man damit sehr kompakten und eleganten Code schreiben. Insbesondere moderne Features dieser Sprache führen zu einigen Vereinfachungen, die wir in unserem Code intensiv verwenden. Seien Sie darauf gefasst!
 
-#### Arrowfunktion
+#### Arrow-Funktionen
 
-Wieviel eleganter ist doch
+Viel eleganter ist doch
 
 ```Javascript
 const sum = (x, y) => x + y;
@@ -40,7 +40,7 @@ function sum(x, y){
 }
 ```
 
-Insbesondere in der Verwendung als Lambas führt das oft zu einer prägnanteren Formulierung.
+Insbesondere in der Verwendung als Lambdas führt das oft zu einer prägnanteren Formulierung.
 
 ```javascript
 const sum = (xs) => xs.reduce( (x, y) => x + y, 0);
@@ -49,16 +49,14 @@ const sum = (xs) => xs.reduce( (x, y) => x + y, 0);
 statt
 
 ```javascript
-function sum(xs){
-    return xs.reduce( function(x, y)( return x + y), 0);
-}
+function sum(xs){ return xs.reduce( function(x, y){ return x + y}, 0);}
 ```
 
 #### map, reduce, filter, some, every
 
-#### forEach is a codesmell
+#### forEach is a code smell
 
-Meist lässt sich das durch map oder reduce ersetzen. forEach ist nur erlaubt, wenn Seiteneffekte ausdrücklich erlaubt sind. In Aufbereitung von Daten hat das nichts verloren.
+Meist lässt sich das durch map oder reduce ersetzen. forEach ist nur erlaubt, wenn Seiteneffekte ausdrücklich erwünscht sind. In Berechnungen und Aufbereitung von Daten hat das nichts verloren.
 
 #### Spreading-Operator
 
