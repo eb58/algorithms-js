@@ -5,7 +5,7 @@ const csqr = (z) => C$('z*z', { z });
 const I = C$(0, 1);
 
 test('simple for debug', () => {
-  expect(C$('pi*5')).toEqual({ r: Math.PI * 5, i: 0 });
+  expect(C$('pi*5')).toEqual({ re: Math.PI * 5, im: 0 });
 });
 
 test('exceptions', () => {
@@ -22,26 +22,26 @@ test('exceptions', () => {
 });
 
 test('init complex with object', () => {
-  expect(C$({ r: 0 })).toEqual({ r: 0, i: 0 });
-  expect(C$({ r: 1, i: 1 })).toEqual({ r: 1, i: 1 });
+  expect(C$({ re: 0 })).toEqual({ re: 0, im: 0 });
+  expect(C$({ re: 1, im: 1 })).toEqual({ re: 1, im: 1 });
 });
 
 test('init complex with numbers or object', () => {
-  expect(C$(0, 0)).toEqual({ r: 0, i: 0 });
-  expect(C$(-0, -0)).toEqual({ r: 0, i: 0 });
-  expect(C$(1)).toEqual({ r: 1, i: 0 });
-  expect(C$(1, 1)).toEqual({ r: 1, i: 1 });
+  expect(C$(0, 0)).toEqual({ re: 0, im: 0 });
+  expect(C$(-0, -0)).toEqual({ re: 0, im: 0 });
+  expect(C$(1)).toEqual({ re: 1, im: 0 });
+  expect(C$(1, 1)).toEqual({ re: 1, im: 1 });
 });
 
 test('init complex with strings', () => {
-  expect(C$('+1')).toEqual({ r: 1, i: 0 });
-  expect(C$('1')).toEqual({ r: 1, i: 0 });
-  expect(C$('-1')).toEqual({ r: -1, i: 0 });
+  expect(C$('+1')).toEqual({ re: 1, im: 0 });
+  expect(C$('1')).toEqual({ re: 1, im: 0 });
+  expect(C$('-1')).toEqual({ re: -1, im: 0 });
 
-  expect(C$('+i')).toEqual({ r: 0, i: 1 });
-  expect(C$('i')).toEqual({ r: 0, i: 1 });
-  expect(C$('-i')).toEqual({ r: 0, i: -1 });
-  expect(C$('1+i')).toEqual({ r: 1, i: 1 });
+  expect(C$('+i')).toEqual({ re: 0, im: 1 });
+  expect(C$('i')).toEqual({ re: 0, im: 1 });
+  expect(C$('-i')).toEqual({ re: 0, im: -1 });
+  expect(C$('1+i')).toEqual({ re: 1, im: 1 });
 });
 
 test('simple calculations', () => {
@@ -148,7 +148,7 @@ test('external variables and functions ', () => {
   expect(f2('2*i')).toEqual(C$(-3));
 
   const b = C$(0, 2);
-  expect(C$('f3(b)', { b, f3 })).toEqual({ r: 64, i: 48 });
+  expect(C$('f3(b)', { b, f3 })).toEqual({ re: 64, im: 48 });
 });
 
 test('exponential z**2 ', () => {
