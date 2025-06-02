@@ -1,7 +1,7 @@
 const tokenStrings = Object.freeze(['ident', 'number', 'minus', 'plus', 'times', 'divide', 'pow', 'lparen', 'rparen', 'lbracket', 'rbracket', 'comma', 'end']);
 const tokens = Object.freeze(tokenStrings.reduce((acc, s) => ({ ...acc, [s]: s }), {}));
 
-const tokenizer = (input) => {
+tokenizer = (input) => {
     let strpos = 0;
 
     const mapCharToToken = Object.freeze({
