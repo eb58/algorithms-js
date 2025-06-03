@@ -3,7 +3,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
     <title>Non-Orientable Minimal Surfaces</title>
-    <script src="https://cdn.plot.ly/plotly-2.34.0.min.js"></script>
+    <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.2.1/math.js"></script>
     <script src="../ol.js"></script>
     <script src="../tokenizer.js"></script>
@@ -26,13 +26,19 @@
       const evalWeierstrass = (f, g, grid) => {
         // cf. https://en.wikipedia.org/wiki/Weierstrass-Enneper_parameterization
         const Phis = {
-          phi1: (z) => C$('f(z) * (1 - g(z)^2) * (1/2)', { f, g, z }), //   f(1-g²)/2
-          phi2: (z) => C$('f(z) * (1 + g(z)^2) * (i/2)', { f, g, z }), // i*f(1+g²)/2
-          phi3: (z) => C$('f(z) * g(z)', { f, g, z }) //         f*g
+          phi1: (f, g) => C$('f * (1 - g^2) * (1/2)', { f, g }), //   f(1-g²)/2
+          phi2: (f, g) => C$('f * (1 + g^2) * (i/2)', { f, g }), // i*f(1+g²)/2
+          phi3: (f, g) => C$('f * g', { f, g }) //         f*g
         }
 
-        const lineIntegral = (phi, za, ze) => C$('phi((za + ze)/2) * (ze - za)', { phi, za, ze })
-        const weierstrass = (za, ze) => Object.values(Phis).map((phi) => lineIntegral(phi, za, ze).re)
+        const lineIntegral = (phi, f, g, dz) => C$('phi(f,g) * dz', { phi, f, g, dz })
+        const weierstrass = (za, ze) => {
+          const z = C$('(za + ze) / 2', { za, ze })
+          const dz = C$('(ze - za)', { za, ze })
+          const ff = f(z)
+          const gg = g(z)
+          return Object.values(Phis).map((phi) => lineIntegral(phi, ff, gg, dz).re)
+        }
 
         // calculate data
         // 1) init data with [0,0,0]
@@ -118,7 +124,8 @@
             // camera: { eye: { x: 0, y: 1.5, z: 0 } },
             bgcolor: '#222'
           },
-          height: 600
+          height: 800,
+          width: 800
         }
 
         const lineType = {
@@ -134,7 +141,7 @@
           y: row.map((r) => r[1]),
           z: row.map((r) => r[2])
         })
-        Plotly.newPlot(div, surface().map(mapForPlotly), { ...layout, title })
+        Plotly.react(div, surface().map(mapForPlotly), { ...layout, title })
       }
 
       // renderSurface('Circular Ring', circularRing, 'div1');
@@ -153,6 +160,7 @@
       const UFO = () => renderSurface('UFO', S41_5_1, 'div1')
 
       renderSurface('Twisted Catenoid', S41_3_1, 'div1')
+
     </script>
   </body>
 </html>
