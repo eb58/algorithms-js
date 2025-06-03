@@ -14,11 +14,12 @@
     <button onclick="Catenoid()">Catenoid</button>
     <button onclick="TwistedCatenoid()">Twisted Catenoid</button>
     <button onclick="Trefoil()">Trefoil</button>
-    <button onclick="Cobra()">Cobra</button>
     <button onclick="DoubleTrefoil()">Double Trefoil</button>
     <button onclick="UFO()">UFO</button>
+    <button onclick="Cobra()">Cobra</button>
 
     <div id="div1"></div>
+    <div id="div2"></div>
     <script>
       const range = (n) => [...Array(n).keys()]
       // const C$ = (...args) => (typeof args[0] === 'string' ? math.evaluate(...args) : math.complex(...args))
@@ -78,62 +79,69 @@
       ///           from my diploma thesis 1988            ///
       ////////////////////////////////////////////////////////
 
-      const S39 = (m, r1 = 1, r2 = 1.2) => {
+      const S39 = (m = 5, r1 = 1, r2 = 1.2) => {
         // Page 39 Example 1
         const g = (z) => C$('z^(m-2) * (z-1)*(z-i) / (z+1)*(z+i)', { z, m })
         const f = (z) => C$('(z+1)^2 * (z+i)^2 / z^(m+1)', { z, m })
         return () => evalWeierstrass(f, g, circleGrid(r1, r2))
       }
 
-      const cobra5 = S39(5, 1.1, 1.2) // Page 39 m=5 -> Page 74
+      const cobra5 = S39() // Page 39 m=5 -> Page 74
       const cobra7 = S39(7, 1.0, 1.1) // Page 39 m=7
       const cobra9 = S39(9, 1.0, 1.05) // Page 39 m=9
 
       const S41 = (m, n, r1 = 1.0, r2 = 1.2) => {
         // Page 41 Example 3  m >= 3 odd, n odd (if n even it is a minimal surface but not a moebius strip!)
-        const g = (z) => C$('z^(m-n)*(z^n-1) / (z^n+1)', { z, m, n })
-        const f = (z) => C$('i*(z^n+1)^2 / z^(m+1)', { z, m, n })
+        const g = (z) => C$('z^(m-n) * (z^n-1) / (z^n+1)', { z, m, n })
+        const f = (z) => C$('i * (z^n+1)^2 / z^(m+1)', { z, m, n })
         return () => evalWeierstrass(f, g, circleGrid(r1, r2))
       }
 
+      // m = 3
       const S41_3_1 = S41(3, 1, 1, 2.0) // m=3, n=1 (see also Page 32 m=3)  -> Page 70
+
+      // m = 5
       const S41_5_1 = S41(5, 1, 1.0, 1.1) // m=5, n=1 -> Page 72 (self penetration) ufo
       const S41_5_3 = S41(5, 3, 1.0, 1.5) // m=5, m=3 -> Page 73 / trefoil
-      const S41_7_1 = S41(7, 1, 1.1, 1.2) // m=7, m=1 (self penetration with r1 = 1.0!)
-      const S41_7_3 = S41(7, 3, 1.1, 1.2) // m=7, m=3 (self penetration with r1 = 1.0!)
-      const S41_7_5 = S41(7, 5, 1.0, 1.25) // m=7, m=5 (five times twisted moebius strip / 5-foil)
-      const S41_9_7 = S41(9, 7, 1.0, 1.2) // m=9, m=7 (seven times twisted moebius strip / 7-foil)
-      const S41_11_9 = S41(13, 11, 1.0, 1.2) // m=9, m=7 (eleven times twisted  moebius strip / 11-foil )
 
-      const S41_13_5 = S41(13, 5, 1.12, 1.15) // play with parameters r1, r2
-      const S41_13_7 = S41(13, 7, 1.12, 1.15)
-      const S41_13_9 = S41(13, 9, 1.1, 1.15)
+      // m = 7
+      const S41_7_1 = S41(7, 1, 1.1, 1.2) // m=1 (self penetration with r1 = 1.0!)
+      const S41_7_3 = S41(7, 3, 1.01, 1.2) // m=3 (self penetration with r1 = 1.0!)
+      const S41_7_5 = S41(7, 5, 1.0, 1.25) // m=5 (five times twisted moebius strip / 5-foil)
+
+      // m = 9
+      const S41_9_1 = S41(9, 1, 1.05, 1.2)
+      const S41_9_3 = S41(9, 3, 1.05, 1.2)
+      const S41_9_5 = S41(9, 5, 1.05, 1.2)
+      const S41_9_7 = S41(9, 7, 1.0, 1.2)  //   n=7 (seven times twisted moebius strip / 7-foil)
+
+      // m = 11
+      const S41_11_1 = S41(11, 1, 1.12, 1.15)
+      const S41_11_3 = S41(11, 3, 1.12, 1.15)
+      const S41_11_5 = S41(11, 5, 1.12, 1.15)
+      const S41_11_7 = S41(11, 7, 1.12, 1.15)
+      const S41_11_9 = S41(11, 9, 1.05, 1.15)
 
       const S42 = (r1 = 1.8, r2 = 3) => {
-        //  Page 42 --- kein Möbiusband! Fehler in Diplomarbeit!
+        //  Page 42 --- no moebius strip! error in thesis!
         const a = -5 + 2 * Math.sqrt(15)
         const g = (z) => C$('z^3 * (z^2 - a) / (a*z^2 - 1)', { a, z })
         const f = (z) => C$('i * (a*z^2 - 1)^2 /  (z^2 * (z-1)^4 * (z+1)^4)', { a, z })
-        return evalWeierstrass(f, g, circleGrid(r1, r2))
+        return () => evalWeierstrass(f, g, circleGrid(r1, r2))
       }
 
       const renderSurface = (title, surface, div) => {
         const layout = {
-          showlegend: false,
           scene: {
-            // camera: { eye: { x: 0, y: 1.5, z: 0 } },
             bgcolor: '#222'
+            // camera: { eye: { x: 0, y: 1.5, z: 0 } }
           },
+          showlegend: false,
           height: 800,
           width: 800
         }
 
-        const lineType = {
-          type: 'scatter3d',
-          mode: 'lines',
-          color: 'black',
-          line: { width: 3 }
-        }
+        const lineType = { type: 'scatter3d', mode: 'lines', line: { width: 3 } }
 
         const mapForPlotly = (row) => ({
           ...lineType,
@@ -144,23 +152,14 @@
         Plotly.react(div, surface().map(mapForPlotly), { ...layout, title })
       }
 
-      // renderSurface('Circular Ring', circularRing, 'div1');
-      // renderSurface('Catenoid', catenoid, 'div2');
-      // renderSurface('Twisted Catenoid', S41_3_1, 'div3');
-      // renderSurface('UFO', S41_5_1, 'div4');
-      //renderSurface('Trefoil', S41_5_3, 'div5');
-      // renderSurface('Cobra', cobra5, 'div6');
-      // renderSurface('Double Trefoil', S41(5, 3, 1.1, 1.5), 'div7');
-
       const Catenoid = () => renderSurface('Catenoid', catenoid, 'div1')
       const TwistedCatenoid = () => renderSurface('Twisted Catenoid', S41_3_1, 'div1')
       const Trefoil = () => renderSurface('Trefoil', S41_5_3, 'div1')
-      const Cobra = () => renderSurface('Cobra', cobra5, 'div1')
       const DoubleTrefoil = () => renderSurface('Double Trefoil', S41(5, 3, 1.1, 1.5), 'div1')
       const UFO = () => renderSurface('UFO', S41_5_1, 'div1')
+      const Cobra = () => renderSurface('Cobra', cobra5, 'div1')
 
-      renderSurface('Twisted Catenoid', S41_3_1, 'div1')
-
+      renderSurface('Twisted Catenoid', S41_11_9, 'div1')
     </script>
   </body>
 </html>
