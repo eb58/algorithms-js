@@ -2,18 +2,32 @@
   <dictionary name="project">
     <words>
       <w>bgcolor</w>
+      <w>fcts</w>
+      <w>feedx</w>
       <w>logtor</w>
       <w>moebius</w>
       <w>ncols</w>
+      <w>nnnn</w>
+      <w>nnnww</w>
+      <w>nnwnw</w>
+      <w>nnwwn</w>
       <w>nrows</w>
+      <w>nwnnw</w>
+      <w>nwnwn</w>
+      <w>nwwnn</w>
       <w>redim</w>
       <w>räuber</w>
       <w>showlegend</w>
+      <w>strpos</w>
       <w>vadd</w>
       <w>vdist</w>
       <w>vnorm</w>
       <w>vscalar</w>
       <w>vsqrdist</w>
+      <w>wnnnw</w>
+      <w>wnnwn</w>
+      <w>wnwnn</w>
+      <w>wwnnn</w>
     </words>
   </dictionary>
 </component>

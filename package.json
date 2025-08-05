@@ -24,15 +24,16 @@
       "pentomino": "node --inspect src/pentomino/pentomino.js"
    },
    "dependencies": {
-      "@algorithm.ts/dlx": "^4.0.0",
+      "@algorithm.ts/dlx": "^4.0.3",
       "dancing-links": "^2.1.1",
-      "mathjs": "^14.5.2",
+      "plotly": "^1.0.6",
+      "mathjs": "^14.6.0",
       "dlx": "^0.2.1",
       "dlxlib": "^1.0.3"
    },
    "devDependencies": {
       "typescript": "^5.8.3",
       "jest": "29.7.0",
-      "prettier": "3.5.3"
+      "prettier": "3.6.2"
    }
 }

@@ -1,4 +1,4 @@
-if (typeof tokenizer === 'undefined') tokenizer = require('./tokenizer.js')
+if (typeof tokenizer === 'undefined') tokenizer = require('./tokenizer.js');
 
 const C$ = (() => {
   const feedx = (x, f) => f(x);
@@ -9,13 +9,13 @@ const C$ = (() => {
     add: (c1, c2) => C$(c1.re + c2.re, c1.im + c2.im),
     sub: (c1, c2) => C$(c1.re - c2.re, c1.im - c2.im),
     mul: (c1, c2) => C$(c1.re * c2.re - c1.im * c2.im, c1.re * c2.im + c1.im * c2.re),
-    div: (c1, c2) => feedx(c2.re * c2.re + c2.im * c2.im, (x) => C$((c1.re * c2.re + c1.im * c2.im) / x, (c1.im * c2.re - c1.re * c2.im) / x)),
+    div: (c1, c2) => feedx(c2.re ** 2 + c2.im ** 2, (x) => C$((c1.re * c2.re + c1.im * c2.im) / x, (c1.im * c2.re - c1.re * c2.im) / x)),
     pow: (c, n) => (n.re === 0 ? C$(1) : range(n.re - 1).reduce((res) => cops.mul(res, c), c))
   };
 
   const evalComplex = (s, varsOrFcts = {}) => {
     const t = tokenizer(s);
-    const tokens = t.getTokens()
+    const tokens = t.getTokens();
 
     varsOrFcts = {
       ...varsOrFcts,
