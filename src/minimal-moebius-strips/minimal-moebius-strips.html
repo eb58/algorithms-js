@@ -23,14 +23,14 @@
     <script>
       const range = (n) => [...Array(n).keys()]
       // const C$ = (...args) => (typeof args[0] === 'string' ? math.evaluate(...args) : math.complex(...args))
-      const { vadd } = vector
+      const vadd = (v1, v2) => [v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]]
       const evalWeierstrass = (f, g, grid) => {
         // cf. https://en.wikipedia.org/wiki/Weierstrass-Enneper_parameterization
-        const Phis = {
-          phi1: (f, g) => C$('f * (1 - g^2) * (1/2)', { f, g }), //   f(1-g²)/2
-          phi2: (f, g) => C$('f * (1 + g^2) * (i/2)', { f, g }), // i*f(1+g²)/2
-          phi3: (f, g) => C$('f * g', { f, g }) //         f*g
-        }
+        const Phis = [
+          (f, g) => C$('    f * (1 - g^2)/2', { f, g }), //   f(1-g²)/2
+          (f, g) => C$('i * f * (1 + g^2)/2', { f, g }), // i*f(1+g²)/2
+          (f, g) => C$('f * g', { f, g }) //         f*g
+        ]
 
         const lineIntegral = (phi, f, g, dz) => C$('phi(f,g) * dz', { phi, f, g, dz })
         const weierstrass = (za, ze) => {
@@ -38,7 +38,7 @@
           const dz = C$('(ze - za)', { za, ze })
           const ff = f(z)
           const gg = g(z)
-          return Object.values(Phis).map((phi) => lineIntegral(phi, ff, gg, dz).re)
+          return Phis.map((phi) => lineIntegral(phi, ff, gg, dz).re)
         }
 
         // calculate data
@@ -98,7 +98,7 @@
       }
 
       // m = 3
-      const S41_3_1 = S41(3, 1, 1, 2.0) // m=3, n=1 (see also Page 32 m=3)  -> Page 70
+      const S41_3_1 = S41(3, 1, 1, 2.0) // m=3, n=1 (see also Page 32 m=3) -> Page 70
 
       // m = 5
       const S41_5_1 = S41(5, 1, 1.0, 1.1) // m=5, n=1 -> Page 72 (self penetration) ufo
@@ -113,7 +113,7 @@
       const S41_9_1 = S41(9, 1, 1.05, 1.2)
       const S41_9_3 = S41(9, 3, 1.05, 1.2)
       const S41_9_5 = S41(9, 5, 1.05, 1.2)
-      const S41_9_7 = S41(9, 7, 1.0, 1.2)  //   n=7 (seven times twisted moebius strip / 7-foil)
+      const S41_9_7 = S41(9, 7, 1.0, 1.2) //   n=7 (seven times twisted moebius strip / 7-foil)
 
       // m = 11
       const S41_11_1 = S41(11, 1, 1.12, 1.15)
@@ -130,10 +130,13 @@
         return () => evalWeierstrass(f, g, circleGrid(r1, r2))
       }
 
-      const renderSurface = (title, surface, div) => {
+      const renderSurface = (title, surface, div = 'div1') => {
         const layout = {
           scene: {
-            bgcolor: '#222'
+            bgcolor: '#222',
+            xaxis: { visible: false },
+            yaxis: { visible: false },
+            zaxis: { visible: false }
             // camera: { eye: { x: 0, y: 1.5, z: 0 } }
           },
           showlegend: false,
@@ -152,14 +155,14 @@
         Plotly.react(div, surface().map(mapForPlotly), { ...layout, title })
       }
 
-      const Catenoid = () => renderSurface('Catenoid', catenoid, 'div1')
-      const TwistedCatenoid = () => renderSurface('Twisted Catenoid', S41_3_1, 'div1')
-      const Trefoil = () => renderSurface('Trefoil', S41_5_3, 'div1')
-      const DoubleTrefoil = () => renderSurface('Double Trefoil', S41(5, 3, 1.1, 1.5), 'div1')
-      const UFO = () => renderSurface('UFO', S41_5_1, 'div1')
-      const Cobra = () => renderSurface('Cobra', cobra5, 'div1')
+      const Catenoid = () => renderSurface('Catenoid', catenoid)
+      const TwistedCatenoid = () => renderSurface('Twisted Catenoid', S41_3_1)
+      const Trefoil = () => renderSurface('Trefoil', S41_5_3)
+      const DoubleTrefoil = () => renderSurface('Double Trefoil', S41(5, 3, 1.1, 1.5))
+      const UFO = () => renderSurface('UFO', S41_5_1)
+      const Cobra = () => renderSurface('Cobra', cobra5)
 
-      renderSurface('Twisted Catenoid', S41_11_9, 'div1')
+      renderSurface('Twisted Catenoid', S41_11_9)
     </script>
   </body>
 </html>
