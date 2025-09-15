@@ -43,18 +43,20 @@
 
         // calculate data
         // 1) init data with [0,0,0]
+        const t = ol.timer();
         const data = range(grid.length).map(() => range(grid[0].length).map(() => [0, 0, 0]))
         // 2) calculate data along the outer circle of the grid
         for (let i = 0; i < grid.length - 1; i++) data[i + 1][0] = vadd(data[i][0], weierstrass(grid[i][0], grid[i + 1][0]))
         // 3) now calculate data along the radial axes
         for (let i = 0; i < grid.length; i++)
           for (let j = 0; j < grid[0].length - 1; j++) data[i][j + 1] = vadd(data[i][j], weierstrass(grid[i][j], grid[i][j + 1]))
+        console.log('Zeit für Datenberechnung', t.elapsedTime())
         return [...data, ...matrix.transpose(data)]
       }
 
       const circleGrid = (r1, r2) => {
         // parameter area: circular ring around 0
-        const [w1, w2, GRID_SIZE_R, GRID_SIZE_W] = [0, 4 * Math.PI, 50, 300]
+        const [w1, w2, GRID_SIZE_R, GRID_SIZE_W] = [0, 2 * Math.PI, 50, 300]
         const xInc = (r2 - r1) / GRID_SIZE_R
         const yInc = (w2 - w1) / GRID_SIZE_W
 

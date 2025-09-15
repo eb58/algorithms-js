@@ -2,6 +2,7 @@ const tokenStrings = Object.freeze(['ident', 'number', 'minus', 'plus', 'times',
 const tokens = Object.freeze(tokenStrings.reduce((acc, s) => ({ ...acc, [s]: s }), {}));
 
 tokenizer = (input) => {
+    input = input.replace(/\s+/g, '')
     let strpos = 0;
 
     const mapCharToToken = Object.freeze({
@@ -21,7 +22,6 @@ tokenizer = (input) => {
     const isDigit = (c) => c >= '0' && c <= '9';
     const isNumberChar = (c) => isDigit(c) || c === '.';
     const isIdentifierChar = (c) => isLetter(c) || isDigit(c);
-    const isSpace = (c) => c === ' ' || c === '\t' || c === '\n' || c === '\r';
     const getIdentOrNumber = (qualifier) => (qualifier(input[strpos]) ? input[strpos++] + getIdentOrNumber(qualifier) : '');
 
     const getIdentifier = () => ({
@@ -38,7 +38,6 @@ tokenizer = (input) => {
         strpos: () => strpos,
         getTokens: () => tokens,
         getToken: () => {
-            while (isSpace(input[strpos])) strpos++;
             if (strpos >= input.length) return { token: tokens.end };
 
             const c = input[strpos];
