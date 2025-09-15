@@ -35,7 +35,7 @@ test('simple calculations with variables', () => {
     expect(V$('v1 - (v2 + v3)', vals)).toEqual([-2, 2]);
 });
 
-test('scalarprodukt', () => {
+test('scalar product', () => {
     expect(V$('v1 * v2', vals)).toEqual(4);
     expect(V$('v2 * v3', vals)).toEqual(1);
 });

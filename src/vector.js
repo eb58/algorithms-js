@@ -43,7 +43,7 @@ const V$ = (() => {
         if (typeof valOrFct !== 'function') return V$(valOrFct);
         token = t.getToken();
         const expressions = [expression()];
-        while (token.token == tokens.comma) expressions.push(expression());
+        while (token.token === tokens.comma) expressions.push(expression());
         if (token.token !== tokens.rparen) throw Error(`Closing bracket not found! Pos:${t.strpos()}`);
         return valOrFct(...expressions);
       }
@@ -72,7 +72,7 @@ const V$ = (() => {
     };
 
     const val = expression();
-    if (token.token != tokens.end) throw Error(`Unexpected symbol. Pos:${t.strpos()}`);
+    if (token.token !== tokens.end) throw Error(`Unexpected symbol. Pos:${t.strpos()}`);
     //** console.log('***', s, val, varsOrFcts, params || '' );
     return val;
   };
