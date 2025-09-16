@@ -1,9 +1,9 @@
 const feedx = (x, f) => f(x)
 
 class ComplexNumber {
-  constructor(re, im = 0) {
-    this.re = re
-    this.im = im
+  constructor(re = 0, im = 0) {
+    this.re = re === -0 ? 0 : re
+    this.im = im === -0 ? 0 : im
   }
   neg() {
     return new ComplexNumber(-this.re, -this.im)
@@ -30,9 +30,7 @@ class ComplexNumber {
     })
   }
   log() {
-    const r = Math.sqrt(this.re * this.re + this.im * this.im)
-    const theta = Math.atan2(this.im, this.re)
-    return new ComplexNumber(Math.log(r), theta)
+    return new ComplexNumber(Math.log(Math.sqrt(this.re * this.re + this.im * this.im)), Math.atan2(this.im, this.re))
   }
   exp() {
     return feedx(Math.exp(this.re), (x) => new ComplexNumber(x * Math.cos(this.im), x * Math.sin(this.im)))
@@ -56,8 +54,9 @@ class ComplexNumber {
   }
   toString() {
     if (this.im === 0) return this.re.toString()
-    if (this.re === 0) return `${this.im}i`
-    return `${this.re}${this.im < 0 ? '' : '+'}${this.im}i`
+    const ii = this.im === 1 ? 'i' : `${this.im}i`
+    if (this.re === 0) return ii
+    return `${this.re}${this.im < 0 ? '' : '+'}${ii}`
   }
 }
 
@@ -89,8 +88,13 @@ const tokenize = (expr) => {
       continue
     }
 
-    if ('+-*/^()'.includes(char)) {
-      tokens.push({ type: 'OPERATOR', value: char })
+    if (char === '+' || char === '-' || char === '*' || char === '/' || char === '^' || char === '(' || char === ')') {
+      const lastToken = tokens[tokens.length - 1]
+      if ((char === '-' || char === '+') && (!lastToken || lastToken.type === 'OPERATOR' || lastToken.value === '(')) {
+        tokens.push({ type: 'UNARY_OPERATOR', value: char })
+      } else {
+        tokens.push({ type: 'OPERATOR', value: char })
+      }
       i++
       continue
     }
@@ -132,8 +136,10 @@ const tokenize = (expr) => {
       }
       continue
     }
+
     i++
   }
+
   return tokens
 }
 
@@ -219,6 +225,13 @@ class UnaryMinusNode {
   evaluate = (vars) => this.operand.evaluate(vars).neg()
 }
 
+class UnaryPlusNode {
+  constructor(operand) {
+    this.operand = operand
+  }
+  evaluate = (vars) => this.operand.evaluate(vars)
+}
+
 class Parser {
   // Parser mit Shunting Yard Algorithmus
   constructor(tokens) {
@@ -228,19 +241,20 @@ class Parser {
 
   peek = () => (this.pos < this.tokens.length ? this.tokens[this.pos] : null)
   consume = () => (this.pos < this.tokens.length ? this.tokens[this.pos++] : null)
+
   parseExpression = () => {
-    const token = this.peek()
-    if (token?.value === '-') {
-      this.consume()
-      return new UnaryMinusNode(this.parseTerm())
+    let node = this.parseTerm()
+    while (this.peek()?.value === '+' || this.peek()?.value === '-') {
+      const op = this.consume().value
+      const right = this.parseTerm()
+      node = new BinaryOpNode(node, op, right)
     }
-    return this.parseTerm()
+    return node
   }
 
   parseTerm = () => {
     let node = this.parseFactor()
-
-    while (this.peek() && (this.peek().value === '+' || this.peek().value === '-')) {
+    while (this.peek()?.value === '*' || this.peek()?.value === '/') {
       const op = this.consume().value
       const right = this.parseFactor()
       node = new BinaryOpNode(node, op, right)
@@ -251,22 +265,22 @@ class Parser {
   parseFactor = () => {
     let node = this.parsePower()
 
-    while (this.peek() && (this.peek().value === '*' || this.peek().value === '/')) {
+    while (this.peek() && this.peek().value === '^') {
       const op = this.consume().value
-      const right = this.parsePower()
+      const right = this.parseFactor()
       node = new BinaryOpNode(node, op, right)
     }
     return node
   }
 
   parsePower = () => {
-    let node = this.parseBase()
-    if (this.peek() && this.peek().value === '^') {
+    const token = this.peek()
+    if (token?.type === 'UNARY_OPERATOR') {
       this.consume()
-      const right = this.parseExpression()
-      node = new BinaryOpNode(node, '^', right)
+      if (token.value === '-') return new UnaryMinusNode(this.parseBase())
+      if (token.value === '+') return new UnaryPlusNode(this.parseBase())
     }
-    return node
+    return this.parseBase()
   }
 
   parseBase = () => {
@@ -293,38 +307,36 @@ class Parser {
   }
 }
 
-const Complex = (expression, name) => {
-  const findVariables = (node, variables = new Set()) => {
-    if (node instanceof VariableNode && node.name !== 'i') variables.add(node.name)
-    else if (node instanceof UnaryMinusNode) findVariables(node.operand, variables)
-    else if (node instanceof FunctionCallNode) findVariables(node.argNode, variables)
-    else if (node instanceof BinaryOpNode) {
-      findVariables(node.left, variables)
-      findVariables(node.right, variables)
-    }
-    return variables
+const findParameters = (node, variables = new Set()) => {
+  if (node instanceof VariableNode && node.name !== 'i') variables.add(node.name)
+  else if (node instanceof UnaryMinusNode) findParameters(node.operand, variables)
+  else if (node instanceof UnaryPlusNode) findParameters(node.operand, variables)
+  else if (node instanceof FunctionCallNode) findParameters(node.argNode, variables)
+  else if (node instanceof BinaryOpNode) {
+    findParameters(node.left, variables)
+    findParameters(node.right, variables)
   }
+  return variables
+}
 
-  const parser = new Parser(tokenize(expression))
+const Complex = (param1, param2 = 0) => {
+  if (typeof param1 === 'number' && typeof param2 === 'number') return complex(param1, param2)
+  if (typeof param1 === 'object') return complex(param1.re, param1.im)
+
+  const parser = new Parser(tokenize(param1))
   const ast = parser.parseExpression()
-  const vars = Array.from(findVariables(ast))
+  const vars = Array.from(findParameters(ast))
 
-  if( vars.length === 0) return ast.evaluate()
-
-  const func = (...args) => {
-    if (args.length !== vars.length) throw new Error('Anzahl der Argumente stimmt nicht mit der Anzahl der Variablen überein.')
-    return ast.evaluate(vars.reduce((acc, name, idx) => ({ ...acc, [name]: args[idx] }), {}))
-  }
-
-  if (name) {
-    namedFunctions[name] = { func, vars: vars }
-  }
-  return func
+  return vars.length === 0
+    ? ast.evaluate(param2)
+    : (...args) => {
+        if (args.length !== vars.length) throw new Error('Anzahl der Argumente stimmt nicht mit der Anzahl der Variablen überein.')
+        return ast.evaluate(vars.reduce((acc, name, idx) => ({ ...acc, [name]: args[idx] }), {}))
+      }
 }
 
 const complex = (re = 0, im = 0) => new ComplexNumber(re, im)
-const C$= Complex
 
 if (typeof module !== 'undefined' && module.exports) {
-  module.exports = { C$, Complex, complex }
+  module.exports = Complex
 }

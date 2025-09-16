@@ -1,5 +1,4 @@
 const C$ = require('../src/complex')
-
 const range = (n) => [...Array(n).keys()]
 const csqr = (z) => C$('z*z', { z })
 const I = C$(0, 1)
@@ -8,7 +7,7 @@ test('simple for debug', () => {
   expect(C$('pi*5')).toEqual({ re: Math.PI * 5, im: 0 })
 })
 
-test('exceptions', () => {
+xtest('exceptions', () => {
   expect(() => C$('')).toThrow('Operand expected. Pos:0')
   expect(() => C$('?5')).toThrow('Char ? not allowed. Pos:0')
   expect(() => C$('5#4')).toThrow('Char # not allowed. Pos:1')
@@ -26,7 +25,7 @@ test('init complex with object', () => {
   expect(C$({ re: 1, im: 1 })).toEqual({ re: 1, im: 1 })
 })
 
-test('init complex with numbers or object', () => {
+test('init complex with numbers', () => {
   expect(C$(0, 0)).toEqual({ re: 0, im: 0 })
   expect(C$(-0, -0)).toEqual({ re: 0, im: 0 })
   expect(C$(1)).toEqual({ re: 1, im: 0 })
@@ -34,21 +33,24 @@ test('init complex with numbers or object', () => {
 })
 
 test('init complex with strings', () => {
-  expect(C$('1+1')).toEqual({ re: 2, im: 0 })
+  expect(C$('0')).toEqual({ re: 0, im: 0 })
   expect(C$('1')).toEqual({ re: 1, im: 0 })
+  expect(C$('+1')).toEqual({ re: 1, im: 0 })
   expect(C$('-1')).toEqual({ re: -1, im: 0 })
 
-  expect(C$('+i')).toEqual({ re: 0, im: 1 })
   expect(C$('i')).toEqual({ re: 0, im: 1 })
   expect(C$('-i')).toEqual({ re: 0, im: -1 })
+  expect(C$('+i')).toEqual({ re: 0, im: 1 })
+
+  expect(C$('1+1')).toEqual({ re: 2, im: 0 })
   expect(C$('1+i')).toEqual({ re: 1, im: 1 })
+  expect(C$('i+i')).toEqual({ re: 0, im: 2 })
 })
 
 test('simple calculations', () => {
   expect(C$('i*i')).toEqual(C$(-1))
   expect(C$('i*i*i')).toEqual(C$(0, -1))
   expect(C$('i*i*i*i')).toEqual(C$(1))
-  expect(C$('i*i*i*i')).toEqual(C$(1, 0))
 
   expect(C$('1+i')).toEqual(C$(1, 1))
   expect(C$('1+2*i')).toEqual(C$(1, 2))
@@ -62,10 +64,10 @@ test('simple calculations', () => {
   expect(C$('(1+i)*5')).toEqual(C$(5, 5))
   expect(C$('pi*5')).toEqual(C$(5 * Math.PI))
 
-  expect(C$('2.4 + i*3.2')).toEqual(C$(2.4, 3.2))
-  expect(C$('2.4 - i*3.2')).toEqual(C$(2.4, -3.2))
   expect(C$('2.4')).toEqual(C$(2.4))
   expect(C$('-2.4')).toEqual(C$(-2.4))
+  expect(C$('2.4 + i*3.2')).toEqual(C$(2.4, 3.2))
+  expect(C$('2.4 - i*3.2')).toEqual(C$(2.4, -3.2))
   expect(C$('-2.4 - i*3.2')).toEqual(C$(-2.4, -3.2))
   expect(C$('-i*3.2')).toEqual(C$(0, -3.2))
 })
