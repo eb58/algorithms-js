@@ -1,5 +1,5 @@
-// const Complex = require('../../src/complex/complex')
-const C$ =  require('../../src/complex/c$')
+const Complex = require('../../src/complex/complex')
+const C$ = Complex//  require('../../src/complex/c$')
 
 const range = (n) => [...Array(n).keys()]
 const csqr = (z) => C$('z*z', { z })

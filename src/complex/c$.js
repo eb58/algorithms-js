@@ -1,5 +1,5 @@
 if (typeof tokenizer === 'undefined') tokenizer = require('./tokenizer.js')
-if (typeof cops === 'undefined') cops = require('./cops.js')
+if (typeof cops === 'undefined') cops = require('./cops.js').cops
 
 const C$ = (() => {
   const evalComplex = (s, varsOrFcts = {}) => {

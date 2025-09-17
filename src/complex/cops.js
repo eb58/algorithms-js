@@ -19,7 +19,40 @@ let cops = {
         ? cops.pow(c, exp.re)
         : cops.exp(cops.mul(exp, cops.log(c)))
     throw new Error('Exponent must be number or complex number')
+  },
+  toString: (c) => {
+    if (c.im === 0) return c.re.toString()
+    const ii = c.im === 1 ? 'i' : `${c.im}i`
+    return c.re === 0 ? ii : `${c.re}${c.im < 0 ? '' : '+'}${ii}`
   }
 }
 
-if (typeof module !== 'undefined' && module.exports) module.exports = cops
+class ComplexNumber {
+  constructor(z) {
+    this.re = z.re || 0
+    this.im = z.im || 0
+  }
+  neg() {
+    return new ComplexNumber(cops.neg(this))
+  }
+  add(z) {
+    return new ComplexNumber(cops.add(this, z))
+  }
+  sub(z) {
+    return new ComplexNumber(cops.sub(this, z))
+  }
+  mul(z) {
+    return new ComplexNumber(cops.mul(this, z))
+  }
+  div(z) {
+    return new ComplexNumber(cops.div(this, z))
+  }
+  pow(exp) {
+    return new ComplexNumber(cops.pow(this, exp))
+  }
+  toString() {
+    return cops.toString(this)
+  }
+}
+
+if (typeof module !== 'undefined' && module.exports) module.exports = { cops, ComplexNumber }

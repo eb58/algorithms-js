@@ -1,48 +1,10 @@
-const feedx = (x, f) => f(x)
-if (typeof cops === 'undefined') cops = require('./cops.js')
-
-class ComplexNumber {
-  constructor(z) {
-    this.re = z.re || 0
-    this.im = z.im || 0
-  }
-  neg() {
-    return new ComplexNumber(cops.neg(this))
-  }
-  add(z) {
-    return feedx(typeof z === 'number' ? new ComplexNumber(z) : z, (z) => new ComplexNumber(cops.add(this, z)))
-  }
-  sub(z) {
-    return feedx(typeof z === 'number' ? new ComplexNumber(z) : z, (z) => new ComplexNumber(cops.sub(this, z)))
-  }
-  mul(z) {
-    return feedx(typeof z === 'number' ? new ComplexNumber(z) : z, (z) => new ComplexNumber(cops.mul(this, z)))
-  }
-  div(z) {
-    return feedx(typeof z === 'number' ? new ComplexNumber(z) : z, (z) => new ComplexNumber(cops.div(this, z)))
-  }
-  log() {
-    return new ComplexNumber({ re: Math.log(Math.sqrt(this.re * this.re + this.im * this.im)), im: Math.atan2(this.im, this.re) })
-  }
-  exp() {
-    return feedx(Math.exp(this.re), (x) => new ComplexNumber({ re: x * Math.cos(this.im), im: x * Math.sin(this.im) }))
-  }
-  pow(exp) {
-    return new ComplexNumber(cops.pow(this, exp))
-  }
-  toString() {
-    if (this.im === 0) return this.re.toString()
-    const ii = this.im === 1 ? 'i' : `${this.im}i`
-    if (this.re === 0) return ii
-    return `${this.re}${this.im < 0 ? '' : '+'}${ii}`
-  }
-}
+if (typeof ComplexNumber === 'undefined') ComplexNumber = require('./cops.js').ComplexNumber
 
 let globalScope = {
   sqr: (z) => z.mul(z),
   pow: (z, n) => z.pow(n),
   i: new ComplexNumber(0, 1)
-} // Globaler Speicher für benannte Funktionen
+} // Globaler Speicher für benannte Funktionen und Konstanten
 
 const tokenize = (expr) => {
   // Einfacher Tokenizer
