@@ -5,6 +5,7 @@ test('basis tests', () => {
   const eulerFormula = C$('e^(i*pi)+1')
   expect(C$('i')).toEqual(C$(0, 1))
   expect(C$('pi')).toEqual(C$(Math.PI))
+  expect(C$('1 + 2*i').toString()).toEqual('1+2i')
   expect(eulerFormula.re).toBe(0)
   expect(Math.abs(eulerFormula.im)).toBeLessThan(1e-15)
 })
@@ -33,8 +34,8 @@ test('function test', () => {
 
   const circleArea = C$('pi*r^2')
   const exponential = C$('e^x')
-  //expect(circleArea(C$(2))).toEqual(C$(12.566370614359172))
-  // expect(exponential(C$(2))).toEqual(C$(7.38905609893065))
+  expect(circleArea(2)).toEqual(C$(12.566370614359172))
+  expect(exponential(2)).toEqual(C$(7.3890560989306495))
 })
 
 test('functions m functions', () => {
