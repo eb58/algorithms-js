@@ -68,4 +68,4 @@ tokenizer = (input) => {
   }
 }
 
-if (typeof module !== 'undefined') module.exports = tokenizer
+if (typeof module !== 'undefined' && module.exports) module.exports = tokenizer

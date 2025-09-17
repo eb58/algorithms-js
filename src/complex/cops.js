@@ -1,0 +1,26 @@
+const feedx = (x, f) => f(x)
+const normalize = (c) => ({ re: c.re === -0 ? 0 : c.re, im: c.im === -0 ? 0 : c.im })
+let cops = {
+  neg: (c) => normalize({ re: -c.re, im: -c.im }),
+  add: (c1, c2) => normalize({ re: c1.re + c2.re, im: c1.im + c2.im }),
+  sub: (c1, c2) => normalize({ re: c1.re - c2.re, im: c1.im - c2.im }),
+  mul: (c1, c2) => normalize({ re: c1.re * c2.re - c1.im * c2.im, im: c1.re * c2.im + c1.im * c2.re }),
+  div: (c1, c2) =>
+    feedx(c2.re ** 2 + c2.im ** 2, (x) => normalize({ re: (c1.re * c2.re + c1.im * c2.im) / x, im: (c1.im * c2.re - c1.re * c2.im) / x })),
+  len: (c) => Math.sqrt(c.re ** 2 + c.im ** 2),
+  log: (c) => ({ re: Math.log(cops.len(c)), im: Math.atan2(c.im, c.re) }),
+  exp: (c) => feedx(Math.exp(c.re), (exp) => normalize({ re: exp * Math.cos(c.im), im: exp * Math.sin(c.im) })),
+  pow: (c, exp) => {
+    if (exp === 0) return { re: 1, im: 0 }
+    if (exp === 1) return c
+    if (exp === 2) return cops.mul(c, c)
+    if (exp === 3) return cops.mul(cops.mul(c, c), c)
+    if (typeof exp === 'object')
+      return exp.im === 0 && (exp.re === 0 || exp.re === 1 || exp.re === 2 || exp.re === 3)
+        ? cops.pow(c, exp.re)
+        : cops.exp(cops.mul(exp, cops.log(c)))
+    throw new Error('Exponent must be number or complex number')
+  }
+}
+
+if (typeof module !== 'undefined' && module.exports) module.exports = cops

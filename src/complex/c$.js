@@ -1,29 +1,7 @@
 if (typeof tokenizer === 'undefined') tokenizer = require('./tokenizer.js')
+if (typeof cops === 'undefined') cops = require('./cops.js')
 
 const C$ = (() => {
-  const feedx = (x, f) => f(x)
-  const cops = {
-    neg: (c) => C$(-c.re, -c.im),
-    add: (c1, c2) => C$(c1.re + c2.re, c1.im + c2.im),
-    sub: (c1, c2) => C$(c1.re - c2.re, c1.im - c2.im),
-    mul: (c1, c2) => C$(c1.re * c2.re - c1.im * c2.im, c1.re * c2.im + c1.im * c2.re),
-    div: (c1, c2) => feedx(c2.re ** 2 + c2.im ** 2, (x) => C$((c1.re * c2.re + c1.im * c2.im) / x, (c1.im * c2.re - c1.re * c2.im) / x)),
-    len: (c) => Math.sqrt(c.re ** 2 + c.im ** 2),
-    log: (c) => C$(Math.log(cops.len(c)), Math.atan2(c.im, c.re)),
-    exp: (c) => feedx(Math.exp(c.re), (exp) => C$(exp * Math.cos(c.im), exp * Math.sin(c.im))),
-    pow: (c, exp) => {
-      if (exp === 0) return C$(1)
-      if (exp === 1) return c
-      if (exp === 2) return cops.mul(c, c)
-      if (exp === 3) return cops.mul(cops.mul(c, c), c)
-      if (typeof exp === 'object')
-        return exp.im === 0 && (exp.re === 0 || exp.re === 1 || exp.re === 2 || exp.re === 3)
-          ? cops.pow(c, exp.re)
-          : cops.exp(cops.mul(exp, cops.log(c)))
-      throw new Error('Exponent must be number or complex number')
-    }
-  }
-
   const evalComplex = (s, varsOrFcts = {}) => {
     const t = tokenizer(s)
     const tokens = t.getTokens()
@@ -99,4 +77,4 @@ const C$ = (() => {
   }
 })()
 
-if (typeof module !== 'undefined') module.exports = C$
+if (typeof module !== 'undefined' && module.exports) module.exports = C$

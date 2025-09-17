@@ -38,6 +38,8 @@ class ComplexNumber {
   pow(exp) {
     if (exp === 0) return new ComplexNumber(1, 0)
     if (exp === 1) return this
+    if (exp === 2) return this.mul(this)
+    if (exp === 3) return this.mul(this.mul(this))
     if (typeof exp === 'number') {
       const r = Math.sqrt(this.re * this.re + this.im * this.im)
       const theta = Math.atan2(this.im, this.re)
@@ -46,11 +48,9 @@ class ComplexNumber {
       return new ComplexNumber(newR * Math.cos(newTheta), newR * Math.sin(newTheta))
     }
     if (exp instanceof ComplexNumber) {
-      const logThis = this.log()
-      const product = exp.mul(logThis)
-      return product.exp()
+      return exp.im === 0 && (exp.re === 0 || exp.re === 1 || exp.re === 2 || exp.re === 3) ? this.pow(exp.re) : exp.mul(this.log()).exp()
     }
-    throw new Error('Exponent muss eine Zahl oder eine komplexe Zahl sein')
+    throw new Error('Exponent must be number or complex number ' + exp)
   }
   toString() {
     if (this.im === 0) return this.re.toString()
@@ -60,7 +60,11 @@ class ComplexNumber {
   }
 }
 
-const namedFunctions = {} // Globaler Speicher für benannte Funktionen
+let globalScope = {
+  sqr: (z) => z.mul(z),
+  pow: (z, n) => z.pow(n),
+  i: new ComplexNumber(0, 1)
+} // Globaler Speicher für benannte Funktionen
 
 const tokenize = (expr) => {
   // Einfacher Tokenizer
@@ -169,7 +173,7 @@ class VariableNode {
     const val = vars[this.name]
     if (val instanceof ComplexNumber) return val
     if (typeof val === 'number') return new ComplexNumber(val)
-    throw new Error('Ungültiger Variablenwert')
+    throw new Error('Ungültiger Variablenwert ' + val)
   }
 }
 
@@ -179,16 +183,9 @@ class FunctionCallNode {
     this.argNode = argNode
   }
   evaluate = (vars) => {
-    if (!(this.funcName in namedFunctions)) throw new Error(`Funktion '${this.funcName}' ist nicht definiert`)
-
-    const funcData = namedFunctions[this.funcName]
-    const func = funcData.func
-
-    // Evaluate the argument node using the correct vars context
+    if (typeof globalScope[this.funcName] !== 'function') throw new Error(`Funktion '${this.funcName}' ist nicht definiert`)
     const argValue = this.argNode.evaluate(vars)
-
-    // Call the function with the evaluated argument
-    return func(argValue)
+    return globalScope[this.funcName](argValue)
   }
 }
 
@@ -264,8 +261,7 @@ class Parser {
 
   parseFactor = () => {
     let node = this.parsePower()
-
-    while (this.peek() && this.peek().value === '^') {
+    while (this.peek()?.value === '^') {
       const op = this.consume().value
       const right = this.parseFactor()
       node = new BinaryOpNode(node, op, right)
@@ -292,9 +288,12 @@ class Parser {
     if (token.type === 'VARIABLE') return new VariableNode(this.consume().value)
     if (token.type === 'FUNCTION_CALL') {
       this.consume()
-      const argTokens = tokenize(token.argument)
-      const argParser = new Parser(argTokens)
-      return new FunctionCallNode(token.funcName, argParser.parseExpression())
+      const args = token.argument.split(',').map((a) => {
+        const argParser = new Parser(tokenize(a))
+        const aa = argParser.parseExpression()
+        return aa
+      })
+      return new FunctionCallNode(token.funcName, ...args)
     }
     if (token.value === '(') {
       this.consume()
@@ -319,24 +318,23 @@ const findParameters = (node, variables = new Set()) => {
   return variables
 }
 
-const Complex = (param1, param2 = 0) => {
-  if (typeof param1 === 'number' && typeof param2 === 'number') return complex(param1, param2)
-  if (typeof param1 === 'object') return complex(param1.re, param1.im)
+const Complex = (param1, param2) => {
+  if (typeof param1 === 'number') return new ComplexNumber(param1, param2)
+  if (typeof param1 === 'object' && Object.keys(param1).every((k) => k === 're' || k === 'im')) return new ComplexNumber(param1.re, param1.im)
+  if (typeof param1 === 'string') {
+    const parser = new Parser(tokenize(param1))
+    const ast = parser.parseExpression()
+    globalScope = { ...globalScope, ...param2 }
+    const vars = Array.from(findParameters(ast)).filter((x) => !(x in (param2 || {})))
 
-  const parser = new Parser(tokenize(param1))
-  const ast = parser.parseExpression()
-  const vars = Array.from(findParameters(ast))
-
-  return vars.length === 0
-    ? ast.evaluate(param2)
-    : (...args) => {
-        if (args.length !== vars.length) throw new Error('Anzahl der Argumente stimmt nicht mit der Anzahl der Variablen überein.')
-        return ast.evaluate(vars.reduce((acc, name, idx) => ({ ...acc, [name]: args[idx] }), {}))
-      }
+    if (vars.length === 0) return ast.evaluate(param2)
+    return (...args) => {
+      if (args.length !== vars.length)
+        throw new Error('Anzahl der Argumente stimmt nicht mit der Anzahl der Variablen überein.' + args + '###' + vars)
+      return ast.evaluate({ ...param2, ...vars.reduce((acc, name, idx) => ({ ...acc, [name]: args[idx] }), {}) })
+    }
+  }
+  throw Error(`False initialisation of C$ ${param1} ${param2 || ''}`)
 }
 
-const complex = (re = 0, im = 0) => new ComplexNumber(re, im)
-
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = Complex
-}
+if (typeof module !== 'undefined' && module.exports) module.exports = Complex

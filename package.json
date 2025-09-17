@@ -20,7 +20,7 @@
       "test": "jest --watchAll",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "sudoku": "node src/sudoku/sudoku3.js",
-      "complex": "node src/complex.js",
+      "complex": "node src/complex/c$.js",
       "pentomino": "node --inspect src/pentomino/pentomino.js"
    },
    "dependencies": {

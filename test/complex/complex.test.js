@@ -1,9 +1,12 @@
-const C$ = require('../src/complex')
+// const Complex = require('../../src/complex/complex')
+const C$ =  require('../../src/complex/c$')
+
 const range = (n) => [...Array(n).keys()]
 const csqr = (z) => C$('z*z', { z })
 const I = C$(0, 1)
 
 test('simple for debug', () => {
+  expect(C$('i*i*i')).toEqual(C$(0, -1))
   expect(C$('pi*5')).toEqual({ re: Math.PI * 5, im: 0 })
 })
 
@@ -33,10 +36,10 @@ test('init complex with numbers', () => {
 })
 
 test('init complex with strings', () => {
+  expect(C$('-1')).toEqual({ re: -1, im: 0 })
   expect(C$('0')).toEqual({ re: 0, im: 0 })
   expect(C$('1')).toEqual({ re: 1, im: 0 })
   expect(C$('+1')).toEqual({ re: 1, im: 0 })
-  expect(C$('-1')).toEqual({ re: -1, im: 0 })
 
   expect(C$('i')).toEqual({ re: 0, im: 1 })
   expect(C$('-i')).toEqual({ re: 0, im: -1 })
@@ -96,11 +99,11 @@ test('complexFunction type 1', () => {
   expect(csqr(1)).toEqual(C$(1))
   expect(csqr(2)).toEqual(C$(4))
   expect(csqr(I)).toEqual(C$(-1))
-  expect(csqr('2*i')).toEqual(C$(-4))
+  expect(csqr(C$('2*i'))).toEqual(C$(-4))
 
   const g = (z) => C$('z*z*(z-1)/(z+1)', { z })
-  expect(g('2*i')).toEqual(C$(-2.4, -3.2))
-  expect(g('i')).toEqual(C$(0, -1))
+  expect(g(C$('2*i'))).toEqual(C$(-2.4, -3.2))
+  expect(g(C$('i'))).toEqual(C$(0, -1))
 })
 
 test('complexFunction type 2', () => {
@@ -113,13 +116,13 @@ test('complexFunction type 2', () => {
   expect(C$('g(1)', { g })).toEqual(C$('0'))
   expect(C$('g(2*i)', { g })).toEqual(C$('-2.4-i*3.2'))
 
-  expect(C$('g(z)', { z: C$(9), g })).toEqual(C$(64.8))
-  expect(C$('g(z)', { z: C$(9, 1), g })).toEqual(C$(63.801980198019805, 16.019801980198018))
+  expect(C$('g(9)', { g })).toEqual(C$(64.8))
+  expect(C$('g(9+i)', { g })).toEqual(C$(63.801980198019805, 16.019801980198018))
 
-  expect(C$('f(z)', { z: C$(1, 1), f })).toEqual(C$(-16, 12))
-  expect(C$('f(z)', { z: C$(1, 1), f })).toEqual(C$(-16, 12))
+  expect(C$('f(1+i)', { f })).toEqual(C$(-16, 12))
+  expect(C$('f(1+i)', { f })).toEqual(C$(-16, 12))
 
-  expect(C$('f(z)*g(z)', { f, g, z: C$(0, 2) })).toEqual(C$(2.842170943040401e-14, -320))
+  expect(C$('f(a)*g(a)', { f, g, a: C$(0, 2) })).toEqual(C$(2.842170943040401e-14, -320))
 })
 
 test('complexFunction type 3', () => {
@@ -128,8 +131,8 @@ test('complexFunction type 3', () => {
   const f3 = (a, b) => C$(' a*b', { a, b })
 
   expect(f1(1)).toEqual(C$(3))
-  expect(f3(I, I)).toEqual(C$(-1))
   expect(f2(I, I)).toEqual(C$(0, 2))
+  expect(f3(I, I)).toEqual(C$(-1))
 
   expect(((a) => C$('i*a', { a }))(I)).toEqual(C$(-1))
   expect(((a) => C$('2*a', { a }))(I)).toEqual(C$(0, 2))
@@ -140,31 +143,31 @@ test('external variables and functions ', () => {
   const f1 = (z) => C$('sqr(z)', { z })
   const f2 = (z) => C$('f1(z)+1', { z, f1 })
   const f3 = (z) => C$('-i*(z+1)*(z+1)*(z*z*z*z)', { z })
+  const sqr = (z) => C$('z*z', { z })
   const cube = (z) => C$('z*z*z', { z })
 
-  expect(C$('sqr(2*i)')).toEqual(C$(-4))
+  expect(C$('sqr(2*i)', { sqr })).toEqual(C$(-4))
   expect(C$('cube(2*i)', { cube })).toEqual(C$(0, -8))
 
-  expect(f1('2*i')).toEqual(C$(-4))
-  expect(f2('2*i')).toEqual(C$(-3))
+  expect(f1(C$('2 *i'))).toEqual(C$(-4))
+  expect(f2(C$('2*i'))).toEqual(C$(-3))
 
   const b = C$(0, 2)
   expect(C$('f3(b)', { b, f3 })).toEqual({ re: 64, im: 48 })
 })
 
-test('exponential z**2 ', () => {
-  expect(C$('1**0')).toEqual(C$(1))
-  expect(C$('1**1')).toEqual(C$(1))
-  expect(C$('1**2')).toEqual(C$(1))
-  expect(C$('2**1')).toEqual(C$(2))
-  expect(C$('2**2')).toEqual(C$(4))
-  expect(C$('3**3')).toEqual(C$(27))
-  expect(C$('z**2', { z: C$(3) })).toEqual(C$(9))
-  expect(C$('z**2', { z: C$('3*i') })).toEqual(C$(-9))
-  expect(C$('2*z**2', { z: C$('3') })).toEqual(C$(18))
-  expect(C$('z**2 * 2', { z: C$('3') })).toEqual(C$(18))
-  expect(C$('z**2 + 2', { z: C$('3') })).toEqual(C$(11))
-  expect(C$('1 + z**2 *2 + 2', { z: C$('3') })).toEqual(C$(21))
+test('exponential z^2 ', () => {
+  expect(C$('1^0')).toEqual(C$(1))
+  expect(C$('1^1')).toEqual(C$(1))
+  expect(C$('1^2')).toEqual(C$(1))
+  expect(C$('2^1')).toEqual(C$(2))
+  expect(C$('2^2')).toEqual(C$(4))
+  expect(C$('z^2', { z: C$(3) })).toEqual(C$(9))
+  expect(C$('z^2', { z: C$('3*i') })).toEqual(C$(-9))
+  expect(C$('2*z^2', { z: C$('3') })).toEqual(C$(18))
+  expect(C$('z^2 * 2', { z: C$('3') })).toEqual(C$(18))
+  expect(C$('z^2 + 2', { z: C$('3') })).toEqual(C$(11))
+  expect(C$('1 + z^2 *2 + 2', { z: C$('3') })).toEqual(C$(21))
   expect(C$('z^2 * 2', { z: C$('3') })).toEqual(C$(18))
 })
 
@@ -177,3 +180,5 @@ test('functions with several parameters ', () => {
   expect(C$('pow(3,2)', { pow })).toEqual(C$(9))
   expect(C$('pow(3,2)')).toEqual(C$(9))
 })
+
+

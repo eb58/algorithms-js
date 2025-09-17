@@ -1,4 +1,4 @@
-if (typeof tokenizer === 'undefined') tokenizer = require('./tokenizer.js');
+if (typeof tokenizer === 'undefined') tokenizer = require('./complex/tokenizer.js');
 
 const V$ = (() => {
   const zip = (xs, ys, f) => xs.map((x, i) => (f ? f(x, ys[i]) : [x, ys[i]]));
