@@ -1,56 +1,34 @@
 const feedx = (x, f) => f(x)
+if (typeof cops === 'undefined') cops = require('./cops.js')
 
 class ComplexNumber {
-  constructor(re = 0, im = 0) {
-    this.re = re === -0 ? 0 : re
-    this.im = im === -0 ? 0 : im
+  constructor(z) {
+    this.re = z.re || 0
+    this.im = z.im || 0
   }
   neg() {
-    return new ComplexNumber(-this.re, -this.im)
+    return new ComplexNumber(cops.neg(this))
   }
   add(z) {
-    return feedx(typeof z === 'number' ? new ComplexNumber(z) : z, (z) => new ComplexNumber(this.re + z.re, this.im + z.im))
+    return feedx(typeof z === 'number' ? new ComplexNumber(z) : z, (z) => new ComplexNumber(cops.add(this, z)))
   }
   sub(z) {
-    return feedx(typeof z === 'number' ? new ComplexNumber(z) : z, (z) => new ComplexNumber(this.re - z.re, this.im - z.im))
+    return feedx(typeof z === 'number' ? new ComplexNumber(z) : z, (z) => new ComplexNumber(cops.sub(this, z)))
   }
   mul(z) {
-    return feedx(
-      typeof z === 'number' ? new ComplexNumber(z) : z,
-      (z) => new ComplexNumber(this.re * z.re - this.im * z.im, this.re * z.im + this.im * z.re)
-    )
+    return feedx(typeof z === 'number' ? new ComplexNumber(z) : z, (z) => new ComplexNumber(cops.mul(this, z)))
   }
   div(z) {
-    return feedx(typeof z === 'number' ? new ComplexNumber(z) : z, (z) => {
-      const denominator = z.re * z.re + z.im * z.im
-      if (denominator === 0) throw new Error('Division durch Null')
-      const re = (this.re * z.re + this.im * z.im) / denominator
-      const im = (this.im * z.re - this.re * z.im) / denominator
-      return new ComplexNumber(re, im)
-    })
+    return feedx(typeof z === 'number' ? new ComplexNumber(z) : z, (z) => new ComplexNumber(cops.div(this, z)))
   }
   log() {
-    return new ComplexNumber(Math.log(Math.sqrt(this.re * this.re + this.im * this.im)), Math.atan2(this.im, this.re))
+    return new ComplexNumber({ re: Math.log(Math.sqrt(this.re * this.re + this.im * this.im)), im: Math.atan2(this.im, this.re) })
   }
   exp() {
-    return feedx(Math.exp(this.re), (x) => new ComplexNumber(x * Math.cos(this.im), x * Math.sin(this.im)))
+    return feedx(Math.exp(this.re), (x) => new ComplexNumber({ re: x * Math.cos(this.im), im: x * Math.sin(this.im) }))
   }
   pow(exp) {
-    if (exp === 0) return new ComplexNumber(1, 0)
-    if (exp === 1) return this
-    if (exp === 2) return this.mul(this)
-    if (exp === 3) return this.mul(this.mul(this))
-    if (typeof exp === 'number') {
-      const r = Math.sqrt(this.re * this.re + this.im * this.im)
-      const theta = Math.atan2(this.im, this.re)
-      const newR = Math.pow(r, exp)
-      const newTheta = exp * theta
-      return new ComplexNumber(newR * Math.cos(newTheta), newR * Math.sin(newTheta))
-    }
-    if (exp instanceof ComplexNumber) {
-      return exp.im === 0 && (exp.re === 0 || exp.re === 1 || exp.re === 2 || exp.re === 3) ? this.pow(exp.re) : exp.mul(this.log()).exp()
-    }
-    throw new Error('Exponent must be number or complex number ' + exp)
+    return new ComplexNumber(cops.pow(this, exp))
   }
   toString() {
     if (this.im === 0) return this.re.toString()
@@ -152,14 +130,14 @@ class NumberNode {
   constructor(value) {
     this.value = value
   }
-  evaluate = () => new ComplexNumber(this.value)
+  evaluate = () => new ComplexNumber({ re: this.value })
 }
 
 class ConstantNode {
   constructor(value) {
     this.value = value
   }
-  evaluate = () => new ComplexNumber(this.value)
+  evaluate = () => new ComplexNumber({ re: this.value })
 }
 
 class VariableNode {
@@ -167,12 +145,12 @@ class VariableNode {
     this.name = name
   }
   evaluate = (vars) => {
-    if (this.name === 'i') return new ComplexNumber(0, 1)
+    if (this.name === 'i') return new ComplexNumber({ re: 0, im: 1 })
     if (!(this.name in vars)) throw new Error(`Variable '${this.name}' ist nicht definiert`)
 
     const val = vars[this.name]
     if (val instanceof ComplexNumber) return val
-    if (typeof val === 'number') return new ComplexNumber(val)
+    if (typeof val === 'number') return new ComplexNumber({ re: val, im: 0 })
     throw new Error('Ungültiger Variablenwert ' + val)
   }
 }
@@ -319,8 +297,8 @@ const findParameters = (node, variables = new Set()) => {
 }
 
 const Complex = (param1, param2) => {
-  if (typeof param1 === 'number') return new ComplexNumber(param1, param2)
-  if (typeof param1 === 'object' && Object.keys(param1).every((k) => k === 're' || k === 'im')) return new ComplexNumber(param1.re, param1.im)
+  if (typeof param1 === 'number') return new ComplexNumber({ re: param1 || 0, im: param2 || 0 })
+  if (typeof param1 === 'object' && Object.keys(param1).every((k) => k === 're' || k === 'im')) return new ComplexNumber(param1)
   if (typeof param1 === 'string') {
     const parser = new Parser(tokenize(param1))
     const ast = parser.parseExpression()
