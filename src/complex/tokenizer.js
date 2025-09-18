@@ -1,36 +1,35 @@
-const tokenStrings = Object.freeze([
-  'ident',
-  'number',
-  'minus',
-  'plus',
-  'times',
-  'divide',
-  'pow',
-  'lparen',
-  'rparen',
-  'lbracket',
-  'rbracket',
-  'comma',
-  'end'
-])
-const tokens = Object.freeze(tokenStrings.reduce((acc, s) => ({ ...acc, [s]: s }), {}))
-
 tokenizer = (input) => {
-  input = input.replace(/\s+/g, '')
-  let strpos = 0
+  const TOKENS = Object.freeze({
+    ident: Symbol('ident'),
+    number: Symbol('number'),
+    minus: Symbol('ident'),
+    plus: Symbol('plus'),
+    times: Symbol('times'),
+    divide: Symbol('divide'),
+    pow: Symbol('pow'),
+    lparen: Symbol('lparen'),
+    rparen: Symbol('rparen'),
+    lbracket: Symbol('lbracket'),
+    rbracket: Symbol('rbracket'),
+    comma: Symbol('comma'),
+    end: Symbol('end')
+  })
 
   const mapCharToToken = Object.freeze({
-    '+': tokens.plus,
-    '-': tokens.minus,
-    '*': tokens.times,
-    '/': tokens.divide,
-    '(': tokens.lparen,
-    ')': tokens.rparen,
-    '[': tokens.lbracket,
-    ']': tokens.rbracket,
-    '^': tokens.pow,
-    ',': tokens.comma
+    '+': TOKENS.plus,
+    '-': TOKENS.minus,
+    '*': TOKENS.times,
+    '/': TOKENS.divide,
+    '(': TOKENS.lparen,
+    ')': TOKENS.rparen,
+    '[': TOKENS.lbracket,
+    ']': TOKENS.rbracket,
+    '^': TOKENS.pow,
+    ',': TOKENS.comma
   })
+
+  input = input.replace(/\s+/g, '')
+  let strpos = 0
 
   const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_'
   const isDigit = (c) => c >= '0' && c <= '9'
@@ -39,32 +38,34 @@ tokenizer = (input) => {
   const getIdentOrNumber = (qualifier) => (qualifier(input[strpos]) ? input[strpos++] + getIdentOrNumber(qualifier) : '')
 
   const getIdentifier = () => ({
-    symbol: tokens.ident,
+    symbol: TOKENS.ident,
     name: getIdentOrNumber(isIdentifierChar)
   })
 
   const getNumber = () => ({
-    symbol: tokens.number,
+    symbol: TOKENS.number,
     value: parseFloat(getIdentOrNumber(isNumberChar))
   })
 
-  return {
-    strpos: () => strpos,
-    getTokens: () => tokens,
-    getToken: () => {
-      if (strpos >= input.length) return { symbol: tokens.end }
+  const getToken = () => {
+    if (strpos >= input.length) return { symbol: TOKENS.end }
 
-      const c = input[strpos]
-      if (isLetter(c)) return getIdentifier()
-      if (isDigit(c)) return getNumber()
-      if (c === '*' && input[strpos + 1] === '*') {
-        strpos += 2
-        return { symbol: tokens.pow }
-      }
-      if (!mapCharToToken[c]) throw Error(`Char ${c} not allowed. Pos:${strpos}`)
-      if (strpos < input.length) strpos++
-      return { symbol: mapCharToToken[c] }
+    const c = input[strpos]
+    if (isLetter(c)) return getIdentifier()
+    if (isDigit(c)) return getNumber()
+    if (c === '*' && input[strpos + 1] === '*') {
+      strpos += 2
+      return { symbol: TOKENS.pow, strpos }
     }
+    if (!mapCharToToken[c]) throw Error(`Char ${c} not allowed. Pos:${strpos}`)
+    if (strpos < input.length) strpos++
+    return { symbol: mapCharToToken[c], strpos }
+  }
+
+    return {
+    strpos: ()  => strpos,
+    getTOKENS: () => TOKENS,
+    getToken,
   }
 }
 
