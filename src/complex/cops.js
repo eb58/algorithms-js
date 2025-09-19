@@ -4,7 +4,14 @@ let cops = {
   neg: (c) => adj({ re: -c.re, im: -c.im }),
   add: (c1, c2) => adj({ re: c1.re + c2.re, im: c1.im + c2.im }),
   sub: (c1, c2) => adj({ re: c1.re - c2.re, im: c1.im - c2.im }),
-  mul: (c1, c2) => adj({ re: c1.re * c2.re - c1.im * c2.im, im: c1.re * c2.im + c1.im * c2.re }),
+  mul: (c1, c2) =>
+    adj(
+      c2.im === 0
+        ? { re: c1.re * c2.re, im: c1.im * c2.re }
+        : c1.im === 0
+          ? { re: c1.re * c2.re, im: c1.re * c2.im }
+          : { re: c1.re * c2.re - c1.im * c2.im, im: c1.re * c2.im + c1.im * c2.re }
+    ),
   div: (c1, c2) => feedx(c2.re ** 2 + c2.im ** 2, (x) => adj({ re: (c1.re * c2.re + c1.im * c2.im) / x, im: (c1.im * c2.re - c1.re * c2.im) / x })),
   len: (c) => Math.sqrt(c.re ** 2 + c.im ** 2),
   log: (c) => ({ re: Math.log(cops.len(c)), im: Math.atan2(c.im, c.re) }),
@@ -28,32 +35,4 @@ let cops = {
   }
 }
 
-class ComplexNumber {
-  constructor(z) {
-    this.re = z.re || 0
-    this.im = z.im || 0
-  }
-  neg() {
-    return new ComplexNumber(cops.neg(this))
-  }
-  add(z) {
-    return new ComplexNumber(cops.add(this, z))
-  }
-  sub(z) {
-    return new ComplexNumber(cops.sub(this, z))
-  }
-  mul(z) {
-    return new ComplexNumber(cops.mul(this, z))
-  }
-  div(z) {
-    return new ComplexNumber(cops.div(this, z))
-  }
-  pow(exp) {
-    return new ComplexNumber(cops.pow(this, exp))
-  }
-  toString() {
-    return cops.toString(this)
-  }
-}
-
-if (typeof module !== 'undefined' && module.exports) module.exports = { cops, ComplexNumber }
+if (typeof module !== 'undefined' && module.exports) module.exports = cops

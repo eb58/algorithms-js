@@ -3,12 +3,12 @@ const C$ = Complex
 
 test('basis tests', () => {
   expect(C$('i')).toEqual(C$(0, 1))
-  expect(C$('2*(1+1)').toString()).toEqual('4')
-  expect(C$('2*6').toString()).toEqual('12')
-  expect(C$('1+1').toString()).toEqual('2')
-  expect(C$('1').toString()).toEqual('1')
+  expect(C$('2*(1+1)')).toEqual(C$('4'))
+  expect(C$('2*6')).toEqual(C$('12'))
+  expect(C$('1+1')).toEqual(C$('2'))
+  expect(C$('1')).toEqual(C$('1'))
   expect(C$('pi')).toEqual(C$(Math.PI))
-  expect(C$('1 + 2*i').toString()).toEqual('1+2i')
+  expect(cops.toString(C$('1 + 2*i'))).toEqual('1+2i')
 
   const eulerFormula = C$('e^(i*pi)+1')
   expect(eulerFormula.re).toBe(0)
@@ -32,9 +32,9 @@ test('function test', () => {
   const f3 = C$('f1(z) + f2(z)', { f1, f2 })
   const f4 = C$('f3(2*f1(z))', { f1, f3 })
 
-  expect(f1(C$(3, 4)).toString()).toEqual('6+8i')
-  expect(f2(C$(3, 4)).toString()).toEqual('9+8i')
-  expect(f3(C$(3, 4)).toString()).toEqual('15+16i')
+  expect(f1(C$(3, 4))).toEqual(C$('6+8*i'))
+  expect(f2(C$(3, 4))).toEqual(C$('9+8*i'))
+  expect(f3(C$(3, 4))).toEqual(C$('15+16*i'))
   expect(f4(C$(3, 4))).toEqual(C$(51, 64))
 
   const circleArea = C$('pi*r^2')

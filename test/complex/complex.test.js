@@ -35,6 +35,7 @@ test('init complex with numbers', () => {
 })
 
 test('init complex with strings', () => {
+  expect(C$('1+1')).toEqual({ re: 2, im: 0 })
   expect(C$('-1')).toEqual({ re: -1, im: 0 })
   expect(C$('0')).toEqual({ re: 0, im: 0 })
   expect(C$('1')).toEqual({ re: 1, im: 0 })

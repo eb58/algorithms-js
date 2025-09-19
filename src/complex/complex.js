@@ -1,5 +1,4 @@
-if (typeof ComplexNumber === 'undefined') ComplexNumber = require('./cops.js').ComplexNumber
-if (typeof cops === 'undefined') cops = require('./cops.js').cops
+if (typeof cops === 'undefined') cops = require('./cops.js')
 if (typeof tokenizer === 'undefined') tokenizer = require('./tokenizer.js')
 
 const TOKENS = tokenizer('tokens').getTOKENS()
@@ -8,16 +7,27 @@ const TOKENS = tokenizer('tokens').getTOKENS()
 let globalScope = {
   sqr: (z) => cops.mul(z, z),
   pow: (z, n) => cops.pow(z, n),
-  i: new ComplexNumber({ re: 0, im: 1 }),
-  pi: new ComplexNumber({ re: Math.PI }),
-  e: new ComplexNumber({ re: Math.E })
+  i: { re: 0, im: 1 },
+  pi: { re: Math.PI, im: 0 },
+  e: { re: Math.E, im: 0 }
+}
+
+class UnaryNode {
+  constructor(operand, sign) {
+    this.operand = operand
+    this.sign = sign
+  }
+  evaluate = (vars) => {
+    const x = this.operand.evaluate(vars)
+    return this.sign === TOKENS.plus ? x : cops.neg(x)
+  }
 }
 
 class NumberNode {
-  constructor(value) {
-    this.value = value
+  constructor(val) {
+    this.value = typeof val === 'number' ? { re: val, im: 0 } : val
   }
-  evaluate = () => (typeof this.value === 'number' ? new ComplexNumber({ re: this.value, im: 0 }) : this.value)
+  evaluate = () => this.value
 }
 
 class VariableNode {
@@ -27,7 +37,7 @@ class VariableNode {
   evaluate = (vars) => {
     if (!(this.name in vars)) throw new Error(`Variable '${this.name}' ist nicht definiert`)
     const val = vars[this.name]
-    return typeof val === 'number' ? new ComplexNumber({ re: val }) : val
+    return typeof val === 'number' ? { re: val, im: 0 } : val
   }
 }
 
@@ -54,27 +64,19 @@ class BinaryOpNode {
     const right = this.right.evaluate(vars)
     switch (this.operator) {
       case TOKENS.plus:
-        return left.add(right)
+        return cops.add(left, right)
       case TOKENS.minus:
-        return left.sub(right)
+        return cops.sub(left, right)
       case TOKENS.times:
-        return left.mul(right)
+        return cops.mul(left, right)
       case TOKENS.divide:
-        return left.div(right)
+        return cops.div(left, right)
       case TOKENS.pow:
-        return left.pow(right)
+        return cops.pow(left, right)
       default:
         throw new Error(`Unbekannter Operator: ${this.operator}`)
     }
   }
-}
-
-class UnaryMinusNode {
-  constructor(operand, sign) {
-    this.operand = operand
-    this.sign = sign
-  }
-  evaluate = (vars) => (this.sign === TOKENS.plus ? this.operand.evaluate(vars) : this.operand.evaluate(vars).neg())
 }
 
 class Parser {
@@ -119,7 +121,7 @@ class Parser {
     const symbol = this.peek()?.symbol
     if (symbol === TOKENS.plus || symbol === TOKENS.minus) {
       this.tokenizer.consume()
-      return new UnaryMinusNode(this.parseBase(), symbol)
+      return new UnaryNode(this.parseBase(), symbol)
     }
     return this.parseBase()
   }
@@ -156,7 +158,7 @@ class Parser {
 
 const findParameters = (node, variables = new Set()) => {
   if (node instanceof VariableNode) variables.add(node.name)
-  else if (node instanceof UnaryMinusNode) findParameters(node.operand, variables)
+  else if (node instanceof UnaryNode) findParameters(node.operand, variables)
   else if (node instanceof FunctionCallNode) node.params.forEach((param) => findParameters(param, variables))
   else if (node instanceof BinaryOpNode) {
     findParameters(node.left, variables)
@@ -166,8 +168,8 @@ const findParameters = (node, variables = new Set()) => {
 }
 
 const Complex = (param1, param2) => {
-  if (typeof param1 === 'number') return new ComplexNumber({ re: param1 || 0, im: param2 || 0 })
-  if (typeof param1 === 'object' && Object.keys(param1).every((k) => k === 're' || k === 'im')) return new ComplexNumber(param1)
+  if (typeof param1 === 'number') return { re: param1 || 0, im: param2 || 0 }
+  if (typeof param1 === 'object' && Object.keys(param1).every((k) => k === 're' || k === 'im')) return { re: 0, im: 0, ...param1 }
   if (typeof param1 === 'string') {
     globalScope = { ...globalScope, ...param2 }
     const parser = new Parser(param1)
