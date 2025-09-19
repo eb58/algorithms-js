@@ -1,18 +1,18 @@
 tokenizer = (input) => {
   const TOKENS = Object.freeze({
-    ident: Symbol('ident'),
-    number: Symbol('number'),
-    minus: Symbol('ident'),
-    plus: Symbol('plus'),
-    times: Symbol('times'),
-    divide: Symbol('divide'),
-    pow: Symbol('pow'),
-    lparen: Symbol('lparen'),
-    rparen: Symbol('rparen'),
-    lbracket: Symbol('lbracket'),
-    rbracket: Symbol('rbracket'),
-    comma: Symbol('comma'),
-    end: Symbol('end')
+    ident: 'ident',
+    number:'number',
+    minus: 'minus',
+    plus: 'plus',
+    times: 'times',
+    divide:'divide',
+    pow: 'pow',
+    lparen: 'lparen',
+    rparen: 'rparen',
+    lbracket: 'lbracket',
+    rbracket: 'rbracket',
+    comma: 'comma',
+    end: 'end'
   })
 
   const mapCharToToken = Object.freeze({
@@ -62,10 +62,23 @@ tokenizer = (input) => {
     return { symbol: mapCharToToken[c], strpos }
   }
 
-    return {
-    strpos: ()  => strpos,
+  const peek = () => allTokens[allTokens.length - 1]
+
+  const allTokens = []
+  do {
+    allTokens.push(getToken())
+  } while (peek().symbol !== TOKENS.end)
+
+  let pos = 0
+  strpos = 0
+
+  return {
+    strpos: () => strpos,
     getTOKENS: () => TOKENS,
     getToken,
+    peek: () => (pos < allTokens.length ? allTokens[pos] : null),
+    consume: () => (pos < allTokens.length ? allTokens[pos++] : null),
+
   }
 }
 

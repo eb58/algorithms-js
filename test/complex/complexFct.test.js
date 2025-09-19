@@ -2,10 +2,15 @@ const Complex = require('../../src/complex/complex')
 const C$ = Complex
 
 test('basis tests', () => {
-  const eulerFormula = C$('e^(i*pi)+1')
   expect(C$('i')).toEqual(C$(0, 1))
+  expect(C$('2*(1+1)').toString()).toEqual('4')
+  expect(C$('2*6').toString()).toEqual('12')
+  expect(C$('1+1').toString()).toEqual('2')
+  expect(C$('1').toString()).toEqual('1')
   expect(C$('pi')).toEqual(C$(Math.PI))
   expect(C$('1 + 2*i').toString()).toEqual('1+2i')
+
+  const eulerFormula = C$('e^(i*pi)+1')
   expect(eulerFormula.re).toBe(0)
   expect(Math.abs(eulerFormula.im)).toBeLessThan(1e-15)
 })
@@ -38,9 +43,18 @@ test('function test', () => {
   expect(exponential(2)).toEqual(C$(7.3890560989306495))
 })
 
-test('functions m functions', () => {
+test('functions with two parameters A', () => {
+  const [a, b] = [C$(3, 4), C$(1, 4)]
   const f1 = C$('z1+z2')
-  const f2 = C$('z1 + z2 + z1*z2')
+  const f2 = C$('f1(a,b)', { f1 })
+  expect(f1(a, b)).toEqual(C$(4, 8))
+  expect(f2(a, b)).toEqual(C$(4, 8))
+})
+
+test('functions with two parameters B', () => {
+  const f1 = C$('z1+z2')
   expect(f1(C$(3, 4), C$(1, 4))).toEqual(C$(4, 8))
-  expect(f2(C$(3, 4), C$(1, -2))).toEqual(C$(15, 0))
+  const f2 = C$('f1(z1,z2)', { f1 })
+  const [a, b] = [C$('3'), C$('3')]
+  expect(C$('f2(a, b)', { f2 })(a, b)).toEqual(C$(6))
 })

@@ -12,7 +12,7 @@ const V$ = (() => {
 
   const evalVectorExpression = (s, varsOrFcts = {}) => {
     const t = tokenizer(s);
-    const tokens = t.getTokens();
+    const tokens = t.getTOKENS();
 
     let token;
 

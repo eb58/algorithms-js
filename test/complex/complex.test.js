@@ -1,7 +1,6 @@
 const Complex = require('../../src/complex/complex')
 const C$ = Complex//  require('../../src/complex/c$')
 
-const range = (n) => [...Array(n).keys()]
 const csqr = (z) => C$('z*z', { z })
 const I = C$(0, 1)
 
@@ -172,12 +171,11 @@ test('exponential z^2 ', () => {
 })
 
 test('functions with several parameters ', () => {
-  const pow = (z, n) => range(n.r - 1).reduce((res) => C$('res*z', { res, z }), z)
   const f = (z1, z2) => C$('z1+z2', { z1, z2 })
 
   expect(C$('f(3,4)', { f })).toEqual(C$(7))
   expect(C$('2+2+sqr(3)')).toEqual(C$(13))
-  expect(C$('pow(3,2)', { pow })).toEqual(C$(9))
+  expect(C$('pow(3,2)')).toEqual(C$(9))
   expect(C$('pow(3,2)')).toEqual(C$(9))
 })
 

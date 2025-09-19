@@ -1,105 +1,23 @@
 if (typeof ComplexNumber === 'undefined') ComplexNumber = require('./cops.js').ComplexNumber
+if (typeof cops === 'undefined') cops = require('./cops.js').cops
+if (typeof tokenizer === 'undefined') tokenizer = require('./tokenizer.js')
 
+const TOKENS = tokenizer('tokens').getTOKENS()
+
+// Globaler Speicher für benannte Funktionen und Konstanten
 let globalScope = {
-  sqr: (z) => z.mul(z),
-  pow: (z, n) => z.pow(n),
-  i: new ComplexNumber(0, 1)
-} // Globaler Speicher für benannte Funktionen und Konstanten
-
-const tokenize = (expr) => {
-  // Einfacher Tokenizer
-  expr = expr.replace(/\s+/g, '')
-  const tokens = []
-  let i = 0
-
-  const constants = {
-    pi: Math.PI,
-    e: Math.E,
-    ln2: Math.LN2,
-    sqrt2: Math.SQRT2
-  }
-
-  while (i < expr.length) {
-    const char = expr[i]
-
-    if ((char >= '0' && char <= '9') || char === '.') {
-      let numStr = ''
-      while (i < expr.length && ((expr[i] >= '0' && expr[i] <= '9') || expr[i] === '.')) {
-        numStr += expr[i]
-        i++
-      }
-      tokens.push({ type: 'NUMBER', value: parseFloat(numStr) })
-      continue
-    }
-
-    if (char === '+' || char === '-' || char === '*' || char === '/' || char === '^' || char === '(' || char === ')') {
-      const lastToken = tokens[tokens.length - 1]
-      if ((char === '-' || char === '+') && (!lastToken || lastToken.type === 'OPERATOR' || lastToken.value === '(')) {
-        tokens.push({ type: 'UNARY_OPERATOR', value: char })
-      } else {
-        tokens.push({ type: 'OPERATOR', value: char })
-      }
-      i++
-      continue
-    }
-
-    if ((char >= 'a' && char <= 'z') || (char >= 'A' && char <= 'Z') || char === '_') {
-      let name = ''
-      while (
-        i < expr.length &&
-        ((expr[i] >= 'a' && expr[i] <= 'z') || (expr[i] >= 'A' && expr[i] <= 'Z') || (expr[i] >= '0' && expr[i] <= '9') || expr[i] === '_')
-      ) {
-        name += expr[i]
-        i++
-      }
-
-      if (i < expr.length && expr[i] === '(') {
-        let parenCount = 1
-        i++
-        const argStart = i
-        let argEnd = -1
-
-        while (i < expr.length) {
-          if (expr[i] === '(') parenCount++
-          else if (expr[i] === ')') parenCount--
-
-          if (parenCount === 0) {
-            argEnd = i
-            break
-          }
-          i++
-        }
-
-        if (argEnd === -1) throw new Error(`Fehlende schließende Klammer für Funktion ${name}`)
-        tokens.push({ type: 'FUNCTION_CALL', funcName: name, argument: expr.substring(argStart, argEnd) })
-        i++
-      } else if (name in constants) {
-        tokens.push({ type: 'CONSTANT', value: constants[name] })
-      } else {
-        tokens.push({ type: 'VARIABLE', value: name })
-      }
-      continue
-    }
-
-    i++
-  }
-
-  return tokens
+  sqr: (z) => cops.mul(z, z),
+  pow: (z, n) => cops.pow(z, n),
+  i: new ComplexNumber({ re: 0, im: 1 }),
+  pi: new ComplexNumber({ re: Math.PI }),
+  e: new ComplexNumber({ re: Math.E })
 }
 
-// Vereinfachte AST-Node Klassen
 class NumberNode {
   constructor(value) {
     this.value = value
   }
-  evaluate = () => new ComplexNumber({ re: this.value })
-}
-
-class ConstantNode {
-  constructor(value) {
-    this.value = value
-  }
-  evaluate = () => new ComplexNumber({ re: this.value })
+  evaluate = () => (typeof this.value === 'number' ? new ComplexNumber({ re: this.value, im: 0 }) : this.value)
 }
 
 class VariableNode {
@@ -107,25 +25,21 @@ class VariableNode {
     this.name = name
   }
   evaluate = (vars) => {
-    if (this.name === 'i') return new ComplexNumber({ re: 0, im: 1 })
     if (!(this.name in vars)) throw new Error(`Variable '${this.name}' ist nicht definiert`)
-
     const val = vars[this.name]
-    if (val instanceof ComplexNumber) return val
-    if (typeof val === 'number') return new ComplexNumber({ re: val, im: 0 })
-    throw new Error('Ungültiger Variablenwert ' + val)
+    return typeof val === 'number' ? new ComplexNumber({ re: val }) : val
   }
 }
 
 class FunctionCallNode {
-  constructor(funcName, argNode) {
+  constructor(funcName, params) {
     this.funcName = funcName
-    this.argNode = argNode
+    this.params = params
   }
   evaluate = (vars) => {
-    if (typeof globalScope[this.funcName] !== 'function') throw new Error(`Funktion '${this.funcName}' ist nicht definiert`)
-    const argValue = this.argNode.evaluate(vars)
-    return globalScope[this.funcName](argValue)
+    if (typeof globalScope[this.funcName] !== 'function') throw new Error(`Function '${this.funcName}' is not defined`)
+    const args = this.params.reduce((acc, param) => [...acc, param.evaluate(vars)], [])
+    return globalScope[this.funcName](...args)
   }
 }
 
@@ -139,15 +53,15 @@ class BinaryOpNode {
     const left = this.left.evaluate(vars)
     const right = this.right.evaluate(vars)
     switch (this.operator) {
-      case '+':
+      case TOKENS.plus:
         return left.add(right)
-      case '-':
+      case TOKENS.minus:
         return left.sub(right)
-      case '*':
+      case TOKENS.times:
         return left.mul(right)
-      case '/':
+      case TOKENS.divide:
         return left.div(right)
-      case '^':
+      case TOKENS.pow:
         return left.pow(right)
       default:
         throw new Error(`Unbekannter Operator: ${this.operator}`)
@@ -156,33 +70,25 @@ class BinaryOpNode {
 }
 
 class UnaryMinusNode {
-  constructor(operand) {
+  constructor(operand, sign) {
     this.operand = operand
+    this.sign = sign
   }
-  evaluate = (vars) => this.operand.evaluate(vars).neg()
-}
-
-class UnaryPlusNode {
-  constructor(operand) {
-    this.operand = operand
-  }
-  evaluate = (vars) => this.operand.evaluate(vars)
+  evaluate = (vars) => (this.sign === TOKENS.plus ? this.operand.evaluate(vars) : this.operand.evaluate(vars).neg())
 }
 
 class Parser {
   // Parser mit Shunting Yard Algorithmus
-  constructor(tokens) {
-    this.tokens = tokens
-    this.pos = 0
+  constructor(s) {
+    this.tokenizer = tokenizer(s)
+    this.peek = this.tokenizer.peek
+    this.consume = this.tokenizer.consume
   }
-
-  peek = () => (this.pos < this.tokens.length ? this.tokens[this.pos] : null)
-  consume = () => (this.pos < this.tokens.length ? this.tokens[this.pos++] : null)
 
   parseExpression = () => {
     let node = this.parseTerm()
-    while (this.peek()?.value === '+' || this.peek()?.value === '-') {
-      const op = this.consume().value
+    while (this.peek()?.symbol === TOKENS.plus || this.peek()?.symbol === TOKENS.minus) {
+      const op = this.consume().symbol
       const right = this.parseTerm()
       node = new BinaryOpNode(node, op, right)
     }
@@ -191,8 +97,8 @@ class Parser {
 
   parseTerm = () => {
     let node = this.parseFactor()
-    while (this.peek()?.value === '*' || this.peek()?.value === '/') {
-      const op = this.consume().value
+    while (this.peek()?.symbol === TOKENS.times || this.peek()?.symbol === TOKENS.divide) {
+      const op = this.consume().symbol
       const right = this.parseFactor()
       node = new BinaryOpNode(node, op, right)
     }
@@ -201,8 +107,8 @@ class Parser {
 
   parseFactor = () => {
     let node = this.parsePower()
-    while (this.peek()?.value === '^') {
-      const op = this.consume().value
+    while (this.peek()?.symbol === TOKENS.pow) {
+      const op = this.consume().symbol
       const right = this.parseFactor()
       node = new BinaryOpNode(node, op, right)
     }
@@ -210,47 +116,48 @@ class Parser {
   }
 
   parsePower = () => {
-    const token = this.peek()
-    if (token?.type === 'UNARY_OPERATOR') {
-      this.consume()
-      if (token.value === '-') return new UnaryMinusNode(this.parseBase())
-      if (token.value === '+') return new UnaryPlusNode(this.parseBase())
+    const symbol = this.peek()?.symbol
+    if (symbol === TOKENS.plus || symbol === TOKENS.minus) {
+      this.tokenizer.consume()
+      return new UnaryMinusNode(this.parseBase(), symbol)
     }
     return this.parseBase()
   }
 
   parseBase = () => {
-    const token = this.peek()
-
-    if (!token) throw new Error('Unerwartetes Ende des Ausdrucks')
-    if (token.type === 'NUMBER') return new NumberNode(this.consume().value)
-    if (token.type === 'CONSTANT') return new ConstantNode(this.consume().value)
-    if (token.type === 'VARIABLE') return new VariableNode(this.consume().value)
-    if (token.type === 'FUNCTION_CALL') {
-      this.consume()
-      const args = token.argument.split(',').map((a) => {
-        const argParser = new Parser(tokenize(a))
-        const aa = argParser.parseExpression()
-        return aa
-      })
-      return new FunctionCallNode(token.funcName, ...args)
+    const t = this.peek()
+    if (!t) throw new Error('Unerwartetes Ende des Ausdrucks')
+    if (t.symbol === TOKENS.number) return new NumberNode(this.consume().value)
+    if (t.symbol === TOKENS.ident) {
+      if (!(t.name in globalScope)) return new VariableNode(this.consume().name)
+      if (typeof globalScope[t.name] !== 'function') return new NumberNode(globalScope[this.consume().name])
+      else {
+        const funcName = this.consume().name
+        if (this.consume().symbol !== TOKENS.lparen) throw new Error(`Opening paren expected` + this.peek())
+        const expressions = [this.parseExpression()]
+        while (this.peek()?.symbol === TOKENS.comma) {
+          this.consume()
+          expressions.push(this.parseExpression())
+        }
+        if (this.consume().symbol !== TOKENS.rparen) throw new Error(`Closing paren expected`)
+        return new FunctionCallNode(funcName, expressions)
+      }
     }
-    if (token.value === '(') {
+    if (t.symbol === TOKENS.lparen) {
       this.consume()
       const node = this.parseExpression()
-      if (!this.peek() || this.peek().value !== ')') throw new Error('Fehlende schließende Klammer')
+      if (this.peek()?.symbol !== TOKENS.rparen) throw new Error('Fehlende schließende Klammer')
       this.consume()
       return node
     }
-    throw new Error(`Unerwartetes Token: ${JSON.stringify(token)}`)
+    throw new Error(`Unerwartetes Token: ${JSON.stringify(t)}`)
   }
 }
 
 const findParameters = (node, variables = new Set()) => {
-  if (node instanceof VariableNode && node.name !== 'i') variables.add(node.name)
+  if (node instanceof VariableNode) variables.add(node.name)
   else if (node instanceof UnaryMinusNode) findParameters(node.operand, variables)
-  else if (node instanceof UnaryPlusNode) findParameters(node.operand, variables)
-  else if (node instanceof FunctionCallNode) findParameters(node.argNode, variables)
+  else if (node instanceof FunctionCallNode) node.params.forEach((param) => findParameters(param, variables))
   else if (node instanceof BinaryOpNode) {
     findParameters(node.left, variables)
     findParameters(node.right, variables)
@@ -262,15 +169,15 @@ const Complex = (param1, param2) => {
   if (typeof param1 === 'number') return new ComplexNumber({ re: param1 || 0, im: param2 || 0 })
   if (typeof param1 === 'object' && Object.keys(param1).every((k) => k === 're' || k === 'im')) return new ComplexNumber(param1)
   if (typeof param1 === 'string') {
-    const parser = new Parser(tokenize(param1))
-    const ast = parser.parseExpression()
     globalScope = { ...globalScope, ...param2 }
-    const vars = Array.from(findParameters(ast)).filter((x) => !(x in (param2 || {})))
+    const parser = new Parser(param1)
+    const ast = parser.parseExpression()
+    const vars = Array.from(findParameters(ast)).filter((x) => !(x in globalScope))
 
     if (vars.length === 0) return ast.evaluate(param2)
     return (...args) => {
       if (args.length !== vars.length)
-        throw new Error('Anzahl der Argumente stimmt nicht mit der Anzahl der Variablen überein.' + args + '###' + vars)
+        throw new Error('Anzahl der Argumente stimmt nicht mit der Anzahl der Variablen überein.' + args + ' ### ' + vars)
       return ast.evaluate({ ...param2, ...vars.reduce((acc, name, idx) => ({ ...acc, [name]: args[idx] }), {}) })
     }
   }

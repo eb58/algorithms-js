@@ -14,6 +14,7 @@ let cops = {
     if (exp === 1) return c
     if (exp === 2) return cops.mul(c, c)
     if (exp === 3) return cops.mul(cops.mul(c, c), c)
+    if (typeof exp === 'number') return cops.pow(c, { re: exp, im: 0 })
     if (typeof exp === 'object')
       return exp.im === 0 && (exp.re === 0 || exp.re === 1 || exp.re === 2 || exp.re === 3)
         ? cops.pow(c, exp.re)
