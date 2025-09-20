@@ -13,14 +13,11 @@ let globalScope = {
 }
 
 class UnaryNode {
-  constructor(operand, sign) {
+  constructor(sign, operand) {
     this.operand = operand
     this.sign = sign
   }
-  evaluate = (vars) => {
-    const x = this.operand.evaluate(vars)
-    return this.sign === TOKENS.plus ? x : cops.neg(x)
-  }
+  evaluate = (vars) => (this.sign === TOKENS.plus ? this.operand.evaluate(vars) : cops.neg(this.operand.evaluate(vars)))
 }
 
 class NumberNode {
@@ -54,33 +51,25 @@ class FunctionCallNode {
 }
 
 class BinaryOpNode {
-  constructor(left, operator, right) {
+  ops = {
+    [TOKENS.plus]: cops.add,
+    [TOKENS.minus]: cops.sub,
+    [TOKENS.times]: cops.mul,
+    [TOKENS.divide]: cops.div,
+    [TOKENS.pow]: cops.pow
+  }
+  constructor(op, left, right) {
+    this.operator = op
     this.left = left
-    this.operator = operator
     this.right = right
   }
   evaluate = (vars) => {
-    const left = this.left.evaluate(vars)
-    const right = this.right.evaluate(vars)
-    switch (this.operator) {
-      case TOKENS.plus:
-        return cops.add(left, right)
-      case TOKENS.minus:
-        return cops.sub(left, right)
-      case TOKENS.times:
-        return cops.mul(left, right)
-      case TOKENS.divide:
-        return cops.div(left, right)
-      case TOKENS.pow:
-        return cops.pow(left, right)
-      default:
-        throw new Error(`Unbekannter Operator: ${this.operator}`)
-    }
+    if (!this.ops[this.operator]) throw new Error(`Unbekannter Operator: ${this.operator}`)
+    return this.ops[this.operator](this.left.evaluate(vars), this.right.evaluate(vars))
   }
 }
 
 class Parser {
-  // Parser mit Shunting Yard Algorithmus
   constructor(s) {
     this.tokenizer = tokenizer(s)
     this.peek = this.tokenizer.peek
@@ -90,9 +79,7 @@ class Parser {
   parseExpression = () => {
     let node = this.parseTerm()
     while (this.peek()?.symbol === TOKENS.plus || this.peek()?.symbol === TOKENS.minus) {
-      const op = this.consume().symbol
-      const right = this.parseTerm()
-      node = new BinaryOpNode(node, op, right)
+      node = new BinaryOpNode(this.consume().symbol, node, this.parseTerm())
     }
     return node
   }
@@ -102,29 +89,25 @@ class Parser {
     while (this.peek()?.symbol === TOKENS.times || this.peek()?.symbol === TOKENS.divide) {
       const op = this.consume().symbol
       const right = this.parseFactor()
-      node = new BinaryOpNode(node, op, right)
+      node = new BinaryOpNode(op, node, right)
     }
     return node
   }
 
   parseFactor = () => {
-    let node = this.parsePower()
+    let node = this.parseOperand()
     while (this.peek()?.symbol === TOKENS.pow) {
       const op = this.consume().symbol
       const right = this.parseFactor()
-      node = new BinaryOpNode(node, op, right)
+      node = new BinaryOpNode(op, node, right)
     }
     return node
   }
 
-  parsePower = () => {
-    const symbol = this.peek()?.symbol
-    if (symbol === TOKENS.plus || symbol === TOKENS.minus) {
-      this.tokenizer.consume()
-      return new UnaryNode(this.parseBase(), symbol)
-    }
-    return this.parseBase()
-  }
+  parseOperand = () =>
+    this.peek().symbol === TOKENS.plus || this.peek().symbol === TOKENS.minus
+      ? new UnaryNode(this.tokenizer.consume().symbol, this.parseBase())
+      : this.parseBase()
 
   parseBase = () => {
     const t = this.peek()
@@ -141,30 +124,32 @@ class Parser {
           this.consume()
           expressions.push(this.parseExpression())
         }
-        if (this.consume().symbol !== TOKENS.rparen) throw new Error(`Closing paren expected`)
+        if (this.peek().symbol !== TOKENS.rparen) throw new Error(`Closing bracket not found! Pos:${this.peek().strpos}`)
+        this.consume()
         return new FunctionCallNode(funcName, expressions)
       }
     }
     if (t.symbol === TOKENS.lparen) {
       this.consume()
       const node = this.parseExpression()
-      if (this.peek()?.symbol !== TOKENS.rparen) throw new Error('Fehlende schließende Klammer')
+      if (this.peek()?.symbol !== TOKENS.rparen) throw Error(`Closing bracket not found!. Pos:${t.strpos}`)
       this.consume()
       return node
     }
-    throw new Error(`Unerwartetes Token: ${JSON.stringify(t)}`)
+    throw new Error(`Operand expected. Pos:${t.strpos}`)
   }
 }
 
-const findParameters = (node, variables = new Set()) => {
-  if (node instanceof VariableNode) variables.add(node.name)
-  else if (node instanceof UnaryNode) findParameters(node.operand, variables)
-  else if (node instanceof FunctionCallNode) node.params.forEach((param) => findParameters(param, variables))
-  else if (node instanceof BinaryOpNode) {
-    findParameters(node.left, variables)
-    findParameters(node.right, variables)
+const findParameters = (node) => {
+  const variables = new Set()
+  const find = (node) => {
+    if (node instanceof VariableNode) variables.add(node.name)
+    else if (node instanceof UnaryNode) find(node.operand)
+    else if (node instanceof FunctionCallNode) node.params.forEach((param) => find(param))
+    else if (node instanceof BinaryOpNode) [node.left, node.right].forEach((param) => find(param))
   }
-  return variables
+  find(node)
+  return Array.from(variables)
 }
 
 const Complex = (param1, param2) => {
@@ -174,7 +159,7 @@ const Complex = (param1, param2) => {
     globalScope = { ...globalScope, ...param2 }
     const parser = new Parser(param1)
     const ast = parser.parseExpression()
-    const vars = Array.from(findParameters(ast)).filter((x) => !(x in globalScope))
+    const vars = findParameters(ast).filter((x) => !(x in globalScope))
 
     if (vars.length === 0) return ast.evaluate(param2)
     return (...args) => {

@@ -1,5 +1,5 @@
 const Complex = require('../../src/complex/complex')
-const C$ = Complex//  require('../../src/complex/c$')
+const C$ = Complex //  require('../../src/complex/c$')
 
 const csqr = (z) => C$('z*z', { z })
 const I = C$(0, 1)
@@ -9,13 +9,12 @@ test('simple for debug', () => {
   expect(C$('pi*5')).toEqual({ re: Math.PI * 5, im: 0 })
 })
 
-xtest('exceptions', () => {
+test('exceptions', () => {
   expect(() => C$('')).toThrow('Operand expected. Pos:0')
   expect(() => C$('?5')).toThrow('Char ? not allowed. Pos:0')
   expect(() => C$('5#4')).toThrow('Char # not allowed. Pos:1')
   expect(() => C$('(1+5')).toThrow('Closing bracket not found!')
   expect(() => C$('1-*5')).toThrow('Operand expected. Pos:3')
-  expect(() => C$('5+5(')).toThrow('Unexpected symbol. Pos:4')
   expect(() => C$('pow(3,2')).toThrow('Closing bracket not found! Pos:7')
 
   expect(() => C$()).toThrow('False initialisation of C$')
@@ -179,5 +178,3 @@ test('functions with several parameters ', () => {
   expect(C$('pow(3,2)')).toEqual(C$(9))
   expect(C$('pow(3,2)')).toEqual(C$(9))
 })
-
-

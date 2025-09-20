@@ -1,11 +1,11 @@
 tokenizer = (input) => {
   const TOKENS = Object.freeze({
     ident: 'ident',
-    number:'number',
+    number: 'number',
     minus: 'minus',
     plus: 'plus',
     times: 'times',
-    divide:'divide',
+    divide: 'divide',
     pow: 'pow',
     lparen: 'lparen',
     rparen: 'rparen',
@@ -39,7 +39,8 @@ tokenizer = (input) => {
 
   const getIdentifier = () => ({
     symbol: TOKENS.ident,
-    name: getIdentOrNumber(isIdentifierChar)
+    name: getIdentOrNumber(isIdentifierChar),
+    strpos
   })
 
   const getNumber = () => ({
@@ -48,7 +49,7 @@ tokenizer = (input) => {
   })
 
   const getToken = () => {
-    if (strpos >= input.length) return { symbol: TOKENS.end }
+    if (strpos >= input.length) return { symbol: TOKENS.end, strpos }
 
     const c = input[strpos]
     if (isLetter(c)) return getIdentifier()
@@ -77,8 +78,7 @@ tokenizer = (input) => {
     getTOKENS: () => TOKENS,
     getToken,
     peek: () => (pos < allTokens.length ? allTokens[pos] : null),
-    consume: () => (pos < allTokens.length ? allTokens[pos++] : null),
-
+    consume: () => (pos < allTokens.length ? allTokens[pos++] : null)
   }
 }
 
