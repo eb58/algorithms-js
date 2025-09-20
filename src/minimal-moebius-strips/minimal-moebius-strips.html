@@ -6,8 +6,9 @@
     <script src="https://cdn.plot.ly/plotly-3.0.1.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/14.2.1/math.js"></script>
     <script src="../ol.js"></script>
+    <script src="../complex/cops.js"></script>
     <script src="../complex/tokenizer.js"></script>
-    <script src="../complex/c$.js"></script>
+    <script src="../complex/complex.js"></script>
   </head>
 
   <body>
@@ -23,34 +24,36 @@
     <script>
       const range = (n) => [...Array(n).keys()]
       // const C$ = (...args) => (typeof args[0] === 'string' ? math.evaluate(...args) : math.complex(...args))
+      const C$ = Complex
       const vadd = (v1, v2) => [v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]]
+      const center = C$('(za + ze) / 2')
+      const diff = C$('ze - za')
       const evalWeierstrass = (f, g, grid) => {
         // cf. https://en.wikipedia.org/wiki/Weierstrass-Enneper_parameterization
         const Phis = [
-          (f, g) => C$('    f * (1 - g^2)/2', { f, g }), //   f(1-g²)/2
-          (f, g) => C$('i * f * (1 + g^2)/2', { f, g }), // i*f(1+g²)/2
-          (f, g) => C$('f * g', { f, g }) //         f*g
+          C$('    f * (1 - g^2)/2'), //   f(1-g²)/2
+          C$('i * f * (1 + g^2)/2'), // i*f(1+g²)/2
+          C$('f * g') //         f*g
         ]
 
-        const lineIntegral = (phi, f, g, dz) => C$('phi(f,g) * dz', { phi, f, g, dz })
         const weierstrass = (za, ze) => {
-          const z = C$('(za + ze) / 2', { za, ze })
-          const dz = C$('(ze - za)', { za, ze })
+          const z = center( za, ze )
+          const dz = diff( za, ze)
           const ff = f(z)
           const gg = g(z)
-          return Phis.map((phi) => lineIntegral(phi, ff, gg, dz).re)
+          return Phis.map((phi) => C$('phi(ff,gg) * dz', { phi, ff, gg, dz }).re)
         }
 
         // calculate data
         // 1) init data with [0,0,0]
-        const t = ol.timer();
+        const t = ol.timer()
         const data = range(grid.length).map(() => range(grid[0].length).map(() => [0, 0, 0]))
         // 2) calculate data along the outer circle of the grid
         for (let i = 0; i < grid.length - 1; i++) data[i + 1][0] = vadd(data[i][0], weierstrass(grid[i][0], grid[i + 1][0]))
         // 3) now calculate data along the radial axes
         for (let i = 0; i < grid.length; i++)
           for (let j = 0; j < grid[0].length - 1; j++) data[i][j + 1] = vadd(data[i][j], weierstrass(grid[i][j], grid[i][j + 1]))
-        console.log('Zeit für Datenberechnung', t.elapsedTime())
+        console.log('Zeit für Datenberechnung', t.elapsedTime(), data)
         return [...data, ...matrix.transpose(data)]
       }
 
@@ -72,7 +75,7 @@
 
       const catenoid = () => {
         const g = (z) => z
-        const f = (z) => C$('-2/z^2', { z })
+        const f = C$('-2/z^2')
         return evalWeierstrass(f, g, circleGrid(0.3, 3))
       }
 
@@ -83,9 +86,9 @@
 
       const S39 = (m = 5, r1 = 1, r2 = 1.2) => {
         // Page 39 Example 1
-        const g = (z) => C$('z^(m-2) * (z-1)*(z-i) / (z+1)*(z+i)', { z, m })
-        const f = (z) => C$('(z+1)^2 * (z+i)^2 / z^(m+1)', { z, m })
-        return () => evalWeierstrass(f, g, circleGrid(r1, r2))
+        const g = C$('z^(m-2) * (z-1)*(z-i) / (z+1)*(z+i)', { m })
+        const f = C$('(z+1)^2 * (z+i)^2 / z^(m+1)', { m })
+        return evalWeierstrass(f, g, circleGrid(r1, r2))
       }
 
       const cobra5 = S39() // Page 39 m=5 -> Page 74
@@ -93,9 +96,9 @@
       const cobra9 = S39(9, 1.0, 1.05) // Page 39 m=9
 
       const S41 = (m, n, r1 = 1.0, r2 = 1.2) => {
-        // Page 41 Example 3  m >= 3 odd, n odd (if n even it is a minimal surface but not a moebius strip!)
-        const g = (z) => C$('z^(m-n) * (z^n-1) / (z^n+1)', { z, m, n })
-        const f = (z) => C$('i * (z^n+1)^2 / z^(m+1)', { z, m, n })
+        // Page 41 Example 3 m >= 3 odd, n odd (if n even it is a minimal surface but not a moebius strip!)
+        const g = C$('z^(m-n) * (z^n-1) / (z^n+1)', { m, n })
+        const f = C$('i * (z^n+1)^2 / z^(m+1)', { m, n })
         return () => evalWeierstrass(f, g, circleGrid(r1, r2))
       }
 
@@ -127,8 +130,8 @@
       const S42 = (r1 = 1.8, r2 = 3) => {
         //  Page 42 --- no moebius strip! error in thesis!
         const a = -5 + 2 * Math.sqrt(15)
-        const g = (z) => C$('z^3 * (z^2 - a) / (a*z^2 - 1)', { a, z })
-        const f = (z) => C$('i * (a*z^2 - 1)^2 /  (z^2 * (z-1)^4 * (z+1)^4)', { a, z })
+        const g = C$('z^3 * (z^2 - a) / (a*z^2 - 1)', { a })
+        const f = C$('i * (a*z^2 - 1)^2 /  (z^2 * (z-1)^4 * (z+1)^4)', { a })
         return () => evalWeierstrass(f, g, circleGrid(r1, r2))
       }
 
