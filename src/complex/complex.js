@@ -70,6 +70,7 @@ class BinaryOpNode {
 }
 
 class Parser {
+  freeParams = new Set();
   constructor(s) {
     this.tokenizer = tokenizer(s)
     this.peek = this.tokenizer.peek
@@ -114,7 +115,10 @@ class Parser {
     if (!t) throw new Error('Unerwartetes Ende des Ausdrucks')
     if (t.symbol === TOKENS.number) return new NumberNode(this.consume().value)
     if (t.symbol === TOKENS.ident) {
-      if (!(t.name in globalScope)) return new VariableNode(this.consume().name)
+      if (!(t.name in globalScope)){
+        this.freeParams.add(t.name)
+        return new VariableNode(this.consume().name)
+      }
       if (typeof globalScope[t.name] !== 'function') return new NumberNode(globalScope[this.consume().name])
       else {
         const funcName = this.consume().name
@@ -138,18 +142,7 @@ class Parser {
     }
     throw new Error(`Operand expected. Pos:${t.strpos}`)
   }
-}
-
-const findParameters = (node) => {
-  const variables = new Set()
-  const find = (node) => {
-    if (node instanceof VariableNode) variables.add(node.name)
-    else if (node instanceof UnaryNode) find(node.operand)
-    else if (node instanceof FunctionCallNode) node.params.forEach((param) => find(param))
-    else if (node instanceof BinaryOpNode) [node.left, node.right].forEach((param) => find(param))
-  }
-  find(node)
-  return Array.from(variables)
+  getParameters = () =>  Array.from(this.freeParams)
 }
 
 const Complex = (param1, param2) => {
@@ -159,7 +152,7 @@ const Complex = (param1, param2) => {
     globalScope = { ...globalScope, ...param2 }
     const parser = new Parser(param1)
     const ast = parser.parseExpression()
-    const vars = findParameters(ast).filter((x) => !(x in globalScope))
+    const vars = parser.getParameters().filter((x) => !(x in globalScope))
 
     if (vars.length === 0) return ast.evaluate(param2)
     return (...args) => {
