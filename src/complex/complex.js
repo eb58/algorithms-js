@@ -31,23 +31,16 @@ class VariableNode {
   constructor(name) {
     this.name = name
   }
-  evaluate = (vars) => {
-    if (!(this.name in vars)) throw new Error(`Variable '${this.name}' ist nicht definiert`)
-    const val = vars[this.name]
-    return typeof val === 'number' ? { re: val, im: 0 } : val
-  }
+  evaluate = (vars) => (typeof vars[this.name] === 'number' ? { re: vars[this.name], im: 0 } : vars[this.name])
 }
 
 class FunctionCallNode {
   constructor(funcName, params) {
+    if (typeof globalScope[funcName] !== 'function') throw new Error(`Function '${funcName}' is not defined`)
     this.funcName = funcName
     this.params = params
   }
-  evaluate = (vars) => {
-    if (typeof globalScope[this.funcName] !== 'function') throw new Error(`Function '${this.funcName}' is not defined`)
-    const args = this.params.reduce((acc, param) => [...acc, param.evaluate(vars)], [])
-    return globalScope[this.funcName](...args)
-  }
+  evaluate = (vars) => globalScope[this.funcName](...this.params.reduce((acc, param) => [...acc, param.evaluate(vars)], []))
 }
 
 class BinaryOpNode {
@@ -59,18 +52,16 @@ class BinaryOpNode {
     [TOKENS.pow]: cops.pow
   }
   constructor(op, left, right) {
+    if (!this.ops[op]) throw new Error(`Unbekannter Operator: ${op}`)
     this.operator = op
     this.left = left
     this.right = right
   }
-  evaluate = (vars) => {
-    if (!this.ops[this.operator]) throw new Error(`Unbekannter Operator: ${this.operator}`)
-    return this.ops[this.operator](this.left.evaluate(vars), this.right.evaluate(vars))
-  }
+  evaluate = (vars) => this.ops[this.operator](this.left.evaluate(vars), this.right.evaluate(vars))
 }
 
 class Parser {
-  freeParams = new Set();
+  freeParams = new Set()
   constructor(s) {
     this.tokenizer = tokenizer(s)
     this.peek = this.tokenizer.peek
@@ -79,29 +70,22 @@ class Parser {
 
   parseExpression = () => {
     let node = this.parseTerm()
-    while (this.peek()?.symbol === TOKENS.plus || this.peek()?.symbol === TOKENS.minus) {
+    while (this.peek()?.symbol === TOKENS.plus || this.peek()?.symbol === TOKENS.minus)
       node = new BinaryOpNode(this.consume().symbol, node, this.parseTerm())
-    }
     return node
   }
 
   parseTerm = () => {
     let node = this.parseFactor()
-    while (this.peek()?.symbol === TOKENS.times || this.peek()?.symbol === TOKENS.divide) {
-      const op = this.consume().symbol
-      const right = this.parseFactor()
-      node = new BinaryOpNode(op, node, right)
-    }
+    while (this.peek()?.symbol === TOKENS.times || this.peek()?.symbol === TOKENS.divide)
+      node = new BinaryOpNode(this.consume().symbol, node, this.parseFactor())
+
     return node
   }
 
   parseFactor = () => {
     let node = this.parseOperand()
-    while (this.peek()?.symbol === TOKENS.pow) {
-      const op = this.consume().symbol
-      const right = this.parseFactor()
-      node = new BinaryOpNode(op, node, right)
-    }
+    while (this.peek()?.symbol === TOKENS.pow) node = new BinaryOpNode(this.consume().symbol, node, this.parseFactor())
     return node
   }
 
@@ -115,7 +99,7 @@ class Parser {
     if (!t) throw new Error('Unerwartetes Ende des Ausdrucks')
     if (t.symbol === TOKENS.number) return new NumberNode(this.consume().value)
     if (t.symbol === TOKENS.ident) {
-      if (!(t.name in globalScope)){
+      if (!(t.name in globalScope)) {
         this.freeParams.add(t.name)
         return new VariableNode(this.consume().name)
       }
@@ -142,7 +126,7 @@ class Parser {
     }
     throw new Error(`Operand expected. Pos:${t.strpos}`)
   }
-  getParameters = () =>  Array.from(this.freeParams)
+  getParameters = () => Array.from(this.freeParams)
 }
 
 const Complex = (param1, param2) => {
@@ -154,12 +138,13 @@ const Complex = (param1, param2) => {
     const ast = parser.parseExpression()
     const vars = parser.getParameters().filter((x) => !(x in globalScope))
 
-    if (vars.length === 0) return ast.evaluate(param2)
-    return (...args) => {
-      if (args.length !== vars.length)
-        throw new Error('Anzahl der Argumente stimmt nicht mit der Anzahl der Variablen überein.' + args + ' ### ' + vars)
-      return ast.evaluate({ ...param2, ...vars.reduce((acc, name, idx) => ({ ...acc, [name]: args[idx] }), {}) })
-    }
+    return vars.length === 0
+      ? ast.evaluate(param2)
+      : (...args) => {
+          if (args.length !== vars.length)
+            throw new Error('Anzahl der Argumente stimmt nicht mit der Anzahl der Variablen überein.' + args + ' ### ' + vars)
+          return ast.evaluate({ ...param2, ...vars.reduce((acc, name, idx) => ({ ...acc, [name]: args[idx] }), {}) })
+        }
   }
   throw Error(`False initialisation of C$ ${param1} ${param2 || ''}`)
 }

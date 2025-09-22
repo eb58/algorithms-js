@@ -88,12 +88,12 @@
         // Page 39 Example 1
         const g = C$('z^(m-2) * (z-1)*(z-i) / (z+1)*(z+i)', { m })
         const f = C$('(z+1)^2 * (z+i)^2 / z^(m+1)', { m })
-        return evalWeierstrass(f, g, circleGrid(r1, r2))
+        return () => evalWeierstrass(f, g, circleGrid(r1, r2))
       }
 
-      const cobra5 = S39() // Page 39 m=5 -> Page 74
-      const cobra7 = S39(7, 1.0, 1.1) // Page 39 m=7
-      const cobra9 = S39(9, 1.0, 1.05) // Page 39 m=9
+      const cobra5 = S39 // Page 39 m=5 -> Page 74
+      const cobra7 = () => S39(7, 1.0, 1.1) // Page 39 m=7
+      const cobra9 = () => S39(9, 1.0, 1.05) // Page 39 m=9
 
       const S41 = (m, n, r1 = 1.0, r2 = 1.2) => {
         // Page 41 Example 3 m >= 3 odd, n odd (if n even it is a minimal surface but not a moebius strip!)
@@ -165,9 +165,9 @@
       const Trefoil = () => renderSurface('Trefoil', S41_5_3)
       const DoubleTrefoil = () => renderSurface('Double Trefoil', S41(5, 3, 1.1, 1.5))
       const UFO = () => renderSurface('UFO', S41_5_1)
-      const Cobra = () => renderSurface('Cobra', cobra5)
+      const Cobra = () => renderSurface('Cobra', cobra5())
 
-      renderSurface('Twisted Catenoid', S41_11_9)
+      renderSurface('Twisted Catenoid', catenoid)
     </script>
   </body>
 </html>
