@@ -24,7 +24,6 @@
     <script>
       const range = (n) => [...Array(n).keys()]
       // const C$ = (...args) => (typeof args[0] === 'string' ? math.evaluate(...args) : math.complex(...args))
-      const C$ = Complex
       const vadd = (v1, v2) => [v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]]
       const center = C$('(za + ze) / 2')
       const diff = C$('ze - za')

@@ -1,5 +1,4 @@
-const Complex = require('../../src/complex/complex')
-const C$ = Complex //  require('../../src/complex/c$')
+const C$ = require('../../src/complex/complex')
 
 const csqr = (z) => C$('z*z', { z })
 const I = C$(0, 1)

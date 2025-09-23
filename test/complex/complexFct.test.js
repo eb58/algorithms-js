@@ -1,5 +1,4 @@
-const Complex = require('../../src/complex/complex')
-const C$ = Complex
+const C$ = require('../../src/complex/complex')
 
 test('basis tests', () => {
   expect(C$('i')).toEqual(C$(0, 1))

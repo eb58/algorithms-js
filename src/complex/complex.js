@@ -129,7 +129,7 @@ class Parser {
   getParameters = () => Array.from(this.freeParams)
 }
 
-const Complex = (param1, param2) => {
+const C$ = (param1, param2) => {
   if (typeof param1 === 'number') return { re: param1 || 0, im: param2 || 0 }
   if (typeof param1 === 'object' && Object.keys(param1).every((k) => k === 're' || k === 'im')) return { re: 0, im: 0, ...param1 }
   if (typeof param1 === 'string') {
@@ -149,4 +149,4 @@ const Complex = (param1, param2) => {
   throw Error(`False initialisation of C$ ${param1} ${param2 || ''}`)
 }
 
-if (typeof module !== 'undefined' && module.exports) module.exports = Complex
+if (typeof module !== 'undefined' && module.exports) module.exports = C$
