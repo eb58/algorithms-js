@@ -30,17 +30,17 @@
       const evalWeierstrass = (f, g, grid) => {
         // cf. https://en.wikipedia.org/wiki/Weierstrass-Enneper_parameterization
         const Phis = [
-          C$('    f * (1 - g^2)/2'), //   f(1-g²)/2
-          C$('i * f * (1 + g^2)/2'), // i*f(1+g²)/2
-          C$('f * g') //         f*g
+          C$('    f * (1 - g^2)/2 * dz'), //   f(1-g²)/2
+          C$('i * f * (1 + g^2)/2 * dz'), // i*f(1+g²)/2
+          C$('f * g * dz') //         f*g
         ]
 
         const weierstrass = (za, ze) => {
-          const z = center( za, ze )
-          const dz = diff( za, ze)
+          const z = center(za, ze)
+          const dz = diff(za, ze)
           const ff = f(z)
           const gg = g(z)
-          return Phis.map((phi) => C$('phi(ff,gg) * dz', { phi, ff, gg, dz }).re)
+          return Phis.map((phi) => phi(ff, gg, dz).re)
         }
 
         // calculate data
