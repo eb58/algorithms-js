@@ -5,7 +5,7 @@ const TOKENS = tokenizer('tokens').getTOKENS()
 
 // Globaler Speicher für benannte Funktionen und Konstanten
 let globalScope = {
-  sqr: (z) => cops.mul(z, z),
+  sqr: (z) => cops.sqr(z),
   pow: (z, n) => cops.pow(z, n),
   i: { re: 0, im: 1 },
   pi: { re: Math.PI, im: 0 },

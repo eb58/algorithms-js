@@ -8,7 +8,7 @@ const C$ = (() => {
 
     scope = {
       ...scope,
-      sqr: (z) => cops.mul(z, z),
+      sqr: (z) => cops.sqr(z),
       pow: (z, n) => cops.pow(z, n),
       i: C$(0, 1),
       e: C$(Math.E),

@@ -5,6 +5,8 @@ let cops = {
   add: (c1, c2) => adj({ re: c1.re + c2.re, im: c1.im + c2.im }),
   sub: (c1, c2) => adj({ re: c1.re - c2.re, im: c1.im - c2.im }),
   mul: (c1, c2) => adj({ re: c1.re * c2.re - c1.im * c2.im, im: c1.re * c2.im + c1.im * c2.re }),
+  sqr: (c) => adj({ re: c.re ** 2 - c.im ** 2, im: 2 * c.re * c.im }),
+  cub: (c) => adj({ re: c.re ** 3 - 3 * c.re * c.im ** 2, im: 3 * c.re ** 2 - c.im ** 3 }),
   div: (c1, c2) => feedx(c2.re ** 2 + c2.im ** 2, (x) => adj({ re: (c1.re * c2.re + c1.im * c2.im) / x, im: (c1.im * c2.re - c1.re * c2.im) / x })),
   len: (c) => Math.sqrt(c.re ** 2 + c.im ** 2),
   log: (c) => ({ re: Math.log(cops.len(c)), im: Math.atan2(c.im, c.re) }),
@@ -12,14 +14,10 @@ let cops = {
   pow: (c, exp) => {
     if (exp === 0) return { re: 1, im: 0 }
     if (exp === 1) return c
-    if (exp === 2) return cops.mul(c, c)
-    if (exp === 3) return cops.mul(cops.mul(c, c), c)
-    if (typeof exp === 'number') return cops.pow(c, { re: exp, im: 0 })
-    if (typeof exp === 'object')
-      return exp.im === 0 && (exp.re === 0 || exp.re === 1 || exp.re === 2 || exp.re === 3)
-        ? cops.pow(c, exp.re)
-        : cops.exp(cops.mul(exp, cops.log(c)))
-    throw new Error('Exponent must be number or complex number')
+    if (exp === 2) return cops.sqr(c)
+    if (exp === 3) return cops.cub(c)
+    if (exp === 4) return cops.sqr(cops.sqr(c))
+    return exp.im === 0 ? cops.pow(c, exp.re) : cops.exp(cops.mul(exp, cops.log(c)))
   },
   toString: (c) => {
     if (c.im === 0) return c.re.toString()
