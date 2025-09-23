@@ -12,121 +12,82 @@ let globalScope = {
   e: { re: Math.E, im: 0 }
 }
 
-class UnaryNode {
-  constructor(sign, operand) {
-    this.operand = operand
-    this.sign = sign
-  }
-  evaluate = (vars) => (this.sign === TOKENS.plus ? this.operand.evaluate(vars) : cops.neg(this.operand.evaluate(vars)))
+const ops = {
+  [TOKENS.plus]: cops.add,
+  [TOKENS.minus]: cops.sub,
+  [TOKENS.times]: cops.mul,
+  [TOKENS.divide]: cops.div,
+  [TOKENS.pow]: cops.pow
 }
 
-class NumberNode {
-  constructor(val) {
-    this.value = typeof val === 'number' ? { re: val, im: 0 } : val
-  }
-  evaluate = () => this.value
-}
+const unaryNode = (sign, op) => ({ eval: (vars) => (sign === TOKENS.minus ? cops.neg(op.eval(vars)) : op.eval(vars)) })
+const numberNode = (val) => ({ eval: () => (typeof val === 'number' ? { re: val, im: 0 } : val) })
+const variableNode = (name) => ({ eval: (vars) => (typeof vars[name] === 'number' ? { re: vars[name], im: 0 } : vars[name]) })
+const functionNode = (name, params) => ({ eval: (vars) => globalScope[name](...params.reduce((acc, param) => [...acc, param.eval(vars)], [])) })
+const binaryOpNode = (op, left, right) => ({ eval: (vars) => ops[op](left.eval(vars), right.eval(vars)) })
 
-class VariableNode {
-  constructor(name) {
-    this.name = name
-  }
-  evaluate = (vars) => (typeof vars[this.name] === 'number' ? { re: vars[this.name], im: 0 } : vars[this.name])
-}
+const parser = (s) => {
+  const freeParams = new Set()
+  const {peek, consume} = tokenizer(s)
 
-class FunctionCallNode {
-  constructor(funcName, params) {
-    if (typeof globalScope[funcName] !== 'function') throw new Error(`Function '${funcName}' is not defined`)
-    this.funcName = funcName
-    this.params = params
-  }
-  evaluate = (vars) => globalScope[this.funcName](...this.params.reduce((acc, param) => [...acc, param.evaluate(vars)], []))
-}
-
-class BinaryOpNode {
-  ops = {
-    [TOKENS.plus]: cops.add,
-    [TOKENS.minus]: cops.sub,
-    [TOKENS.times]: cops.mul,
-    [TOKENS.divide]: cops.div,
-    [TOKENS.pow]: cops.pow
-  }
-  constructor(op, left, right) {
-    if (!this.ops[op]) throw new Error(`Unbekannter Operator: ${op}`)
-    this.operator = op
-    this.left = left
-    this.right = right
-  }
-  evaluate = (vars) => this.ops[this.operator](this.left.evaluate(vars), this.right.evaluate(vars))
-}
-
-class Parser {
-  freeParams = new Set()
-  constructor(s) {
-    this.tokenizer = tokenizer(s)
-    this.peek = this.tokenizer.peek
-    this.consume = this.tokenizer.consume
-  }
-
-  parseExpression = () => {
-    let node = this.parseTerm()
-    while (this.peek()?.symbol === TOKENS.plus || this.peek()?.symbol === TOKENS.minus)
-      node = new BinaryOpNode(this.consume().symbol, node, this.parseTerm())
+  const parseExpression = () => {
+    let node = parseTerm()
+    while (peek()?.symbol === TOKENS.plus || peek()?.symbol === TOKENS.minus) node = binaryOpNode(consume().symbol, node, parseTerm())
     return node
   }
 
-  parseTerm = () => {
-    let node = this.parseFactor()
-    while (this.peek()?.symbol === TOKENS.times || this.peek()?.symbol === TOKENS.divide)
-      node = new BinaryOpNode(this.consume().symbol, node, this.parseFactor())
-
+  const parseTerm = () => {
+    let node = parseFactor()
+    while (peek()?.symbol === TOKENS.times || peek()?.symbol === TOKENS.divide) node = binaryOpNode(consume().symbol, node, parseFactor())
     return node
   }
 
-  parseFactor = () => {
-    let node = this.parseOperand()
-    while (this.peek()?.symbol === TOKENS.pow) node = new BinaryOpNode(this.consume().symbol, node, this.parseFactor())
+  const parseFactor = () => {
+    let node = parseOperand()
+    while (peek()?.symbol === TOKENS.pow) node = binaryOpNode(consume().symbol, node, parseFactor())
     return node
   }
 
-  parseOperand = () =>
-    this.peek().symbol === TOKENS.plus || this.peek().symbol === TOKENS.minus
-      ? new UnaryNode(this.tokenizer.consume().symbol, this.parseBase())
-      : this.parseBase()
+  const parseOperand = () =>
+    peek().symbol === TOKENS.plus || peek().symbol === TOKENS.minus ? unaryNode(consume().symbol, parseBase()) : parseBase()
 
-  parseBase = () => {
-    const t = this.peek()
-    if (!t) throw new Error('Unerwartetes Ende des Ausdrucks')
-    if (t.symbol === TOKENS.number) return new NumberNode(this.consume().value)
-    if (t.symbol === TOKENS.ident) {
-      if (!(t.name in globalScope)) {
-        this.freeParams.add(t.name)
-        return new VariableNode(this.consume().name)
+  const parseBase = () => {
+    const token = peek()
+    if (token.symbol === TOKENS.number) return numberNode(consume().value)
+    if (token.symbol === TOKENS.ident) {
+      if (!(token.name in globalScope)) {
+        freeParams.add(token.name)
+        return variableNode(consume().name)
       }
-      if (typeof globalScope[t.name] !== 'function') return new NumberNode(globalScope[this.consume().name])
+      if (typeof globalScope[token.name] !== 'function') return numberNode(globalScope[consume().name])
       else {
-        const funcName = this.consume().name
-        if (this.consume().symbol !== TOKENS.lparen) throw new Error(`Opening paren expected` + this.peek())
-        const expressions = [this.parseExpression()]
-        while (this.peek()?.symbol === TOKENS.comma) {
-          this.consume()
-          expressions.push(this.parseExpression())
+        const funcName = consume().name
+        if (consume().symbol !== TOKENS.lparen) throw new Error(`Opening paren expected` + peek())
+        const expressions = [parseExpression()]
+        while (peek()?.symbol === TOKENS.comma) {
+          consume()
+          expressions.push(parseExpression())
         }
-        if (this.peek().symbol !== TOKENS.rparen) throw new Error(`Closing bracket not found! Pos:${this.peek().strpos}`)
-        this.consume()
-        return new FunctionCallNode(funcName, expressions)
+        if (peek().symbol !== TOKENS.rparen) throw new Error(`Closing bracket not found! Pos:${peek().strpos}`)
+        consume()
+        return functionNode(funcName, expressions)
       }
     }
-    if (t.symbol === TOKENS.lparen) {
-      this.consume()
-      const node = this.parseExpression()
-      if (this.peek()?.symbol !== TOKENS.rparen) throw Error(`Closing bracket not found!. Pos:${t.strpos}`)
-      this.consume()
+    if (token.symbol === TOKENS.lparen) {
+      consume()
+      const node = parseExpression()
+      if (peek()?.symbol !== TOKENS.rparen) throw new Error(`Closing bracket not found!. Pos:${token.strpos}`)
+      consume()
       return node
     }
-    throw new Error(`Operand expected. Pos:${t.strpos}`)
+    throw new Error(`Operand expected. Pos:${token.strpos}`)
   }
-  getParameters = () => Array.from(this.freeParams)
+  const getParameters = () => Array.from(freeParams)
+
+  return {
+    parseExpression,
+    getParameters
+  }
 }
 
 const C$ = (param1, param2) => {
@@ -134,16 +95,16 @@ const C$ = (param1, param2) => {
   if (typeof param1 === 'object' && Object.keys(param1).every((k) => k === 're' || k === 'im')) return { re: 0, im: 0, ...param1 }
   if (typeof param1 === 'string') {
     globalScope = { ...globalScope, ...param2 }
-    const parser = new Parser(param1)
-    const ast = parser.parseExpression()
-    const vars = parser.getParameters().filter((x) => !(x in globalScope))
+    const p = parser(param1)
+    const ast = p.parseExpression()
+    const vars = p.getParameters().filter((x) => !(x in globalScope))
 
     return vars.length === 0
-      ? ast.evaluate(param2)
+      ? ast.eval(param2)
       : (...args) => {
           if (args.length !== vars.length)
             throw new Error('Anzahl der Argumente stimmt nicht mit der Anzahl der Variablen überein.' + args + ' ### ' + vars)
-          return ast.evaluate({ ...param2, ...vars.reduce((acc, name, idx) => ({ ...acc, [name]: args[idx] }), {}) })
+          return ast.eval({ ...param2, ...vars.reduce((acc, name, idx) => ({ ...acc, [name]: args[idx] }), {}) })
         }
   }
   throw Error(`False initialisation of C$ ${param1} ${param2 || ''}`)
