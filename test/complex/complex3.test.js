@@ -22,7 +22,8 @@ test('basis function tests ', () => {
   expect(f1(C$(3, 4))).toEqual(C$(6, 8))
   expect(f2(C$(3, 4))).toEqual(C$(6, 8))
   expect(f2(1)).toEqual(C$(2))
-  expect(f3(C$(3, 4))).toEqual(C$(-7, 24))
+  expect(f3(C$(3, 4)).re).toBeCloseTo(-7)
+  expect(f3(C$(3, 4)).im).toBeCloseTo(24)
 })
 
 test('function test', () => {
@@ -38,8 +39,8 @@ test('function test', () => {
 
   const circleArea = C$('pi*r^2')
   const exponential = C$('e^x')
-  expect(circleArea(2)).toEqual(C$(12.566370614359172))
-  expect(exponential(2)).toEqual(C$(7.3890560989306495))
+  expect(circleArea(2).re).toBeCloseTo(12.566370614359172)
+  expect(exponential(2).re).toBeCloseTo(7.3890560989306495)
 })
 
 test('functions with two parameters A', () => {

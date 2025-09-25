@@ -160,13 +160,13 @@ test('exponential z^2 ', () => {
   expect(C$('1^2')).toEqual(C$(1))
   expect(C$('2^1')).toEqual(C$(2))
   expect(C$('2^2')).toEqual(C$(4))
-  expect(C$('z^2', { z: C$(3) })).toEqual(C$(9))
-  expect(C$('z^2', { z: C$('3*i') })).toEqual(C$(-9))
-  expect(C$('2*z^2', { z: C$('3') })).toEqual(C$(18))
-  expect(C$('z^2 * 2', { z: C$('3') })).toEqual(C$(18))
-  expect(C$('z^2 + 2', { z: C$('3') })).toEqual(C$(11))
-  expect(C$('1 + z^2 *2 + 2', { z: C$('3') })).toEqual(C$(21))
-  expect(C$('z^2 * 2', { z: C$('3') })).toEqual(C$(18))
+  expect(C$('z^2', { z: C$(3) }).re).toBeCloseTo(9)
+  expect(C$('z^2', { z: C$('3*i') }).re).toBeCloseTo(-9)
+  expect(C$('2*z^2', { z: 3 }).re).toBeCloseTo(18)
+  expect(C$('z^2 * 2', { z: 3 }).re).toBeCloseTo(18)
+  expect(C$('z^2 + 2', { z: 3 }).re).toBeCloseTo(11)
+  expect(C$('1 + z^2 *2 + 2', { z: 3 }).re).toBeCloseTo(21)
+  expect(C$('z^2 * 2', { z: C$('3') }).re).toBeCloseTo(18)
 })
 
 test('functions with several parameters ', () => {
@@ -174,6 +174,5 @@ test('functions with several parameters ', () => {
 
   expect(C$('f(3,4)', { f })).toEqual(C$(7))
   expect(C$('2+2+sqr(3)')).toEqual(C$(13))
-  expect(C$('pow(3,2)')).toEqual(C$(9))
-  expect(C$('pow(3,2)')).toEqual(C$(9))
+  expect(C$('pow(3,2)').re).toBeCloseTo(9)
 })

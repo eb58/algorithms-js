@@ -7,6 +7,10 @@ const TOKENS = tokenizer('tokens').getTOKENS()
 let globalScope = {
   sqr: (z) => cops.sqr(z),
   pow: (z, n) => cops.pow(z, n),
+  exp: (z, e) => cops.exp(z, e),
+  ln: (z) => cops.log(z),
+  sin: (z) => cops.sin(z),
+  cos: (z) => cops.cos(z),
   i: { re: 0, im: 1 },
   pi: { re: Math.PI, im: 0 },
   e: { re: Math.E, im: 0 }
