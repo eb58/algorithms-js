@@ -1,4 +1,3 @@
-// tests/complex1.test.js
 const C$ = require('../../src/complex/complex')
 const cops = require('../../src/complex/cops')
 
@@ -28,9 +27,9 @@ describe('Complex numbers basis tests', () => {
 })
 describe('Complex number functions', () => {
   test('basis function tests', () => {
-    const f1 = C$('z+z')
-    const f2 = C$('2*z')
-    const f3 = C$('z^2')
+    const f1 = C$('z => z+z')
+    const f2 = C$('z => 2*z')
+    const f3 = C$('z => z^2')
 
     expect(cops.equals(f1(C$(3, 4)), C$(6, 8))).toBeTruthy()
     expect(cops.equals(f2(C$(3, 4)), C$(6, 8))).toBeTruthy()
@@ -39,10 +38,10 @@ describe('Complex number functions', () => {
   })
 
   test('functions with other functions', () => {
-    const f1 = C$('2*z')
-    const f2 = C$('f1(z)+3', { f1 })
-    const f3 = C$('f1(z) + f2(z)', { f1, f2 })
-    const f4 = C$('f3(2*f1(z))', { f1, f3 })
+    const f1 = C$('z => 2*z')
+    const f2 = C$('z => f1(z)+3', { f1 })
+    const f3 = C$('z => f1(z) + f2(z)', { f1, f2 })
+    const f4 = C$('z => f3(2*f1(z))', { f1, f3 })
 
     expect(cops.equals(f1(C$(3, 4)), C$('6+8*i'))).toBeTruthy()
     expect(cops.equals(f2(C$(3, 4)), C$('9+8*i'))).toBeTruthy()
@@ -54,8 +53,8 @@ describe('Complex number functions', () => {
 describe('Mathematical functions', () => {
   test('sin and cos', () => {
     const z = C$('pi/2+i')
-    const sinZ = C$('sin(z)')(z)
-    const cosZ = C$('cos(z)')(z)
+    const sinZ = C$('z => sin(z)')(z)
+    const cosZ = C$('z => cos(z)')(z)
     expect(sinZ.re).toBeCloseTo(Math.cosh(1))
     expect(sinZ.im).toBeCloseTo(0, 3)
     expect(cosZ.re).toBeCloseTo(0, 1)
@@ -64,12 +63,11 @@ describe('Mathematical functions', () => {
 
   test('exponential and logarithm', () => {
     const z = C$(1, 1)
-    const expZ = C$('exp(z)')(z)
-    console.log(expZ, Math.E * Math.cos(1))
+    const expZ = C$('z => exp(z)')(z)
     expect(expZ.re).toBeCloseTo(Math.E * Math.cos(1))
     expect(expZ.im).toBeCloseTo(Math.E * Math.sin(1))
 
-    const lnZ = C$('ln(z)')(expZ)
+    const lnZ = C$('z => ln(z)')(expZ)
     expect(lnZ.re).toBeCloseTo(z.re)
     expect(lnZ.im).toBeCloseTo(z.im)
   })
@@ -78,17 +76,17 @@ describe('Mathematical functions', () => {
 describe('Functions with multiple parameters', () => {
   test('functions with two parameters A', () => {
     const [a, b] = [C$(3, 4), C$(1, 4)]
-    const f1 = C$('z1+z2')
-    const f2 = C$('f1(a,b)', { f1 })
+    const f1 = C$('(z1,z2) =>z1+z2')
+    const f2 = C$('(a,b) =>f1(a,b)', { f1 })
     expect(cops.equals(f1(a, b), C$(4, 8))).toBeTruthy()
     expect(cops.equals(f2(a, b), C$(4, 8))).toBeTruthy()
   })
 
   test('functions with two parameters B', () => {
-    const f1 = C$('z1+z2')
+    const f1 = C$('(z1,z2) => z1+z2')
     expect(f1(C$(3, 4), C$(1, 4))).toEqual(C$(4, 8))
-    const f2 = C$('f1(z1,z2)', { f1 })
+    const f2 = C$('(z1,z2) => f1(z1,z2)', { f1 })
     const [a, b] = [C$('3'), C$('3')]
-    expect(C$('f2(a, b)', { f2 })(a, b)).toEqual(C$(6))
+    expect(C$('(a,b) => f2(a, b)', { f2 })(a, b)).toEqual(C$(6))
   })
 })

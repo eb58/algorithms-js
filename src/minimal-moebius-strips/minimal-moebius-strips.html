@@ -23,21 +23,21 @@
     <div id="div2"></div>
     <script>
       const range = (n) => [...Array(n).keys()]
-      // const C$ = (...args) => (typeof args[0] === 'string' ? math.evaluate(...args) : math.complex(...args))
       const vadd = (v1, v2) => [v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]]
-      const center = C$('(za + ze) / 2')
-      const diff = C$('ze - za')
+      const center = C$('(za,ze) => (za + ze) / 2')
+      const diff = C$('(za,ze) => ze - za')
+
       const evalWeierstrass = (f, g, grid) => {
         // cf. https://en.wikipedia.org/wiki/Weierstrass-Enneper_parameterization
         const Phis = [
-          C$('    f * (1 - g^2)/2 * dz'), //   f(1-g²)/2
-          C$('i * f * (1 + g^2)/2 * dz'), // i*f(1+g²)/2
-          C$('f * g * dz') //         f*g
+          C$('(f,g,dz) =>     f * (1 - g^2)/2 * dz'), //   f(1-g²)/2
+          C$('(f,g,dz) => i * f * (1 + g^2)/2 * dz'), // i*f(1+g²)/2
+          C$('(f,g,dz) => f * g * dz') //         f*g
         ]
 
         const weierstrass = (za, ze) => {
           const z = center(za, ze)
-          const dz = diff(za, ze)
+          const dz = diff(ze, za)
           const ff = f(z)
           const gg = g(z)
           return Phis.map((phi) => phi(ff, gg, dz).re)
@@ -74,7 +74,7 @@
 
       const catenoid = () => {
         const g = (z) => z
-        const f = C$('-2/z^2')
+        const f = C$('z => -2/z^2')
         return evalWeierstrass(f, g, circleGrid(0.3, 3))
       }
 
@@ -85,8 +85,8 @@
 
       const S39 = (m = 5, r1 = 1, r2 = 1.2) => {
         // Page 39 Example 1
-        const g = C$('z^(m-2) * (z-1)*(z-i) / (z+1)*(z+i)', { m })
-        const f = C$('(z+1)^2 * (z+i)^2 / z^(m+1)', { m })
+        const g = C$('z => z^(m-2) * (z-1)*(z-i) / (z+1)*(z+i)', { m })
+        const f = C$('z => (z+1)^2 * (z+i)^2 / z^(m+1)', { m })
         return () => evalWeierstrass(f, g, circleGrid(r1, r2))
       }
 
@@ -96,8 +96,8 @@
 
       const S41 = (m, n, r1 = 1.0, r2 = 1.2) => {
         // Page 41 Example 3 m >= 3 odd, n odd (if n even it is a minimal surface but not a moebius strip!)
-        const g = C$('z^(m-n) * (z^n-1) / (z^n+1)', { m, n })
-        const f = C$('i * (z^n+1)^2 / z^(m+1)', { m, n })
+        const g = C$('z => z^(m-n) * (z^n-1) / (z^n+1)', { m, n })
+        const f = C$('z => i * (z^n+1)^2 / z^(m+1)', { m, n })
         return () => evalWeierstrass(f, g, circleGrid(r1, r2))
       }
 
@@ -129,8 +129,8 @@
       const S42 = (r1 = 1.8, r2 = 3) => {
         //  Page 42 --- no moebius strip! error in thesis!
         const a = -5 + 2 * Math.sqrt(15)
-        const g = C$('z^3 * (z^2 - a) / (a*z^2 - 1)', { a })
-        const f = C$('i * (a*z^2 - 1)^2 /  (z^2 * (z-1)^4 * (z+1)^4)', { a })
+        const g = C$('z => z^3 * (z^2 - a) / (a*z^2 - 1)', { a })
+        const f = C$('z => i * (a*z^2 - 1)^2 /  (z^2 * (z-1)^4 * (z+1)^4)', { a })
         return () => evalWeierstrass(f, g, circleGrid(r1, r2))
       }
 

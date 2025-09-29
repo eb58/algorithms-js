@@ -15,9 +15,9 @@ test('basis tests', () => {
 })
 
 test('basis function tests ', () => {
-  const f1 = C$('z+z')
-  const f2 = C$('2*z')
-  const f3 = C$('z^2')
+  const f1 = C$('z => z+z')
+  const f2 = C$('z =>2*z')
+  const f3 = C$('z =>z^2')
 
   expect(f1(C$(3, 4))).toEqual(C$(6, 8))
   expect(f2(C$(3, 4))).toEqual(C$(6, 8))
@@ -27,34 +27,56 @@ test('basis function tests ', () => {
 })
 
 test('function test', () => {
-  const f1 = C$('2*z')
-  const f2 = C$('f1(z)+3', { f1 })
-  const f3 = C$('f1(z) + f2(z)', { f1, f2 })
-  const f4 = C$('f3(2*f1(z))', { f1, f3 })
+  const f1 = C$('z =>2*z')
+  const f2 = C$('z =>f1(z)+3', { f1 })
+  const f3 = C$('z =>f1(z) + f2(z)', { f1, f2 })
+  const f4 = C$('z =>f3(2*f1(z))', { f1, f3 })
 
   expect(f1(C$(3, 4))).toEqual(C$('6+8*i'))
   expect(f2(C$(3, 4))).toEqual(C$('9+8*i'))
   expect(f3(C$(3, 4))).toEqual(C$('15+16*i'))
   expect(f4(C$(3, 4))).toEqual(C$(51, 64))
 
-  const circleArea = C$('pi*r^2')
-  const exponential = C$('e^x')
+  const circleArea = C$('r=>pi*r^2')
+  const exponential = C$('x=>e^x')
   expect(circleArea(2).re).toBeCloseTo(12.566370614359172)
   expect(exponential(2).re).toBeCloseTo(7.3890560989306495)
 })
 
 test('functions with two parameters A', () => {
   const [a, b] = [C$(3, 4), C$(1, 4)]
-  const f1 = C$('z1+z2')
-  const f2 = C$('f1(a,b)', { f1 })
+  const f1 = C$('(z1,z2) =>z1+z2')
+  const f2 = C$('(a,b) => f1(a,b)', { f1 })
   expect(f1(a, b)).toEqual(C$(4, 8))
   expect(f2(a, b)).toEqual(C$(4, 8))
 })
 
 test('functions with two parameters B', () => {
-  const f1 = C$('z1+z2')
+  const f1 = C$('(z1,z2)=>z1+z2')
   expect(f1(C$(3, 4), C$(1, 4))).toEqual(C$(4, 8))
-  const f2 = C$('f1(z1,z2)', { f1 })
+  const f2 = C$('(z1,z2)=>f1(z1,z2)', { f1 })
   const [a, b] = [C$('3'), C$('3')]
-  expect(C$('f2(a, b)', { f2 })(a, b)).toEqual(C$(6))
+  expect(C$('(a,b)=>f2(a, b)', { f2 })(a, b)).toEqual(C$(6))
+})
+
+test('functions with two parameters C', () => {
+  const [a, b] = [C$(3, 5), C$(1, 4)]
+  const f1 = C$('(a,b) => a-b') // (a,b) => sub(a,b)
+
+  const f2 = C$('(a,b) => (b-a)*b') // (z1,z2) => mul(sub(z2,z1),z2)
+
+  expect(f1(a, b)).toEqual(C$(2, 1))
+  expect(f1(b, a)).toEqual(C$(-2, -1))
+
+  expect(f2(a, b)).toEqual(C$(2, -9))
+  expect(f2(b, a)).toEqual(C$(1, 13))
+})
+
+test('functions with two parameters D', () => {
+  const [a, b] = [C$(3, 5), C$(1, 4)]
+  const f1 = C$('(a,b) => (a-b)') // (z1,z2) => mul(sub(z2,z1),z2)
+  const f2 = C$('(b,a) => (b-a)') // (z1,z2) => mul(sub(z2,z1),z2)
+
+  expect(f1(a, b)).toEqual(C$(2, 1))
+  expect(f2( b,a)).toEqual(C$(-2, -1))
 })

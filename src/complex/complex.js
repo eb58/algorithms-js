@@ -5,12 +5,7 @@ const TOKENS = tokenizer('tokens').getTOKENS()
 
 // Globaler Speicher für benannte Funktionen und Konstanten
 let globalScope = {
-  sqr: (z) => cops.sqr(z),
-  pow: (z, n) => cops.pow(z, n),
-  exp: (z, e) => cops.exp(z, e),
-  ln: (z) => cops.log(z),
-  sin: (z) => cops.sin(z),
-  cos: (z) => cops.cos(z),
+  ...cops,
   i: { re: 0, im: 1 },
   pi: { re: Math.PI, im: 0 },
   e: { re: Math.E, im: 0 }
@@ -25,13 +20,12 @@ const ops = {
 }
 
 const numberNode = (val) => ({ eval: () => (typeof val === 'number' ? { re: val, im: 0 } : val) })
-const unaryNode = (sign, op) => ({ eval: (vars) => (sign === TOKENS.minus ? cops.neg(op.eval(vars)) : op.eval(vars)) })
-const variableNode = (name) => ({ eval: (vars) => (typeof vars[name] === 'number' ? { re: vars[name], im: 0 } : vars[name]) })
-const functionNode = (name, params) => ({ eval: (vars) => globalScope[name](...params.reduce((acc, param) => [...acc, param.eval(vars)], [])) })
-const binaryOpNode = (op, left, right) => ({ eval: (vars) => ops[op](left.eval(vars), right.eval(vars)) })
+const unaryNode = (sign, op) => ({ eval: (args, pos) => (sign === TOKENS.minus ? cops.neg(op.eval(args, pos)) : op.eval(args, pos)) })
+const variableNode = (name) => ({ eval: (args, pos) => (typeof args[pos[name]] === 'number' ? { re: args[pos[name]], im: 0 } : args[pos[name]]) })
+const functionNode = (name, params) => ({ eval: (args, pos) => globalScope[name](...params.reduce((acc, p) => [...acc, p.eval(args, pos)], [])) })
+const binaryOpNode = (op, left, right) => ({ eval: (args, pos) => ops[op](left.eval(args, pos), right.eval(args, pos)) })
 
 const parser = (s) => {
-  const freeParams = new Set()
   const { peek, consume } = tokenizer(s)
 
   const parseExpression = () => {
@@ -59,10 +53,7 @@ const parser = (s) => {
     const token = peek()
     if (token.symbol === TOKENS.number) return numberNode(consume().value)
     if (token.symbol === TOKENS.ident) {
-      if (!(token.name in globalScope)) {
-        freeParams.add(token.name)
-        return variableNode(consume().name)
-      }
+      if (!(token.name in globalScope)) return variableNode(consume().name)
       if (typeof globalScope[token.name] !== 'function') return numberNode(globalScope[consume().name])
       else {
         const funcName = consume().name
@@ -86,29 +77,36 @@ const parser = (s) => {
     }
     throw new Error(`Operand expected. Pos:${token.strpos}`)
   }
-  const getParameters = () => Array.from(freeParams).filter((x) => !(x in globalScope))
-
-  return {
-    parseExpression,
-    getParameters
-  }
+  return parseExpression()
 }
 
+splitParam = (s) => {
+  const idx = s.indexOf('=>')
+  return {
+    params:
+      idx < 0
+        ? []
+        : s
+            .substring(0, idx)
+            .replace(/[\s()]/g, '')
+            .split(','),
+    expression: idx < 0 ? s : s.substring(idx + 2)
+  }
+}
 const C$ = (param1, param2) => {
   if (typeof param1 === 'number') return { re: param1 || 0, im: param2 || 0 } // C$(1, 1)
-  if (typeof param1 === 'object' && Object.keys(param1).every((k) => k === 're' || k === 'im')) return { re: 0, im: 0, ...param1 } // C$({ re: 1, im: 1 })
-  if (typeof param1 === 'string') {  // C$("3+i") ->
+  if (typeof param1 === 'string') {
     globalScope = { ...globalScope, ...param2 }
-    const p = parser(param1)
-    const ast = p.parseExpression()
-    const vars = p.getParameters()
 
-    return vars.length === 0
+    const { expression, params } = splitParam(param1)
+    const positions = params.reduce((acc, name, idx) => ({ ...acc, [name]: idx }), {})
+    const ast = parser(expression)
+
+    return params.length === 0
       ? ast.eval(param2)
       : (...args) => {
-          if (args.length !== vars.length)
-            throw new Error('Anzahl der Argumente stimmt nicht mit der Anzahl der Variablen überein.' + args + ' ### ' + vars)
-          return ast.eval({ ...param2, ...vars.reduce((acc, name, idx) => ({ ...acc, [name]: args[idx] }), {}) })
+          if (args.length !== params.length) throw new Error('Anzahl der Argumente stimmt nicht mit der Anzahl der Variablen überein.')
+          return ast.eval(args, positions)
         }
   }
   throw Error(`False initialisation of C$ ${param1} ${param2 || ''}`)
