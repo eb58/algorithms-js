@@ -39,6 +39,9 @@ const toString = (c) => {
 }
 
 let cops = {
+  i: { re: 0, im: 1 },
+  pi: { re: Math.PI, im: 0 },
+  e: { re: Math.E, im: 0 },
   neg,
   conj,
   add,

@@ -6,14 +6,7 @@ const C$ = (() => {
     const t = tokenizer(s)
     const TOKENS = t.getTOKENS()
 
-    scope = {
-      ...scope,
-      sqr: (z) => cops.sqr(z),
-      pow: (z, n) => cops.pow(z, n),
-      i: C$(0, 1),
-      e: C$(Math.E),
-      pi: C$(Math.PI)
-    }
+    scope = { ...scope, ...cops }
     let token
 
     const operand = () => {
@@ -71,7 +64,6 @@ const C$ = (() => {
 
   return (re, im) => {
     if (typeof re === 'number') return { re: re || 0, im: im || 0 } // C$(1, 1)
-    if (typeof re === 'object' && Object.keys(re).every((k) => k === 're' || k === 'im')) return { re: 0, im: 0, ...re } // C$({ re: 1, im: 1 })
     if (typeof re === 'string') return evalComplex(re, im || {}) // C$("3+i") ->
     throw Error(`False initialisation of C$ ${re} ${im || ''}`)
   }

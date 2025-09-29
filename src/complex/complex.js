@@ -4,12 +4,7 @@ if (typeof tokenizer === 'undefined') tokenizer = require('./tokenizer.js')
 const TOKENS = tokenizer('tokens').getTOKENS()
 
 // Globaler Speicher für benannte Funktionen und Konstanten
-let globalScope = {
-  ...cops,
-  i: { re: 0, im: 1 },
-  pi: { re: Math.PI, im: 0 },
-  e: { re: Math.E, im: 0 }
-}
+let globalScope = { ...cops }
 
 const ops = {
   [TOKENS.plus]: cops.add,
@@ -93,23 +88,23 @@ splitParam = (s) => {
     expression: idx < 0 ? s : s.substring(idx + 2)
   }
 }
-const C$ = (param1, param2) => {
-  if (typeof param1 === 'number') return { re: param1 || 0, im: param2 || 0 } // C$(1, 1)
-  if (typeof param1 === 'string') {
-    globalScope = { ...globalScope, ...param2 }
+const C$ = (re, im) => {
+  if (typeof re === 'number') return { re: re || 0, im: im || 0 } // C$(1, 1)
+  if (typeof re === 'string') {
+    globalScope = { ...globalScope, ...im }
 
-    const { expression, params } = splitParam(param1)
+    const { expression, params } = splitParam(re)
     const positions = params.reduce((acc, name, idx) => ({ ...acc, [name]: idx }), {})
     const ast = parser(expression)
 
     return params.length === 0
-      ? ast.eval(param2)
+      ? ast.eval(im)
       : (...args) => {
           if (args.length !== params.length) throw new Error('Anzahl der Argumente stimmt nicht mit der Anzahl der Variablen überein.')
           return ast.eval(args, positions)
         }
   }
-  throw Error(`False initialisation of C$ ${param1} ${param2 || ''}`)
+  throw Error(`False initialisation of C$ ${re} ${im || ''}`)
 }
 
 if (typeof module !== 'undefined' && module.exports) module.exports = C$
