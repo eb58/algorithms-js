@@ -158,7 +158,7 @@ const ol = (() => {
   // nobody needs uuid() !!!
   const uid = (prefix = '') => prefix + randomInRange(1_000_000, 9_999_999) + Date.now();
 
-  const timer = (start = performance.now()) => ({ elapsedTime: () => (performance.now() - start) / 1000 })
+  const timer = (start = performance.now()) => ({ elapsedTime: () => ((performance.now() - start) / 1000).toFixed(3) })
 
   // usage:   log(() => callSomeComplicatedFunction(2, 4, 6))
   // example: log(() => sin(2))
