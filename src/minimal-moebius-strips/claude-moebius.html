@@ -1,0 +1,416 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Weierstraß-Enneper Katenoid</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        background: linear-gradient(135deg, #0f0f23, #1a1a3e);
+        font-family: 'Consolas', monospace;
+        color: #e0e0e0;
+        overflow-x: auto;
+      }
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+      h1 {
+        text-align: center;
+        color: #00ff88;
+        text-shadow: 0 0 10px rgba(0, 255, 136, 0.3);
+        margin-bottom: 10px;
+      }
+      .subtitle {
+        text-align: center;
+        color: #888;
+        font-size: 0.9em;
+        margin-bottom: 30px;
+      }
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 300px;
+        gap: 20px;
+        align-items: start;
+      }
+      .canvas-container {
+        position: relative;
+        border: 2px solid #333;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #000;
+      }
+      canvas {
+        display: block;
+      }
+      .controls {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 20px;
+        backdrop-filter: blur(10px);
+      }
+      .control-group {
+        margin-bottom: 20px;
+        padding: 15px;
+        background: rgba(0, 255, 136, 0.1);
+        border-radius: 8px;
+        border-left: 3px solid #00ff88;
+      }
+      label {
+        display: block;
+        margin-bottom: 8px;
+        color: #00ff88;
+        font-size: 0.9em;
+        font-weight: bold;
+      }
+      input[type='range'] {
+        width: 100%;
+        margin: 8px 0;
+        accent-color: #00ff88;
+      }
+      .value-display {
+        color: #fff;
+        font-size: 0.8em;
+        text-align: center;
+        margin-top: 5px;
+      }
+      button {
+        width: 100%;
+        background: linear-gradient(45deg, #00ff88, #00cc6a);
+        color: #0f0f23;
+        border: none;
+        padding: 12px;
+        border-radius: 6px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.3s;
+        font-family: inherit;
+      }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0, 255, 136, 0.3);
+      }
+      .status {
+        background: rgba(0, 0, 0, 0.7);
+        padding: 10px;
+        border-radius: 6px;
+        font-size: 0.8em;
+        margin-top: 10px;
+      }
+      .math-info {
+        background: rgba(136, 136, 136, 0.1);
+        padding: 15px;
+        border-radius: 8px;
+        margin-top: 20px;
+        font-size: 0.8em;
+        line-height: 1.4;
+      }
+      .math-info code {
+        background: rgba(0, 255, 136, 0.2);
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>⚡ Weierstraß-Enneper Katenoid</h1>
+      <p class="subtitle">Minimale Oberflächen durch komplexe Analysis</p>
+
+      <div class="main-grid">
+        <div class="canvas-container">
+          <canvas id="canvas" width="1000" height="1000"></canvas>
+        </div>
+
+        <div class="controls">
+          <div class="control-group">
+            <label for="rotationY">Y-Rotation</label>
+            <input type="range" id="rotationY" min="0" max="360" value="45" />
+            <div class="value-display" id="rotationYValue">45°</div>
+          </div>
+
+          <div class="control-group">
+            <label for="rotationX">X-Rotation</label>
+            <input type="range" id="rotationX" min="-90" max="90" value="25" />
+            <div class="value-display" id="rotationXValue">25°</div>
+          </div>
+
+          <div class="control-group">
+            <label for="scale">Zoom</label>
+            <input type="range" id="scale" min="10" max="300" value="100" />
+            <div class="value-display" id="scaleValue">100%</div>
+          </div>
+
+          <div class="control-group">
+            <label for="innerRadius">Innerer Radius</label>
+            <input type="range" id="innerRadius" min="0.1" max="1" step="0.05" value="0.3" />
+            <div class="value-display" id="innerRadiusValue">0.3</div>
+          </div>
+
+          <div class="control-group">
+            <label for="outerRadius">Äußerer Radius</label>
+            <input type="range" id="outerRadius" min="1.1" max="4" step="0.1" value="3" />
+            <div class="value-display" id="outerRadiusValue">3.0</div>
+          </div>
+
+          <div class="control-group">
+            <button onclick="toggleAnimation()">Animation Start/Stop</button>
+            <button onclick="generateSurface()" style="margin-top: 10px">Oberfläche neu berechnen</button>
+          </div>
+
+          <div class="status" id="status">Berechne Katenoid...</div>
+
+          <div class="math-info">
+            <strong>Weierstraß-Enneper Parametrisierung:</strong><br />
+            <code>f(z) = -2/z²</code><br />
+            <code>g(z) = z</code><br /><br />
+            <strong>Koordinaten:</strong><br />
+            <code>x = Re[∫f(1-g²)/2 dz]</code><br />
+            <code>y = Re[∫if(1+g²)/2 dz]</code><br />
+            <code>z = Re[∫fg dz]</code>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="../ol.js"></script>
+    <script src="../complex/tokenizer.js"></script>
+    <script src="../complex/cops.js"></script>
+    <script src="../complex/complex.js"></script>
+    <script>
+      const range = (n) => [...Array(n).keys()]
+      const vadd = (v1, v2) => [v1[0] + v2[0], v1[1] + v2[1], v1[2] + v2[2]]
+      const center = C$('(za,ze) => (za + ze) / 2')
+      const diff = C$('(za,ze) => ze - za')
+
+      const canvas = document.getElementById('canvas')
+      const ctx = canvas.getContext('2d')
+      const [width, height] = [canvas.width, canvas.height]
+
+      let [rotationY, rotationX, scale] = [45, 25, 100]
+      let [innerRadius, outerRadius] = [0.3, 3.0]
+      let isAnimating = false
+      let surfaceData = []
+
+      const circleGrid = (r1, r2) => {
+        // parameter area: circular ring around 0
+        const [w1, w2, GRID_SIZE_R, GRID_SIZE_W] = [0, 2 * Math.PI, 50, 300]
+        const dx = (r2 - r1) / GRID_SIZE_R
+        const dy = (w2 - w1) / GRID_SIZE_W
+        const extracted = (n) => (m) => C$((r1 + n * dx) * Math.cos(dy * m), (r1 + n * dx) * Math.sin(dy * m))
+        return range(GRID_SIZE_R + 1).map((n) => range(GRID_SIZE_W + 1).map(extracted(n)))
+      }
+
+      const rectangleGrid = (x1, x2, y1, y2) => {
+        const [GRID_SIZE_X, GRID_SIZE_Y] = [40, 40]
+        const dx = (x2 - x1) / GRID_SIZE_X
+        const dy = (y2 - y1) / GRID_SIZE_Y
+        return range(GRID_SIZE_X + 1).map((i) => range(GRID_SIZE_Y + 1).map((j) => C$(x1 + i * dx, y1 + j * dy)))
+      }
+
+      const evalWeierstrass = (f, g, grid) => {
+        // cf. https://en.wikipedia.org/wiki/Weierstrass-Enneper_parameterization
+        const Phis = [
+          C$('(f,g,dz) =>     f * (1 - g^2)/2 * dz'), //   f(1-g²)/2
+          C$('(f,g,dz) => i * f * (1 + g^2)/2 * dz'), // i*f(1+g²)/2
+          C$('(f,g,dz) => f * g * dz') //         f*g
+        ]
+
+        const weierstrass = (za, ze) => {
+          const z = center(za, ze)
+          const dz = diff(ze, za)
+          const ff = f(z)
+          const gg = g(z)
+          return Phis.map((phi) => phi(ff, gg, dz).re)
+        }
+
+        // calculate data
+        // 1) init data with [0,0,0]
+        const t = ol.timer()
+        const data = range(grid.length).map(() => range(grid[0].length).map(() => [0, 0, 0]))
+        // 2) calculate data along the outer circle of the grid
+        for (let i = 0; i < grid.length - 1; i++) data[i + 1][0] = vadd(data[i][0], weierstrass(grid[i][0], grid[i + 1][0]))
+        // 3) now calculate data along the radial axes
+        for (let i = 0; i < grid.length; i++)
+          for (let j = 0; j < grid[0].length - 1; j++) data[i][j + 1] = vadd(data[i][j], weierstrass(grid[i][j], grid[i][j + 1]))
+        console.log(`Zeit für Datenberechnung: ${t.elapsedTime()}sec`, data)
+        return data
+      }
+
+      const helicoid = () => {
+        const g = C$('z=> exp(i*z)')
+        const f = () => 1
+        return evalWeierstrass(f, g, circleGrid(0.3, 3))
+      }
+
+      const enneper = () => {
+        const g = (z) => z
+        const f = () => C$('2')
+        return evalWeierstrass(f, g, circleGrid(0.3, 2))
+      }
+
+      const catenoid = (r1 = 0.3, r2 = 3) => {
+        const g = (z) => z
+        const f = C$('z => -2/z^2')
+        return evalWeierstrass(f, g, circleGrid(r1, r2))
+      }
+
+      const S41 = (r1 = 0.8, r2 = 1.2) => {
+        const f = C$('z => i * (z+1)^2 / z^4')
+        const g = C$('z => z^2 * (z-1) / (z+1)')
+        return evalWeierstrass(f, g, circleGrid(r1, r2))
+      }
+
+      const scherk = () => {
+        const g = C$('z => exp(i*z)')
+        const f = () => C$('2*i')
+        return evalWeierstrass(f, g, rectangleGrid(-2, 2, -2, 2))
+      }
+      //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+      // 3D transformations
+      function rotatePoint(point, angleX, angleY) {
+        const radX = (angleX * Math.PI) / 180
+        const radY = (angleY * Math.PI) / 180
+
+        let [x, y, z] = point
+
+        // Rotation around X-axis
+        const newY = y * Math.cos(radX) - z * Math.sin(radX)
+        const newZ = y * Math.sin(radX) + z * Math.cos(radX)
+        y = newY
+        z = newZ
+
+        // Rotation around Y-axis
+        const newX = x * Math.cos(radY) + z * Math.sin(radY)
+        z = -x * Math.sin(radY) + z * Math.cos(radY)
+        x = newX
+
+        return [x, y, z]
+      }
+
+      function project(point) {
+        const [x, y, z] = point
+        const distance = 8
+        const factor = distance / (distance + z)
+        return {
+          x: width / 2 + x * scale * factor,
+          y: height / 2 - y * scale * factor,
+          z: z
+        }
+      }
+
+      // Render the surface
+      function render() {
+        ctx.fillStyle = '#000'
+        ctx.fillRect(0, 0, width, height)
+
+        if (surfaceData.length === 0) return
+
+        const triangles = []
+
+        // Generate triangles from grid
+        for (let i = 0; i < surfaceData.length - 1; i++) {
+          for (let j = 0; j < surfaceData[0].length - 1; j++) {
+            const p1 = rotatePoint(surfaceData[i][j], rotationX, rotationY)
+            const p2 = rotatePoint(surfaceData[i + 1][j], rotationX, rotationY)
+            const p3 = rotatePoint(surfaceData[i][j + 1], rotationX, rotationY)
+            const p4 = rotatePoint(surfaceData[i + 1][j + 1], rotationX, rotationY)
+
+            triangles.push({
+              points: [p1, p2, p3],
+              z: (p1[2] + p2[2] + p3[2]) / 3
+            })
+
+            triangles.push({
+              points: [p2, p3, p4],
+              z: (p2[2] + p3[2] + p4[2]) / 3
+            })
+          }
+        }
+
+        // Sort by depth and render triangles
+        triangles
+          .sort((a, b) => a.z - b.z)
+          .forEach((triangle) => {
+            const projected = triangle.points.map(project)
+
+            // Calculate color based on position and depth
+            const colorIntensity = 0.3 + (0.7 * (triangle.z + 2)) / 4
+            const hue = (triangle.z * 50 + 120) % 360
+
+            ctx.fillStyle = `hsla(${hue}, 70%, ${Math.min(80, colorIntensity * 60)}%, 0.8)`
+            ctx.strokeStyle = `hsla(${hue}, 50%, ${Math.min(90, colorIntensity * 70)}%, 0.6)`
+            ctx.lineWidth = 0.5
+
+            ctx.beginPath()
+            ctx.moveTo(projected[0].x, projected[0].y)
+            ctx.lineTo(projected[1].x, projected[1].y)
+            ctx.lineTo(projected[2].x, projected[2].y)
+            ctx.closePath()
+            ctx.fill()
+            ctx.stroke()
+          })
+      }
+
+      // Generate surface data
+      function generateSurface() {
+        document.getElementById('status').textContent = 'Berechne Oberfläche...'
+        setTimeout(() => {
+          surfaceData = catenoid(innerRadius, outerRadius)
+          render()
+        }, 50)
+      }
+
+      // Animation
+      function animate() {
+        if (isAnimating) {
+          rotationY = (rotationY + 0.5) % 360
+          document.getElementById('rotationY').value = rotationY
+          document.getElementById('rotationYValue').textContent = Math.round(rotationY) + '°'
+          render()
+          requestAnimationFrame(animate)
+        }
+      }
+
+      function toggleAnimation() {
+        isAnimating = !isAnimating
+        if (isAnimating) animate()
+      }
+
+      // Event listeners
+      document.getElementById('rotationY').addEventListener('input', (e) => {
+        rotationY = parseFloat(e.target.value)
+        document.getElementById('rotationYValue').textContent = Math.round(rotationY) + '°'
+        if (!isAnimating) render()
+      })
+
+      document.getElementById('rotationX').addEventListener('input', (e) => {
+        rotationX = parseFloat(e.target.value)
+        document.getElementById('rotationXValue').textContent = Math.round(rotationX) + '°'
+        if (!isAnimating) render()
+      })
+
+      document.getElementById('scale').addEventListener('input', (e) => {
+        scale = parseFloat(e.target.value)
+        document.getElementById('scaleValue').textContent = Math.round(scale) + '%'
+        if (!isAnimating) render()
+      })
+
+      document.getElementById('innerRadius').addEventListener('input', (e) => {
+        innerRadius = parseFloat(e.target.value)
+        generateSurface()
+        document.getElementById('innerRadiusValue').textContent = innerRadius.toFixed(2)
+      })
+
+      document.getElementById('outerRadius').addEventListener('input', (e) => {
+        outerRadius = parseFloat(e.target.value)
+        generateSurface()
+        document.getElementById('outerRadiusValue').textContent = outerRadius.toFixed(1)
+      })
+
+      generateSurface()
+    </script>
+  </body>
+</html>
