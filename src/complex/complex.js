@@ -76,18 +76,16 @@ const parser = (s) => {
 }
 
 splitParam = (s) => {
+  s = s.replace(/\s/g, '')
   const idx = s.indexOf('=>')
-  return {
-    params:
-      idx < 0
-        ? []
-        : s
-            .substring(0, idx)
-            .replace(/[\s()]/g, '')
-            .split(','),
-    expression: idx < 0 ? s : s.substring(idx + 2)
-  }
+  return idx < 0
+    ? { params: [], expression: s }
+    : {
+        params: s.slice(0, idx).replace(/[()]/g, '').split(','),
+        expression: s.slice(idx + 2)
+      }
 }
+
 const C$ = (re, im) => {
   if (typeof re === 'number') return { re: re || 0, im: im || 0 } // C$(1, 1)
   if (typeof re === 'string') {
