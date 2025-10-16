@@ -9,15 +9,19 @@
     <script src="../complex/cops.js"></script>
     <script src="../complex/tokenizer.js"></script>
     <script src="../complex/complex.js"></script>
+    <style>
+      button {
+        font-size: 30px;
+      }
+    </style>
   </head>
 
   <body>
-    <button onclick="Catenoid()">Catenoid</button>
     <button onclick="TwistedCatenoid()">Twisted Catenoid</button>
     <button onclick="Trefoil()">Trefoil</button>
     <button onclick="DoubleTrefoil()">Double Trefoil</button>
     <button onclick="UFO()">UFO</button>
-    <button onclick="Cobra()">Cobra</button>
+    <button onclick="Catenoid()">Catenoid</button>
 
     <div id="div1"></div>
     <div id="div2"></div>
@@ -159,14 +163,13 @@
         Plotly.react(div, surface().map(mapForPlotly), { ...layout, title })
       }
 
-      const Catenoid = () => renderSurface('Catenoid', catenoid)
       const TwistedCatenoid = () => renderSurface('Twisted Catenoid', S41_3_1)
       const Trefoil = () => renderSurface('Trefoil', S41_5_3)
       const DoubleTrefoil = () => renderSurface('Double Trefoil', S41(5, 3, 1.1, 1.5))
       const UFO = () => renderSurface('UFO', S41_5_1)
-      const Cobra = () => renderSurface('Cobra', cobra5())
+      const Catenoid = () => renderSurface('Catenoid', catenoid)
 
-      renderSurface('Twisted Catenoid', catenoid)
+      renderSurface('Twisted Catenoid', S41_3_1)
     </script>
   </body>
 </html>
