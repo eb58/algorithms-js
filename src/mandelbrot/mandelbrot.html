@@ -6,14 +6,15 @@
   </head>
 
   <body>
-    <canvas id="myCanvas" width="1200" height="1200"></canvas>
+    <canvas id="myCanvas" width="1000" height="1000"></canvas>
     <p style="text-align: center">Click the image to zoom in</p>
     <script>
       const range = (n) => [...Array(n).keys()]
 
       const canvas = document.getElementById('myCanvas')
       const { width, height } = canvas
-      const canvasData = canvas.getContext('2d').getImageData(0, 0, width, height)
+      const ctx = canvas.getContext('2d')
+      const canvasData = ctx.getImageData(0, 0, width, height)
 
       const setPixel = (x, y, rgb) => rgb.forEach((n, idx) => (canvasData.data[(x + y * width) * 4 + idx] = n))
 
@@ -23,28 +24,35 @@
         { r: -2.05, i: 1.15 },
         { r: 0.6, i: -1.15 }
       ]
+      let maxIterations = 100
 
-      canvas.addEventListener('click', (e) => {
-        const ZOOM_FACTOR = 0.2
-        const getRelativePoint = (pixel, s, e, d) => s + (pixel / d) * (e - s)
-        const [w, h] = [(bottomRight.r - topLeft.r) * ZOOM_FACTOR, (bottomRight.i - topLeft.i) * ZOOM_FACTOR]
-        const center = {
-          r: getRelativePoint(e.offsetX, topLeft.r, bottomRight.r, width),
-          i: getRelativePoint(e.offsetY, topLeft.i, bottomRight.i, height)
-        }
-        topLeft = { r: center.r - w / 2, i: center.i - h / 2 }
-        bottomRight = { r: center.r + w / 2, i: center.i + h / 2 }
-        startWorker()
-      })
-
-      const startWorker = () => {
-        worker.postMessage({ topLeft, bottomRight, width, height })
+      const startWorker = (topLeft, bottomRight) => {
+        const [dx, dy] = [(bottomRight.r - topLeft.r) / width, (bottomRight.i - topLeft.i) / height]
+        const pixels = range(width).map((x) => range(height).map((y) => ({ r: topLeft.r + x * dx, i: topLeft.i + y * dy })))
+        worker.postMessage({ pixels, maxIterations })
         worker.onmessage = (data) => {
           data.data.forEach((r, ri) => r.forEach((c, ci) => setPixel(ri, ci, c)))
-          canvas.getContext('2d').putImageData(canvasData, 0, 0)
+          ctx.putImageData(canvasData, 0, 0)
         }
       }
-      startWorker()
+
+      const zoom = (event, factor = 3) => {
+        const getRelativePoint = (pixel, s, e, d) => s + (pixel / d) * (e - s)
+        const [w, h] = [(bottomRight.r - topLeft.r) / factor, (bottomRight.i - topLeft.i) / factor]
+        const center = {
+          r: getRelativePoint(event.offsetX, topLeft.r, bottomRight.r, width),
+          i: getRelativePoint(event.offsetY, topLeft.i, bottomRight.i, height)
+        }
+        startWorker({ r: center.r - w / 2, i: center.i - h / 2 }, { r: center.r + w / 2, i: center.i + h / 2 })
+      }
+
+      canvas.addEventListener('click', (e) => zoom(e, 3))
+      canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault()
+        zoom(e, 1 / 3)
+      })
+
+      startWorker(topLeft, bottomRight)
     </script>
   </body>
 </html>
