@@ -8,7 +8,7 @@ const ol = (() => {
   const dec = (x) => x - 1
   const mul = (a, b) => a * b
   const sqr = (x) => x ** 2
-  const cube = (x) => x ** 3
+  const cub = (x) => x ** 3
 
   const gcd = (a, b) => (a % b === 0 ? b : gcd(b, a % b))
   const fac = (x) => prod(range(x).map(inc))
@@ -19,16 +19,7 @@ const ol = (() => {
   ///////////////////////////////////////////////////////////////////////////////////////////////////
 
   const blanks = (n) => ' '.repeat(n)
-  const indent = (s, lev, opts) =>
-    feedX(
-      { fillChars: '   ', prompt: '', ...opts },
-      (opts) =>
-        range(lev)
-          .map(() => opts.fillChars)
-          .join('') +
-        opts.prompt +
-        s
-    )
+  const indent = (s, lev, opts) => feedX({ fillChars: '   ', prompt: '', ...opts }, (opts) => opts.fillChars.repeat(lev) + opts.prompt + s)
   // padding pad,
   // const randomColor = () =>      '#A2F0D9'
   // https://www.kaggle.com/code/parulpandey/10-useful-string-methods-in-python
@@ -214,7 +205,7 @@ const ol = (() => {
     dec,
     mul,
     sqr,
-    cube,
+    cub,
     gcd,
     fac,
     fib, // numerical functions
@@ -306,7 +297,7 @@ const interval = (a, b) => ({
 const num = (x) => ({
   abs: () => ol.abs(x),
   sqr: () => ol.sqr(x),
-  cube: () => ol.cube(x),
+  cub: () => ol.cub(x),
   isInInterval: (a, b) => ol.isInInterval(x, a, b)
 })
 

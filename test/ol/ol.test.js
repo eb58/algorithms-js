@@ -7,7 +7,7 @@ const {
   dec,
   mul,
   sqr,
-  cube,
+  cub,
   gcd,
   fac,
   fib, // numerical functions
@@ -90,10 +90,10 @@ test('simple', () => {
   expect(abs(2)).toEqual(2)
   expect(abs(-2)).toEqual(2)
 
-  expect(cube(0)).toEqual(0)
-  expect(cube(1)).toEqual(1)
-  expect(cube(2)).toEqual(8)
-  expect(cube(3)).toEqual(27)
+  expect(cub(0)).toEqual(0)
+  expect(cub(1)).toEqual(1)
+  expect(cub(2)).toEqual(8)
+  expect(cub(3)).toEqual(27)
 })
 
 test('faculty', () => {
