@@ -9,15 +9,14 @@
     <div style="width: 800px; margin: 0 auto">
       <h1>Mandelbrot Set Viewer</h1>
       <div id="controls">
-        <button onclick="resetView()" id="resetBtn">Zurücksetzen</button>
-        <button onclick="increaseIterations()" id="moreBtn">Mehr Details (+50 Iterationen)</button>
-        <button onclick="decreaseIterations()" id="lessBtn">Weniger Details (-50 Iterationen)</button>
+        <button onclick="resetView()">Zurücksetzen</button>
+        <button onclick="increaseIterations()">Mehr Details (+50 Iterationen)</button>
+        <button onclick="decreaseIterations()">Weniger Details (-50 Iterationen)</button>
+        <button onclick="changeColScheme()">Farbschema</button>
       </div>
       <canvas id="myCanvas" width="800" height="800"></canvas>
       <p style="text-align: center">Click the image to zoom in</p>
-      <p style="text-align: center">
-        Zoom: <span id="zoomLevel">1.0</span>x | Iterationen: <span id="iterations">100</span>
-      </p>
+      <p style="text-align: center">Zoom: <span id="zoomLevel">1.0</span>x | Iterationen: <span id="iterations">100</span></p>
     </div>
     <script>
       const timer = (start = performance.now()) => ({ elapsedTime: () => ((performance.now() - start) / 1000).toFixed(3) })
@@ -27,6 +26,7 @@
       const NCOLORS = 1000
       const COLORS = range(NCOLORS).map(() => [rand255(), rand255(), rand255(), 255])
       const WHITE = [255, 255, 255, 255]
+      const BLACK = [0, 0, 0, 255]
 
       const canvas = document.getElementById('myCanvas')
       const { width, height } = canvas
@@ -40,16 +40,58 @@
       }
       let view = { ...initialView }
 
+      const getColorSimple = (n, maxIterations) => (n >= maxIterations ? WHITE : COLORS[n % NCOLORS])
+      const getColor = (n, maxIterations) => {
+        if (n >= maxIterations) return BLACK
+
+        const ratio = n / maxIterations
+        const hue = ratio * 360
+        const saturation = 100
+        const lightness = ratio < 0.5 ? 50 * ratio * 2 : 50
+
+        const h = hue / 60
+        const c = ((1 - Math.abs((2 * lightness) / 100 - 1)) * saturation) / 100
+        const x = c * (1 - Math.abs((h % 2) - 1))
+        const m = lightness / 100 - c / 2
+
+        let r, g, b
+        if (h < 1) {
+          r = c
+          g = x
+          b = 0
+        } else if (h < 2) {
+          r = x
+          g = c
+          b = 0
+        } else if (h < 3) {
+          r = 0
+          g = c
+          b = x
+        } else if (h < 4) {
+          r = 0
+          g = x
+          b = c
+        } else if (h < 5) {
+          r = x
+          g = 0
+          b = c
+        } else {
+          r = c
+          g = 0
+          b = x
+        }
+        return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255), 255]
+      }
+
+      let getCol = getColorSimple
       const mandelbrot = (cx, cy, maxIterations = 100) => {
-        let x = cx,
-          y = cy,
-          n = 0
+        let [x, y, n] = [cx, cy, 0]
         while (x * x + y * y <= 4 && n++ < maxIterations) {
           const xTemp = x * x - y * y + cx
           y = 2 * x * y + cy
           x = xTemp
         }
-        return n >= maxIterations ? WHITE : COLORS[n % NCOLORS]
+        return getCol(n, maxIterations) // n >= maxIterations ? WHITE : COLORS[n % NCOLORS]
       }
 
       const computeMandelbrot = () => {
@@ -81,17 +123,16 @@
         computeMandelbrot()
       }
 
+
+      // ui actions
       canvas.addEventListener('click', (e) => zoom(e, 0.5))
       canvas.addEventListener('dblclick', (e) => zoom(e, 2))
-
-      const resetView = () => {
-        view = { ...initialView }
-        computeMandelbrot()
-      }
+      const resetView = () => ((view = { ...initialView }), computeMandelbrot())
       const increaseIterations = () => ((view.maxIterations += 50), computeMandelbrot())
       const decreaseIterations = () => ((view.maxIterations = Math.max(100, view.maxIterations - 50)), computeMandelbrot())
+      const changeColScheme = () => ((getCol = getCol === getColorSimple ? getColor : getColorSimple), computeMandelbrot())
       const updateInfo = () => {
-        document.getElementById('zoomLevel').textContent = view.zoomFactor.toFixed(2)
+        document.getElementById('zoomLevel').textContent = view.zoomFactor
         document.getElementById('iterations').textContent = view.maxIterations
       }
 
