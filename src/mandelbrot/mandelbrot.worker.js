@@ -2,6 +2,8 @@ const timer = (start = performance.now()) => ({ elapsedTime: () => (performance.
 
 const mandelbrot = (cx, cy, maxIterations = 100) => {
   let [x, y, n] = [cx, cy, 0]
+  if ((x + 0.25) * (x + 0.25) + y * y < 0.25) return maxIterations
+  if ((x +1) * (x + 1) + y * y < 0.05) return maxIterations
   while (n++ < maxIterations && x * x + y * y <= 4) {
     const xTemp = x * x - y * y + cx
     y = 2 * x * y + cy
@@ -12,26 +14,26 @@ const mandelbrot = (cx, cy, maxIterations = 100) => {
 
 onmessage = (e) => {
   const t = timer()
-  const currentRow = e.data.currentRow
-  const endRow = e.data.endRow
-  const viewHeight = e.data.viewHeight
-  const view = e.data.view
-  const height = e.data.height
-  const width = e.data.width
-  const sm = new Int16Array(e.data.chunkSize * width)
+  const data = e.data
+  const width = data.width
+  const height = data.height
+  const endRow = data.endRow
+  const view = data.view
+  const viewHeight = view.width * (height / width)
 
-  for (let r = currentRow, rr = 0; r < endRow; r++, rr++) {
-    const x = view.centerX + ((r - width / 2) * view.width) / width
+  const sm = new Int16Array((endRow - data.row) * width)
+
+  for (let r = data.row, rr = 0; r < endRow; r++, rr++) {
+    const y = view.centerY + ((r - height / 2) * viewHeight) / height
     for (let c = 0; c < width; c++) {
-      const y = view.centerY + ((c - height / 2) * viewHeight) / height
+      const x = view.centerX + ((c - width / 2) * view.width) / width
       sm[rr * width + c] = mandelbrot(x, y, view.maxIterations)
     }
   }
   // console.log('WORKER', currentRow, t.elapsedTime().toFixed(3))
   postMessage({
-    type: 'complete',
-    chunk: currentRow,
-    result: sm,
+    row: data.row,
+    sm,
     elapsedTime: t.elapsedTime()
   })
 }

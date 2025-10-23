@@ -4,14 +4,19 @@
     <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
     <title>Mandelbrot</title>
   </head>
+  <style>
+    button {
+      font-size: 20px;
+    }
+  </style>
 
-  <body style="width: 1000px; margin: 0 auto">
+  <body style="width: 1000px; margin: 0 auto; font-size: 24px">
     <div style="width: 800px; margin: 0 auto">
       <h1>Mandelbrot Set Viewer</h1>
       <div id="controls">
         <button onclick="resetView()">Zurücksetzen</button>
-        <button onclick="increaseIterations()">Mehr Details (+100 Iterationen)</button>
-        <button onclick="decreaseIterations()">Weniger Details (-100 Iterationen)</button>
+        <button onclick="increaseIterations()">Mehr Details</button>
+        <button onclick="decreaseIterations()">Weniger Details</button>
         <button onclick="changeColScheme()">Farbschema</button>
       </div>
       <canvas id="myCanvas" width="800" height="800"></canvas>
@@ -25,9 +30,10 @@
       const rand255 = () => Math.floor(Math.random() * 255)
 
       const NCOLORS = 1000
-      const COLORS = range(NCOLORS).map(() => [rand255(), rand255(), rand255(), 255])
-      const WHITE = [255, 255, 255, 255]
-      const BLACK = [0, 0, 0, 255]
+      const COLORS = range(NCOLORS).map(() => Uint8ClampedArray.from([rand255(), rand255(), rand255(), 255]))
+      const WHITE = Uint8ClampedArray.from([255, 255, 255, 255])
+      const BLACK = Uint8ClampedArray.from([0, 0, 0, 255])
+      let N_CHUNKS = 1
 
       const canvas = document.getElementById('myCanvas')
       const { width, height } = canvas
@@ -35,9 +41,9 @@
       const imageData = ctx.getImageData(0, 0, width, height)
 
       const initialView = {
-        centerX: -0.5,
+        centerX: -0.75,
         centerY: 0,
-        width: 2.65,
+        width: 2.55,
         maxIterations: 100,
         zoomFactor: 1
       }
@@ -92,51 +98,35 @@
         updateInfo()
 
         const t = timer()
-        const viewHeight = view.width * (height / width)
-        const chunkSize = Math.trunc(height / 16) // rows per chunk
+        const rowsPerChunk = Math.trunc(height / N_CHUNKS) // rows per chunk
 
-        for (let currentRow = 0; currentRow < height; currentRow += chunkSize) {
-          const endRow = Math.min(height, currentRow + chunkSize)
-          worker.postMessage({
-            view,
-            width,
-            height,
-            viewHeight,
-            currentRow,
-            endRow,
-            chunkSize,
-            maxIterations: view.maxIterations
-          })
+        for (let row = 0; row < height; row += rowsPerChunk)
+          worker.postMessage({ view, width, height, row, endRow: Math.min(height, row + rowsPerChunk) })
 
-          let accTime = 0
-          worker.onmessage = (data) => {
-            accTime += data.data.elapsedTime
-            console.log('AAA', t.elapsedTime(), data.data.elapsedTime.toFixed(3), accTime.toFixed(3))
-            data.data.result.forEach((nIter, i1) => getCol(nIter, view.maxIterations).forEach((cc,idx)=> (imageData.data[i1 * 4 + idx] = cc)))
-            ctx.putImageData(imageData, 0, data.data.chunk)
-            console.log('BBB', t.elapsedTime())
-          }
+        let accTime = 0
+        worker.onmessage = (m) => {
+          m.data.sm.forEach((n, i) => imageData.data.set(getCol(n, view.maxIterations), i * 4))
+          ctx.putImageData(imageData, 0, m.data.row)
+
+          accTime += m.data.elapsedTime
+          console.log(t.elapsedTime(), m.data.elapsedTime.toFixed(3), accTime.toFixed(3))
         }
       }
 
-      const zoom = (event, factor = 2) => {
+      const zoom = (event) => {
+        const factor = event.ctrlKey ? 2 : 0.5
         const rect = canvas.getBoundingClientRect()
         const x = event.clientX - rect.left
         const y = event.clientY - rect.top
-        const viewHeight = view.width * (canvas.height / canvas.width)
-        const clickX = view.centerX + (x - canvas.width / 2) * (view.width / canvas.width)
-        const clickY = view.centerY + (y - canvas.height / 2) * (viewHeight / canvas.height)
         view.width *= factor
-        view.centerX = clickX
-        view.centerY = clickY
+        view.centerX = view.centerX + ((x - width / 2) * view.width) / width
+        view.centerY = view.centerY + ((y - height / 2) * view.width) / width
         view.zoomFactor /= factor
         computeMandelbrot()
       }
 
-
-      // ui actions
-      canvas.addEventListener('click', (e) => zoom(e, 0.5))
-      canvas.addEventListener('dblclick', (e) => zoom(e, 2))
+      // UI actions
+      canvas.addEventListener('click', (e) => zoom(e))
       const resetView = () => ((view = { ...initialView }), computeMandelbrot())
       const increaseIterations = () => ((view.maxIterations += 100), computeMandelbrot())
       const decreaseIterations = () => ((view.maxIterations = Math.max(100, view.maxIterations - 100)), computeMandelbrot())
