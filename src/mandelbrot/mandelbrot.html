@@ -133,6 +133,7 @@
         computeMandelbrot()
       }
 
+
       // ui actions
       canvas.addEventListener('click', (e) => zoom(e, 0.5))
       canvas.addEventListener('dblclick', (e) => zoom(e, 2))
@@ -145,7 +146,6 @@
         document.getElementById('iterations').textContent = view.maxIterations
       }
 
-      // start
       computeMandelbrot()
     </script>
   </body>
