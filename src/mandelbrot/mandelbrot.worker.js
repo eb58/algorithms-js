@@ -50,8 +50,8 @@ let getCol = getColor
 
 const mandelbrot = (cx, cy, maxIterations = 100) => {
   let [x, y, n] = [cx, cy, 0]
-  if ((x + 0.25) * (x + 0.25) + y * y < 0.25) return 0
-  if ((x + 1) * (x + 1) + y * y < 0.06) return 0
+  if ((x + 0.25) * (x + 0.25) + y * y < 0.25) return maxIterations
+  if ((x +1) * (x + 1) + y * y < 0.05) return maxIterations
   while (n++ < maxIterations && x * x + y * y <= 4) {
     const xTemp = x * x - y * y + cx
     y = 2 * x * y + cy
@@ -60,26 +60,28 @@ const mandelbrot = (cx, cy, maxIterations = 100) => {
   return n
 }
 
-onmessage = (msg) => {
+onmessage = (e) => {
   const t = timer()
-  const data = msg.data
+  const data = e.data
   const width = data.width
   const height = data.height
+  const endRow = data.endRow
   const view = data.view
   const viewHeight = view.width * (height / width)
 
-  getCol = view.colorScheme === 1 ? getColorSimple : getColor
+  const sm = new Int16Array((endRow - data.row) * width)
 
-  const chunkImageData = new Uint8ClampedArray((data.endRow - data.startRow) * width * 4)
-
-  for (let r = data.startRow, rr = 0; r < data.endRow; r++, rr++) {
+  for (let r = data.row, rr = 0; r < endRow; r++, rr++) {
     const y = view.centerY + ((r - height / 2) * viewHeight) / height
     for (let c = 0; c < width; c++) {
       const x = view.centerX + ((c - width / 2) * view.width) / width
-      const col = getCol(mandelbrot(x, y, view.maxIterations), view.maxIterations, data.COLORS)
-      chunkImageData.set(col, (rr * width + c) * 4)
+      sm[rr * width + c] = mandelbrot(x, y, view.maxIterations)
     }
   }
-  console.log('WORKER', data.n, t.elapsedTime())
-  postMessage({ ...data, chunkImageData })
+  // console.log('WORKER', currentRow, t.elapsedTime().toFixed(3))
+  postMessage({
+    row: data.row,
+    sm,
+    elapsedTime: t.elapsedTime()
+  })
 }
