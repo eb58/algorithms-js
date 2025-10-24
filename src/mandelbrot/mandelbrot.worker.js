@@ -60,28 +60,26 @@ const mandelbrot = (cx, cy, maxIterations = 100) => {
   return n
 }
 
-onmessage = (e) => {
+onmessage = (msg) => {
   const t = timer()
-  const data = e.data
+  const data = msg.data
   const width = data.width
   const height = data.height
-  const endRow = data.endRow
   const view = data.view
   const viewHeight = view.width * (height / width)
 
-  const sm = new Int16Array((endRow - data.row) * width)
+  getCol = view.colorScheme === 1 ? getColorSimple : getColor
 
-  for (let r = data.row, rr = 0; r < endRow; r++, rr++) {
+  const chunkImageData = new Uint8ClampedArray((data.endRow - data.startRow) * width * 4)
+
+  for (let r = data.startRow, rr = 0; r < data.endRow; r++, rr++) {
     const y = view.centerY + ((r - height / 2) * viewHeight) / height
     for (let c = 0; c < width; c++) {
       const x = view.centerX + ((c - width / 2) * view.width) / width
-      sm[rr * width + c] = mandelbrot(x, y, view.maxIterations)
+      const col = getCol(mandelbrot(x, y, view.maxIterations), view.maxIterations, data.COLORS)
+      chunkImageData.set(col, (rr * width + c) * 4)
     }
   }
-  // console.log('WORKER', currentRow, t.elapsedTime().toFixed(3))
-  postMessage({
-    row: data.row,
-    sm,
-    elapsedTime: t.elapsedTime()
-  })
+  console.log('WORKER', data.n, t.elapsedTime())
+  postMessage({ ...data, chunkImageData })
 }
