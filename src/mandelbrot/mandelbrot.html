@@ -9,7 +9,6 @@
       font-size: 20px;
     }
   </style>
-
   <body style="width: 1000px; margin: 0 auto; font-size: 24px">
     <div style="width: 800px; margin: 0 auto">
       <h1>Mandelbrot Set Viewer</h1>
@@ -19,22 +18,16 @@
         <button onclick="decreaseIterations()">Weniger Details</button>
         <button onclick="changeColScheme()">Farbschema</button>
       </div>
-      <canvas id="myCanvas" width="800" height="800"></canvas>
+      <canvas id="myCanvas" width="1000" height="1000"></canvas>
       <p style="text-align: center">Click the image to zoom in</p>
       <p style="text-align: center">Zoom: <span id="zoomLevel">1.0</span>x | Iterationen: <span id="iterations">100</span></p>
     </div>
     <script>
-      const worker = new Worker('mandelbrot.worker.js')
-      const timer = (start = performance.now()) => ({ elapsedTime: () => ((performance.now() - start) / 1000).toFixed(3) })
       const range = (n) => [...Array(n).keys()]
+      const timer = (start = performance.now()) => ({ elapsedTime: () => ((performance.now() - start) / 1000).toFixed(3) })
       const rand255 = () => Math.floor(Math.random() * 255)
 
-      const NCOLORS = 1000
-      const COLORS = range(NCOLORS).map(() => Uint8ClampedArray.from([rand255(), rand255(), rand255(), 255]))
-      const WHITE = Uint8ClampedArray.from([255, 255, 255, 255])
-      const BLACK = Uint8ClampedArray.from([0, 0, 0, 255])
-      let N_CHUNKS = 1
-
+      const COLORS = range(100).map(() => Uint8ClampedArray.from([rand255(), rand255(), rand255(), 255]))
       const canvas = document.getElementById('myCanvas')
       const { width, height } = canvas
       const ctx = canvas.getContext('2d')
@@ -45,71 +38,37 @@
         centerY: 0,
         width: 2.55,
         maxIterations: 100,
-        zoomFactor: 1
+        zoomFactor: 1,
+        colorScheme: 1
       }
       let view = { ...initialView }
 
-      const getColorSimple = (n, maxIterations) => (n >= maxIterations ? WHITE : COLORS[n % NCOLORS])
-      const getColor = (n, maxIterations) => {
-        if (n >= maxIterations) return BLACK
-
-        const ratio = n / maxIterations
-        const hue = ratio * 360
-        const saturation = 100
-        const lightness = ratio < 0.5 ? 50 * ratio * 2 : 50
-
-        const h = hue / 60
-        const c = ((1 - Math.abs((2 * lightness) / 100 - 1)) * saturation) / 100
-        const x = c * (1 - Math.abs((h % 2) - 1))
-        const m = lightness / 100 - c / 2
-
-        let r, g, b
-        if (h < 1) {
-          r = c
-          g = x
-          b = 0
-        } else if (h < 2) {
-          r = x
-          g = c
-          b = 0
-        } else if (h < 3) {
-          r = 0
-          g = c
-          b = x
-        } else if (h < 4) {
-          r = 0
-          g = x
-          b = c
-        } else if (h < 5) {
-          r = x
-          g = 0
-          b = c
-        } else {
-          r = c
-          g = 0
-          b = x
+      let N_CHUNKS = 16
+      let RECEIVED_CHUNKS = 0
+      let t = timer()
+      const workers = range(N_CHUNKS).map(() => {
+        const worker = new Worker('mandelbrot.worker.js')
+        worker.onmessage = (msg) => {
+          // console.log('MAIN RECEIVED', msg.data)
+          imageData.data.set(msg.data.chunkImageData, msg.data.startRow * width * 4)
+          if (++RECEIVED_CHUNKS === N_CHUNKS) {
+            console.log('finished', t.elapsedTime())
+            ctx.putImageData(imageData, 0, 0)
+          }
         }
-        return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255), 255]
-      }
-
-      let getCol = getColorSimple
+        return worker
+      })
 
       const computeMandelbrot = () => {
         updateInfo()
+        t = timer()
+        RECEIVED_CHUNKS = 0
 
-        const t = timer()
         const rowsPerChunk = Math.trunc(height / N_CHUNKS) // rows per chunk
-
-        for (let row = 0; row < height; row += rowsPerChunk)
-          worker.postMessage({ view, width, height, row, endRow: Math.min(height, row + rowsPerChunk) })
-
-        let accTime = 0
-        worker.onmessage = (m) => {
-          m.data.sm.forEach((n, i) => imageData.data.set(getCol(n, view.maxIterations), i * 4))
-          ctx.putImageData(imageData, 0, m.data.row)
-
-          accTime += m.data.elapsedTime
-          console.log(t.elapsedTime(), m.data.elapsedTime.toFixed(3), accTime.toFixed(3))
+        for (let n = 0; n < N_CHUNKS; n++) {
+          const startRow = n * rowsPerChunk
+          const endRow = Math.min(height, startRow + rowsPerChunk)
+          workers[n].postMessage({ n, view, width, height, startRow, endRow, COLORS })
         }
       }
 
@@ -130,7 +89,7 @@
       const resetView = () => ((view = { ...initialView }), computeMandelbrot())
       const increaseIterations = () => ((view.maxIterations += 100), computeMandelbrot())
       const decreaseIterations = () => ((view.maxIterations = Math.max(100, view.maxIterations - 100)), computeMandelbrot())
-      const changeColScheme = () => ((getCol = getCol === getColorSimple ? getColor : getColorSimple), computeMandelbrot())
+      const changeColScheme = () => ((view.colorScheme = 3 - view.colorScheme), computeMandelbrot())
       const updateInfo = () => {
         document.getElementById('zoomLevel').textContent = view.zoomFactor
         document.getElementById('iterations').textContent = view.maxIterations
