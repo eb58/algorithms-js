@@ -1,5 +1,4 @@
 const range = (n) => [...Array(n).keys()]
-const timer = (start = performance.now()) => ({ elapsedTime: () => ((performance.now() - start) / 1000).toFixed(3) })
 const WHITE = Uint8ClampedArray.from([255, 255, 255, 255])
 const BLACK = Uint8ClampedArray.from([0, 0, 0, 255])
 
@@ -9,12 +8,12 @@ const getColor = (n, maxIterations) => {
 
   const ratio = n / maxIterations
   const hue = ratio * 360
-  const lightness = ratio < 0.5 ? 100 * ratio : 50
+  const lightness = (ratio < 0.5 ? 100 * ratio : 50)/100
 
   const h = hue / 60
-  const c = 1 - Math.abs((2 * lightness) / 100 - 1)
+  const c = 1 - Math.abs((2 * lightness)  - 1)
   const x = c * (1 - Math.abs((h % 2) - 1))
-  const m = lightness / 100 - c / 2
+  const m = lightness  - c / 2
 
   let r, g, b
   if (h < 1) [r, g, b] = [c, x, 0]
@@ -60,6 +59,5 @@ onmessage = (msg) => {
       chunkImageData.set(col, (rr * width + c) * 4)
     }
   }
-  // console.log('WORKER', data.n, t.elapsedTime())
   postMessage({ ...data, chunkImageData })
 }
