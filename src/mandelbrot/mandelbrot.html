@@ -6,11 +6,12 @@
   </head>
   <style>
     button {
-      font-size: 20px;
+      font-size: 24px;
+      margin: 5px 0 10px 0;
     }
   </style>
-  <body style="width: 1000px; margin: 0 auto; font-size: 24px">
-    <div style="width: 800px; margin: 0 auto">
+  <body>
+    <div style="width: 800px; margin: 10px">
       <h1>Mandelbrot Set Viewer</h1>
       <div id="controls">
         <button onclick="resetView()">Zurücksetzen</button>
@@ -49,7 +50,6 @@
       const workers = range(N_CHUNKS).map(() => {
         const worker = new Worker('mandelbrot.worker.js')
         worker.onmessage = (msg) => {
-          // console.log('MAIN RECEIVED', msg.data)
           imageData.data.set(msg.data.chunkImageData, msg.data.startRow * width * 4)
           if (++RECEIVED_CHUNKS === N_CHUNKS) {
             console.log('finished', t.elapsedTime())

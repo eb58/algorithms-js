@@ -52,6 +52,7 @@ const mandelbrot = (cx, cy, maxIterations = 100) => {
   let [x, y, n] = [cx, cy, 0]
   if ((x + 0.25) * (x + 0.25) + y * y < 0.25) return maxIterations
   if ((x +1) * (x + 1) + y * y < 0.05) return maxIterations
+  // eleganter aber langsamer ! while (n++ < maxIterations && x * x + y * y <= 4) [x, y] = [x * x - y * y + cx, 2 * x * y + cy]
   while (n++ < maxIterations && x * x + y * y <= 4) {
     const xTemp = x * x - y * y + cx
     y = 2 * x * y + cy
@@ -61,7 +62,6 @@ const mandelbrot = (cx, cy, maxIterations = 100) => {
 }
 
 onmessage = (msg) => {
-  const t = timer()
   const data = msg.data
   const width = data.width
   const height = data.height
@@ -80,6 +80,6 @@ onmessage = (msg) => {
       chunkImageData.set(col, (rr * width + c) * 4)
     }
   }
-  console.log('WORKER', data.n, t.elapsedTime())
+  // console.log('WORKER', data.n, t.elapsedTime())
   postMessage({ ...data, chunkImageData })
 }
