@@ -7,21 +7,22 @@
   <style>
     button {
       font-size: 24px;
-      margin: 5px 0 10px 0;
+      margin: 5px 0 20px 0;
     }
   </style>
   <body>
     <div style="width: 800px; margin: 10px">
       <h1>Mandelbrot Set Viewer</h1>
+      <canvas id="myCanvas" width="800" height="800"></canvas>
       <div id="controls">
         <button onclick="resetView()">Zurücksetzen</button>
-        <button onclick="increaseIterations()">Mehr Details</button>
-        <button onclick="decreaseIterations()">Weniger Details</button>
         <button onclick="changeColScheme()">Farbschema</button>
+        <label for="iterSlider">Iterationen</label>
+        <input onchange="changeIteration(this.value)" type="range" min="100" max="2000" value="100" id="iterSlider" />
+        <span id="iterations">100</span>
       </div>
-      <canvas id="myCanvas" width="1000" height="1000"></canvas>
       <p style="text-align: center">Click the image to zoom in</p>
-      <p style="text-align: center">Zoom: <span id="zoomLevel">1.0</span>x | Iterationen: <span id="iterations">100</span></p>
+      <p style="text-align: center">Zoom: <span id="zoomLevel">1.0</span>x </p>
     </div>
     <script>
       const range = (n) => [...Array(n).keys()]
@@ -87,9 +88,8 @@
       // UI actions
       canvas.addEventListener('click', (e) => zoom(e))
       const resetView = () => ((view = { ...initialView }), computeMandelbrot())
-      const increaseIterations = () => ((view.maxIterations += 100), computeMandelbrot())
-      const decreaseIterations = () => ((view.maxIterations = Math.max(100, view.maxIterations - 100)), computeMandelbrot())
       const changeColScheme = () => ((view.colorScheme = 3 - view.colorScheme), computeMandelbrot())
+      const changeIteration = (val) => (view.maxIterations = val, computeMandelbrot())
       const updateInfo = () => {
         document.getElementById('zoomLevel').textContent = view.zoomFactor
         document.getElementById('iterations').textContent = view.maxIterations
