@@ -315,8 +315,11 @@ test('num', () => {
   expect(num(1).sqr()).toBe(1)
   expect(num(2).sqr()).toBe(4)
 
+  expect(num(0).cub()).toBe(0)
   expect(num(0).cube()).toBe(0)
+  expect(num(1).cub()).toBe(1)
   expect(num(1).cube()).toBe(1)
+  expect(num(2).cub()).toBe(8)
   expect(num(2).cube()).toBe(8)
 
   expect(num(0).abs()).toBe(0)
@@ -371,6 +374,7 @@ test('array wrapper', () => {
   expect(array([]).without(3)).toEqual([])
   expect(array([3]).without(3)).toEqual([])
   expect(array([1]).without(3)).toEqual([1])
+  expect(array([1, 2, 3]).withoutIndex(1)).toEqual([1, 3])
   expect(array([1]).max()).toEqual(1)
 
   expect(array([]).max()).toEqual(undefined)

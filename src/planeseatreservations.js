@@ -1,7 +1,10 @@
 // You have a plane with N rows and seats ABC DEFG HIK for every row
 // And you have given a String with reservations i.e. '1A 1B 1D 2B 11F'
 // Compute number of remaining triples of adjacent seats.
-const range = (n) => [...Array(n).keys()]
+const { ol } = require('./ol')
+
+const range = (n) => [...new Array(n).keys()]
+const { feedX } = ol
 
 const solution1 = (N, reservationsAsString) => feedX(reservationsAsString.split(' '), reservations => {
   const makeRow = (r) =>
@@ -34,4 +37,4 @@ const test = (sol) =>
   sol(12, '1A 1B 2D 2E 2F') === 34 &&
   sol(12, '11A 11B 2D 2E 2F') === 34
 
-test(solution1) && test(solution2)
+if (typeof module !== 'undefined' && module.exports) module.exports = { solution1, solution2, adjustSol, test }

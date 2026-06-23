@@ -297,6 +297,7 @@ const interval = (a, b) => ({
 const num = (x) => ({
   abs: () => ol.abs(x),
   sqr: () => ol.sqr(x),
+  cube: () => ol.cub(x),
   cub: () => ol.cub(x),
   isInInterval: (a, b) => ol.isInInterval(x, a, b)
 })
@@ -311,7 +312,7 @@ const array = (xs) => ({
 
   patch: (idx, val) => ol.patch(xs, idx, val),
   without: (x) => ol.without(xs, x),
-  withoutIndex: (idx) => ol.withoutIndex(idx),
+  withoutIndex: (idx) => ol.withoutIndex(xs, idx),
   shuffle: () => ol.shuffle(xs),
   flatten: () => ol.flatten(xs),
   uniq: () => ol.uniq(xs),

@@ -7,6 +7,7 @@ const V$ = (() => {
     neg: (v) => V$(v.map((x) => -x)),
     add: (v1, v2) => V$(zip(v1, v2, (x, y) => x + y)),
     sub: (v1, v2) => V$(zip(v1, v2, (x, y) => x - y)),
+    pow: (v1, v2) => (Array.isArray(v2) ? V$(zip(v1, v2, (x, y) => x ** y)) : V$(v1.map((x) => x ** v2))),
     scalarproduct: (v1, v2) => zip(v1, v2, (x, y) => x * y).reduce((sum, x) => sum + x, 0)
   };
 
@@ -15,64 +16,65 @@ const V$ = (() => {
     const tokens = t.getTOKENS();
 
     let token;
+    const is = (kind) => token.symbol === kind;
 
     const operand = () => {
       token = t.getToken();
-      if (token.token === tokens.minus) return vops.neg(operand());
-      if (token.token === tokens.plus) return operand();
+      if (is(tokens.minus)) return vops.neg(operand());
+      if (is(tokens.plus)) return operand();
       // ???? if (token.token === tokens.number) return C$(token.value);
-      if (token.token === tokens.lparen) {
+      if (is(tokens.lparen)) {
         const ret = expression();
-        if (token.token !== tokens.rparen) throw Error(`Closing bracket not found!. Pos:${t.strpos()}`);
+        if (!is(tokens.rparen)) throw new Error(`Closing bracket not found!. Pos:${t.strpos()}`);
         return ret;
       }
-      if (token.token === tokens.lbracket) {
+      if (is(tokens.lbracket)) {
         const ret = [];
         token = t.getToken();
-        while ((token).token === tokens.number) {
+        while (is(tokens.number)) {
           ret.push(token.value);
           token = t.getToken();
-          if( token.token === tokens.comma ) token = t.getToken();
+          if (is(tokens.comma)) token = t.getToken();
         }
-        if (token.token !== tokens.rbracket) throw Error(`rbracket not found!. Pos:${t.strpos()}`);
+        if (!is(tokens.rbracket)) throw new Error(`rbracket not found!. Pos:${t.strpos()}`);
         return ret;
       }
-      if (token.token === tokens.ident) {
+      if (is(tokens.ident)) {
         const valOrFct = varsOrFcts[token.name];
-        if (!valOrFct) throw Error(`Unknown identifier ${token.name}. Pos:${t.strpos()}`);
+        if (!valOrFct) throw new Error(`Unknown identifier ${token.name}. Pos:${t.strpos()}`);
         if (typeof valOrFct !== 'function') return V$(valOrFct);
         token = t.getToken();
         const expressions = [expression()];
-        while (token.token === tokens.comma) expressions.push(expression());
-        if (token.token !== tokens.rparen) throw Error(`Closing bracket not found! Pos:${t.strpos()}`);
+        while (is(tokens.comma)) expressions.push(expression());
+        if (!is(tokens.rparen)) throw new Error(`Closing bracket not found! Pos:${t.strpos()}`);
         return valOrFct(...expressions);
       }
-      throw Error(`Operand expected. Pos:${t.strpos()}`);
+      throw new Error(`Operand expected. Pos:${t.strpos()}`);
     };
 
     const term = () => {
       const val = operand();
       token = t.getToken();
-      return token.token !== tokens.pow ? val : vops.pow(val, term());
+      return is(tokens.pow) ? vops.pow(val, term()) : val;
     };
 
     const factor = () => {
       const val = term();
-      if (token.token === tokens.times) return vops.scalarproduct(val, term());
+      if (is(tokens.times)) return vops.scalarproduct(val, term());
       return val;
     };
 
     const expression = () => {
       let val = factor();
-      while (token.token === tokens.plus || token.token === tokens.minus) {
-        if (token.token === tokens.plus) val = vops.add(val, factor());
-        if (token.token === tokens.minus) val = vops.sub(val, factor());
+      while (is(tokens.plus) || is(tokens.minus)) {
+        if (is(tokens.plus)) val = vops.add(val, factor());
+        if (is(tokens.minus)) val = vops.sub(val, factor());
       }
       return val;
     };
 
     const val = expression();
-    if (token.token !== tokens.end) throw Error(`Unexpected symbol. Pos:${t.strpos()}`);
+    if (!is(tokens.end)) throw new Error(`Unexpected symbol. Pos:${t.strpos()}`);
     //** console.log('***', s, val, varsOrFcts, params || '' );
     return val;
   };
@@ -80,7 +82,7 @@ const V$ = (() => {
   return (expr, vars) => {
     if (typeof expr === 'string') return evalVectorExpression(expr, vars); // V$("v1 + v2") ->
     if (typeof expr === 'object') return expr;
-    throw Error(`False initialisation of V$ ${expr}`);
+    throw new Error(`False initialisation of V$ ${expr}`);
   };
 })();
 
