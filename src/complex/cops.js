@@ -60,4 +60,5 @@ let cops = {
   toString
 }
 
+if (typeof globalThis !== 'undefined') globalThis.cops = cops
 if (typeof module !== 'undefined' && module.exports) module.exports = cops

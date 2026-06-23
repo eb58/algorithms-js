@@ -1,4 +1,4 @@
-if (typeof tokenizer === 'undefined') tokenizer = require('./complex/tokenizer.js');
+const tokenizerRef = typeof tokenizer === 'undefined' ? require('./complex/tokenizer.js') : tokenizer;
 
 const V$ = (() => {
   const zip = (xs, ys, f) => xs.map((x, i) => (f ? f(x, ys[i]) : [x, ys[i]]));
@@ -12,7 +12,7 @@ const V$ = (() => {
   };
 
   const evalVectorExpression = (s, varsOrFcts = {}) => {
-    const t = tokenizer(s);
+    const t = tokenizerRef(s);
     const tokens = t.getTOKENS();
 
     let token;

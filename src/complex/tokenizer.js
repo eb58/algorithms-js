@@ -1,4 +1,4 @@
-tokenizer = (input) => {
+const tokenizer = (input) => {
   const TOKENS = Object.freeze({
     ident: 'ident',
     number: 'number',
@@ -82,4 +82,5 @@ tokenizer = (input) => {
   }
 }
 
+if (typeof globalThis !== 'undefined') globalThis.tokenizer = tokenizer
 if (typeof module !== 'undefined' && module.exports) module.exports = tokenizer

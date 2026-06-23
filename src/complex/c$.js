@@ -1,32 +1,33 @@
-if (typeof tokenizer === 'undefined') tokenizer = require('./tokenizer.js')
-if (typeof cops === 'undefined') cops = require('./cops.js')
+const tokenizerRef = typeof tokenizer === 'undefined' ? require('./tokenizer.js') : tokenizer
+const copsRef = typeof cops === 'undefined' ? require('./cops.js') : cops
 
 const C$ = (() => {
   const evalComplex = (s, scope = {}) => {
-    const t = tokenizer(s)
+    const t = tokenizerRef(s)
     const TOKENS = t.getTOKENS()
+    const is = (kind) => token.symbol === kind
 
-    scope = { ...scope, ...cops }
+    scope = { ...copsRef, ...scope }
     let token
 
     const operand = () => {
       token = t.getToken()
-      if (token.symbol === TOKENS.minus) return cops.neg(operand())
-      if (token.symbol === TOKENS.plus) return operand()
-      if (token.symbol === TOKENS.number) return C$(token.value)
-      if (token.symbol === TOKENS.lparen) {
+      if (is(TOKENS.minus)) return copsRef.neg(operand())
+      if (is(TOKENS.plus)) return operand()
+      if (is(TOKENS.number)) return C$(token.value)
+      if (is(TOKENS.lparen)) {
         const ret = expression()
-        if (token.symbol !== TOKENS.rparen) throw Error(`Closing bracket not found!. Pos:${t.strpos()}`)
+        if (!is(TOKENS.rparen)) throw Error(`Closing bracket not found!. Pos:${t.strpos()}`)
         return ret
       }
-      if (token.symbol === TOKENS.ident) {
+      if (is(TOKENS.ident)) {
         const valOrFct = scope[token.name]
-        if (!valOrFct) throw Error(`Unknown identifier ${token.name}. Pos:${t.strpos()}`)
+        if (!Object.hasOwn(scope, token.name)) throw Error(`Unknown identifier ${token.name}. Pos:${t.strpos()}`)
         if (typeof valOrFct !== 'function') return C$(valOrFct)
         token = t.getToken()
         const expressions = [expression()]
-        while (token.symbol === TOKENS.comma) expressions.push(expression())
-        if (token.symbol !== TOKENS.rparen) throw Error(`Closing bracket not found! Pos:${t.strpos()}`)
+        while (is(TOKENS.comma)) expressions.push(expression())
+        if (!is(TOKENS.rparen)) throw Error(`Closing bracket not found! Pos:${t.strpos()}`)
         return valOrFct(...expressions)
       }
       throw Error(`Operand expected. Pos:${t.strpos()}`)
@@ -35,29 +36,29 @@ const C$ = (() => {
     const term = () => {
       const val = operand()
       token = t.getToken()
-      return token.symbol !== TOKENS.pow ? val : cops.pow(val, term())
+      return !is(TOKENS.pow) ? val : copsRef.pow(val, term())
     }
 
     const factor = () => {
       let val = term()
-      while (token.symbol === TOKENS.times || token.symbol === TOKENS.divide) {
-        if (token.symbol === TOKENS.times) val = cops.mul(val, term())
-        if (token.symbol === TOKENS.divide) val = cops.div(val, term())
+      while (is(TOKENS.times) || is(TOKENS.divide)) {
+        if (is(TOKENS.times)) val = copsRef.mul(val, term())
+        if (is(TOKENS.divide)) val = copsRef.div(val, term())
       }
       return val
     }
 
     const expression = () => {
       let val = factor()
-      while (token.symbol === TOKENS.plus || token.symbol === TOKENS.minus) {
-        if (token.symbol === TOKENS.plus) val = cops.add(val, factor())
-        if (token.symbol === TOKENS.minus) val = cops.sub(val, factor())
+      while (is(TOKENS.plus) || is(TOKENS.minus)) {
+        if (is(TOKENS.plus)) val = copsRef.add(val, factor())
+        if (is(TOKENS.minus)) val = copsRef.sub(val, factor())
       }
       return val
     }
 
     const val = expression()
-    if (token.symbol !== TOKENS.end) throw Error(`Unexpected symbol. Pos:${t.strpos()}`)
+    if (!is(TOKENS.end)) throw Error(`Unexpected symbol. Pos:${t.strpos()}`)
     //** console.log('***', s, val, varsOrFcts, params || '' );
     return val
   }

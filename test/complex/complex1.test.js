@@ -87,6 +87,12 @@ test('simple calculations with variables', () => {
   expect(C$('a - b + c', vars2)).toEqual(C$('(a - b) + c', vars2))
 })
 
+test('variables with falsy values and param shadowing', () => {
+  expect(C$('a', { a: 0 })).toEqual(C$(0))
+  expect(C$('(a) => a + 1', { a: 9 })(0)).toEqual(C$(1))
+  expect(C$('(a) => a + b', { a: 9, b: 2 })(0)).toEqual(C$(2))
+})
+
 test('complexFunction type 1', () => {
   // call functions of form (z) => f(z) e.g. csqr = z => C$(z*z)
   expect(csqr(1)).toEqual(C$(1))
