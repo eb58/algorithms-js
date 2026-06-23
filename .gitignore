@@ -1,7 +1,4 @@
 node_modules
 .history
-Oneliners.pdf
 ts-built
-/.idea/algorithms-js.iml
-/.idea/jsLibraryMappings.xml
-/.idea/modules.xml
+test/fixtures
