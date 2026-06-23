@@ -38,7 +38,7 @@ const toString = (c) => {
   return c.re === 0 ? ii : `${c.re}${c.im < 0 ? '' : '+'}${ii}`
 }
 
-let cops = {
+const cops = {
   i: { re: 0, im: 1 },
   pi: { re: Math.PI, im: 0 },
   e: { re: Math.E, im: 0 },

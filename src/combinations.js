@@ -2,7 +2,7 @@ const { ol, bitset, array } = require('./ol')
 const { range } = ol
 
 // comb1 - fastest solution
-comb1 = (xs, k, pred) => {
+const comb1 = (xs, k, pred) => {
   const result = []
   const res = []
 
@@ -24,23 +24,23 @@ comb1 = (xs, k, pred) => {
 }
 
 // comb1a - similar to comb1
-comb1a = (xs, k) => {
+const comb1a = (xs, k) => {
   const result = []
-  combX = (sofar, rest, k) =>
+  const combX = (sofar, rest, k) =>
     k === 0 ? result.push(sofar) : range(rest.length).forEach((i) => combX([...sofar, rest[i]], rest.slice(i + 1), k - 1))
   combX([], xs, k)
   return result
 }
 
 // comb2 - Most elegant solution
-comb2 = (xs, k) =>
+const comb2 = (xs, k) =>
   !k ? [[]] : range(xs.length - k + 1).reduce((a, i) => [...a, ...comb2(xs.slice(i + 1), k - 1).map((ys) => [xs[i], ...ys])], [])
 
 {
   // combinations for Set
-  slice = (S, n) => new Set([...S].slice(n))
-  at = (S, i) => [...S][i]
-  combS = (S, k) =>
+  const slice = (S, n) => new Set([...S].slice(n))
+  const at = (S, i) => [...S][i]
+  const combS = (S, k) =>
     !k
       ? [[]]
       : range(S.size - k + 1).reduce((a, i) => {
@@ -48,7 +48,7 @@ comb2 = (xs, k) =>
         }, [])
 }
 
-combBS = (S, k) =>
+const combBS = (S, k) =>
   !k
     ? [[]]
     : range(bitset.size(S) - k + 1).reduce((a, i) => {
@@ -56,7 +56,7 @@ combBS = (S, k) =>
       }, [])
 
 // comb3 --- too slow  but quite interesting!!!
-comb3a = (xs, k) =>
+const comb3a = (xs, k) =>
   k === 1
     ? xs.map((x) => [x])
     : comb3a(xs, k - 1).reduce(

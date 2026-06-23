@@ -2,7 +2,7 @@ const decorateFunction =
   (f, decorator) =>
   (...args) => {
     if (decorator.before && decorator.before()) {
-      const res = f(args)
+      const res = f(...args)
       decorator.after && decorator.after()
       return res
     }
@@ -10,14 +10,16 @@ const decorateFunction =
 
 const counter = (cnt = 0) => ({ before: () => cnt++, cnt: () => cnt })
 
-let fib = (x) => (x <= 2 ? 1 : fib(x - 1) + fib(x - 2))
+const fib = (x) => (x <= 2 ? 1 : fib(x - 1) + fib(x - 2))
 
-const c = counter()
-fib = decorateFunction(fib, c)
-fib(10)
-console.log(c.cnt())
+const runDemo = () => {
+  const c = counter()
+  const decoratedFib = decorateFunction(fib, c)
+  decoratedFib(10)
 
-const d = counter()
-fib = decorateFunction(fib, d)
-fib(5)
-console.log(d.cnt())
+  const d = counter()
+  const decoratedFib2 = decorateFunction(decoratedFib, d)
+  decoratedFib2(5)
+}
+
+if (typeof module !== 'undefined' && module.exports) module.exports = { decorateFunction, counter, fib, runDemo }
