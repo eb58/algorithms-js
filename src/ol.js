@@ -198,6 +198,36 @@ const ol = (() => {
       console.log('..'.repeat(--lev) + 'res:', res, '# of calls:', ++cnt, 'time:' + t.elapsedTime())
       return res
     }
+
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+  // caching
+  ///////////////////////////////////////////////////////////////////////////////////////////////////
+
+  const cache = (ttl = 1, c = {}) => ({
+    // ttl = time to live in secs - 0 meaning live forever
+    add: (key, val) => (c[key] = { val, validUntil: Date.now() + (ttl || 3600 * 1000) * 1000 }), // 3600 * 1000 -> 1000 hours -> living almost forever!
+    get: (key) => (Date.now() < c[key]?.validUntil ? c[key].val : undefined),
+    cleaner: () =>
+      (c = Object.keys(c)
+        .filter((k) => c[k].validUntil >= Date.now())
+        .reduce((acc, k) => ({ ...acc, [k]: c[k] }), {}))
+  })
+
+  const memoize =
+    (f, c = cache()) =>
+    (x) =>
+      c.get(x) === undefined ? c.add(x, f(x)).val : c.get(x)
+
+  const simpleCache = (c = {}) => ({ add: (key, val) => (c[key] = val), get: (key) => c[key] })
+  const memoizeX =
+    (f, insertCondition = () => true, hash = (x) => x, c = simpleCache()) =>
+    (...args) => {
+      const h = hash(...args)
+      if (c.get(h) !== undefined) return c.get(h)
+      const val = f(...args)
+      return insertCondition(...args) ? c.add(h, val) : val
+    }
+
   return {
     abs,
     add,
@@ -269,7 +299,11 @@ const ol = (() => {
     counter,
     timer,
     log,
-    logtor // helpers
+    logtor, // helpers
+    simpleCache,
+    cache,
+    memoize,
+    memoizeX
   }
 })()
 
@@ -364,35 +398,6 @@ const matrix = {
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-// caching
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-const cache = (ttl = 1, c = {}) => ({
-  // ttl = time to live in secs - 0 meaning live forever
-  add: (key, val) => (c[key] = { val, validUntil: Date.now() + (ttl || 3600 * 1000) * 1000 }), // 3600 * 1000 -> 1000 hours -> living almost forever!
-  get: (key) => (Date.now() < c[key]?.validUntil ? c[key].val : undefined),
-  cleaner: () =>
-    (c = Object.keys(c)
-      .filter((k) => c[k].validUntil >= Date.now())
-      .reduce((acc, k) => ({ ...acc, [k]: c[k] }), {}))
-})
-
-const memoize =
-  (f, c = cache()) =>
-  (x) =>
-    c.get(x) === undefined ? c.add(x, f(x)).val : c.get(x)
-
-const simpleCache = (c = {}) => ({ add: (key, val) => (c[key] = val), get: (key) => c[key] })
-const memoizeX =
-  (f, insertCondition = () => true, hash = (x) => x, c = simpleCache()) =>
-  (...args) => {
-    const h = hash(...args)
-    if (c.get(h) !== undefined) return c.get(h)
-    const val = f(...args)
-    return insertCondition(...args) ? c.add(h, val) : val
-  }
-
-///////////////////////////////////////////////////////////////////////////////////////////////////
 // bitset
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 const bitset = {
@@ -463,7 +468,7 @@ if (typeof module !== 'undefined')
     bitset,
     vector,
     matrix,
-    simpleCache,
-    cache,
-    memoize
+    simpleCache: ol.simpleCache,
+    cache: ol.cache,
+    memoize: ol.memoize
   }

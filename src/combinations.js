@@ -3,6 +3,8 @@ const { range } = ol
 
 // comb1 - fastest solution
 const comb1 = (xs, k, pred) => {
+  if (k === 0) return [[]]
+  if (k > xs.length) return []
   const result = []
   const res = []
 

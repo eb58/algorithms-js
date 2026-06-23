@@ -39,6 +39,7 @@ const V$ = (() => {
         if (!is(tokens.rbracket)) throw new Error(`rbracket not found!. Pos:${t.strpos()}`);
         return ret;
       }
+      if (is(tokens.number)) return token.value;
       if (is(tokens.ident)) {
         const valOrFct = varsOrFcts[token.name];
         if (!valOrFct) throw new Error(`Unknown identifier ${token.name}. Pos:${t.strpos()}`);
@@ -55,7 +56,14 @@ const V$ = (() => {
     const term = () => {
       const val = operand();
       token = t.getToken();
-      return is(tokens.pow) ? vops.pow(val, term()) : val;
+      if (is(tokens.pow)) {
+        token = t.getToken();
+        if (!is(tokens.number)) throw new Error(`Operand expected. Pos:${t.strpos()}`);
+        const rhs = token.value;
+        token = t.getToken();
+        return vops.pow(val, rhs);
+      }
+      return val;
     };
 
     const factor = () => {

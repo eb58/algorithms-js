@@ -30,4 +30,10 @@ test('bitset', () => {
     expect(bitset.contains(bs1, 12)).toBe(false);
 
     expect(bitset.sum(bs)).toBe(23);
+    expect(bitset.toArray(bitset.slice(bs1, 0))).toEqual([1, 2, 9, 11]);
+    expect(bitset.toArray(bitset.slice(bs1, 2))).toEqual([9, 11]);
+    expect(bitset.toArray(bitset.slice(bs1, 4))).toEqual([]);
+    expect(bitset.at(bs1, 0)).toBe(1);
+    expect(bitset.at(bs1, 3)).toBe(11);
+    expect(() => bitset.at(bs1, 4)).toThrow('Wrong index 4');
 });

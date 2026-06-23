@@ -5,7 +5,7 @@ const vals = { v1: [1, 2], v2: [2, 1], v3: [1, -1] }
 test('exceptions', () => {
     expect(() => V$('')).toThrow('Operand expected. Pos:0');
     expect(() => V$('?5')).toThrow('Char ? not allowed. Pos:0');
-    expect(() => V$('5')).toThrow('Operand expected. Pos:1');
+    expect(V$('5')).toBe(5);
     expect(() => V$('(v1+v2', vals)).toThrow('Closing bracket not found!');
     expect(() => V$('v1-*v2', vals)).toThrow('Operand expected. Pos:4');
     expect(() => V$('v1+v2(', vals)).toThrow('Unexpected symbol. Pos:6');
@@ -38,6 +38,10 @@ test('simple calculations with variables', () => {
 test('scalar product', () => {
     expect(V$('v1 * v2', vals)).toEqual(4);
     expect(V$('v2 * v3', vals)).toEqual(1);
+});
+
+test('powers and scalars', () => {
+    expect(V$('v1 ^ 2', vals)).toEqual([1, 4]);
 });
 
 

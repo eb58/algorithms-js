@@ -48,3 +48,8 @@ test('testset magic quad  with permWithFilter', () => {
   const expected = [[1, 2, 3, 4, 5]];
   expect(res).toEqual(expected);
 });
+
+test('empty input', () => {
+  perms.forEach((perm) => expect(perm([])).toEqual([[]]));
+  expect(permWithFilter(() => true)([])).toEqual([[]]);
+});

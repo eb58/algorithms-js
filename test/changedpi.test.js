@@ -27,6 +27,19 @@ test('png inserts pHYs chunk', () => {
   expect(res.indexOf(Buffer.from('IDAT'))).toBeGreaterThan(24);
 });
 
+test('png updates existing pHYs chunk', () => {
+  const data = Buffer.concat([pngHeader, Buffer.from([0, 0, 0, 9]), Buffer.from('pHYs'), Buffer.alloc(13), Buffer.from([0, 0, 0, 0]), Buffer.from('IDAT'), Buffer.alloc(8)]);
+  const inserted = changeDpi(Buffer.from(data), dpi);
+  const nextDpi = 72;
+  const updated = changeDpi(inserted, nextDpi);
+  const nextDpm = Math.trunc((nextDpi * 100) / 2.54);
+
+  expect(updated).toBe(inserted);
+  expect(updated.readUInt32BE(16)).toBe(nextDpm);
+  expect(updated.readUInt32BE(20)).toBe(nextDpm);
+  expect(updated[24]).toBe(1);
+});
+
 test('unknown format passthrough', () => {
   const data = Buffer.from([1, 2, 3, 4]);
   const res = changeDpi(data, dpi);

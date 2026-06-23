@@ -1,4 +1,4 @@
-const { reshape, redim, makeQuadratic, translate, transpose, rotate90 } = require('../../src/ol').matrix;
+const { reshape, redim, makeQuadratic, translate, transpose, rotate90, rotateN90 } = require('../../src/ol').matrix;
 
 test('redim', () => {
     expect(redim([], 1, 1)).toEqual([[0]]);
@@ -40,6 +40,8 @@ test('rotate matrix', () => {
         [1, 0, 0, 0, 0],
         [0, 0, 0, 0, 0],
     ]);
+    expect(rotateN90(mat, 2)).toEqual(rotate90(rotate90(mat)));
+    expect(rotateN90(mat, 4)).toEqual(mat);
 })
 
 test('matrix translate', () => {

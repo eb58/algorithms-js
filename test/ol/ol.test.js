@@ -68,6 +68,7 @@ const {
   uniqBy,
   groupBy,
   zip, // arrays
+  memoize,
   counter,
   timer // helpers
 } = ol
@@ -96,12 +97,27 @@ test('simple', () => {
   expect(cub(3)).toEqual(27)
 })
 
+test('clone', () => {
+  const xs = [{ a: 1 }, { b: [2, 3] }]
+  const ys = clone(xs)
+
+  expect(ys).toEqual(xs)
+  expect(ys).not.toBe(xs)
+  expect(ys[1]).not.toBe(xs[1])
+})
+
 test('faculty', () => {
   expect(fac(0)).toEqual(1)
   expect(fac(1)).toEqual(1)
   expect(fac(2)).toEqual(2)
   expect(fac(3)).toEqual(6)
   expect(fac(4)).toEqual(24)
+})
+
+test('gcd', () => {
+  expect(gcd(12, 18)).toBe(6)
+  expect(gcd(18, 12)).toBe(6)
+  expect(gcd(21, 7)).toBe(7)
 })
 
 test('randomInRange', () => {
@@ -259,6 +275,13 @@ test('withoutIndex', () => {
   expect(withoutIndex([1, 2, 3, 4], 2)).toEqual([1, 2, 4])
 })
 
+test('patch', () => {
+  const xs = [1, 2, 3]
+  const ys = patch(xs, 1, 9)
+  expect(ys).toEqual([1, 9, 3])
+  expect(xs).toEqual([1, 2, 3])
+})
+
 test('shuffle & sort', () => {
   const xs = range(300)
   const ys = shuffle([...xs])
@@ -383,6 +406,19 @@ test('array wrapper', () => {
   expect(array([]).min()).toEqual(undefined)
   expect(array([1]).min()).toEqual(1)
   expect(array([1, 2]).min()).toEqual(1)
+})
+
+test('memoize', () => {
+  let calls = 0
+  const fn = memoize((x) => {
+    calls += 1
+    return x * 2
+  })
+
+  expect(fn(3)).toBe(6)
+  expect(fn(3)).toBe(6)
+  expect(fn(4)).toBe(8)
+  expect(calls).toBe(2)
 })
 
 test('counter foreach', () => {

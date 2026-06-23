@@ -17,5 +17,9 @@ combinations.forEach(comb => test('testset1 ' + comb.name, () => {
   expect(JSON.stringify(comb([1, 2, 3, 4, 5], 2))).toEqual("[[1,2],[1,3],[1,4],[1,5],[2,3],[2,4],[2,5],[3,4],[3,5],[4,5]]");
   expect(JSON.stringify(comb([1, 2, 3, 4, 5], 1))).toEqual("[[1],[2],[3],[4],[5]]");
   expect(JSON.stringify(comb([1, 2, 3, 4, 5], 5))).toEqual("[[1,2,3,4,5]]");
+  expect(comb([], 0)).toEqual([[]]);
+  expect(comb([1, 2, 3], 0)).toEqual([[]]);
+  expect(comb([], 1)).toEqual([]);
+  expect(comb([1, 2, 3], 4)).toEqual([]);
 })
 );
