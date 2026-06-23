@@ -2,9 +2,278 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>$Title$</title>
+  <title><!DOCTYPE html>
+    <html lang="de">
+    <head>
+    <meta charset="UTF-8">
+    <title>WebGL Deep Zoom (Emulated Double Precision)</title>
+  <style>
+      body { margin: 0; overflow: hidden; background: #000; font-family: sans-serif; }
+      canvas { display: block; width: 100vw; height: 100vh; }
+      #hud {
+          position: absolute; top: 10px; left: 10px; color: #0f0;
+          background: rgba(0,0,0,0.7); padding: 10px; border-radius: 5px;
+          pointer-events: none; font-family: monospace;
+      }
+  </style>
 </head>
 <body>
-$END$
+<div id="hud">
+  Status: Bereit<br>
+  Zoom: 1.0<br>
+  <span style="color:#aaa; font-size: 0.8em;">(Scrollen zum Zoomen)</span>
+</div>
+<canvas id="glcanvas"></canvas>
+
+<script id="vs" type="x-shader/x-vertex">
+  attribute vec2 position;
+  void main() { gl_Position = vec4(position, 0.0, 1.0); }
+</script>
+
+<script id="fs" type="x-shader/x-fragment">
+  precision highp float;
+
+  uniform vec2 u_resolution;
+  // Wir übergeben Center und Zoom als Split-Doubles (High/Low Pairs)
+  uniform vec2 u_center_re; // x = high, y = low
+  uniform vec2 u_center_im; // x = high, y = low
+  uniform float u_zoom;     // Einfacher Zoom-Faktor für Skalierung
+
+  const int MAX_ITER = 500;
+
+  // --- EMULATED DOUBLE MATH LIBRARY ---
+  
+  // Addiert zwei "Split-Doubles" (a.x + a.y) + (b.x + b.y)
+  vec2 ds_add(vec2 dsa, vec2 dsb) {
+      vec2 dsc;
+      float t1, t2, e;
+      t1 = dsa.x + dsb.x;
+      e = t1 - dsa.x;
+      t2 = ((dsb.x - e) + (dsa.x - (t1 - e))) + dsa.y + dsb.y;
+      dsc.x = t1 + t2;
+      dsc.y = t2 - (dsc.x - t1);
+      return dsc;
+  }
+
+  // Multipliziert zwei "Split-Doubles"
+  vec2 ds_mul(vec2 dsa, vec2 dsb) {
+      vec2 dsc;
+      float c11, c21, c2, e, t1, t2;
+      float a1, a2, b1, b2, cona, conb, split = 8193.0;
+
+      cona = dsa.x * split;
+      a1 = cona - (cona - dsa.x);
+      a2 = dsa.x - a1;
+      conb = dsb.x * split;
+      b1 = conb - (conb - dsb.x);
+      b2 = dsb.x - b1;
+
+      c11 = dsa.x * dsb.x;
+      c21 = a1 * b1 - c11;
+      c21 += a1 * b2;
+      c21 += a2 * b1;
+      c21 += a2 * b2;
+
+      c2 = dsa.x * dsb.y + dsa.y * dsb.x;
+      t1 = c11 + c2;
+      e = t1 - c11;
+      t2 = dsa.y * dsb.y + ((c2 - e) + (c11 - (t1 - e))) + c21;
+
+      dsc.x = t1 + t2;
+      dsc.y = t2 - (dsc.x - t1);
+
+      return dsc;
+  }
+
+  // Vergleicht ds > float
+  bool ds_gt(vec2 dsa, float b) {
+      return dsa.x > b;
+  }
+  
+  // --- MAIN ---
+  void main() {
+      // Seitenverhältnis
+      vec2 ar = vec2(u_resolution.x / u_resolution.y, 1.0);
+      
+      // Pixel-Koordinate (-1 bis 1)
+      vec2 uv = (gl_FragCoord.xy / u_resolution.xy) * 2.0 - 1.0;
+      uv *= ar;
+
+      // c = center + uv * zoom
+      // Hier müssen wir aufpassen: uv * zoom ist klein, center ist groß.
+      // Wir wandeln uv * zoom in ein Split-Double um.
+      
+      vec2 zoom_vec = vec2(u_zoom, 0.0); // Zoom ist float, low part 0
+      
+      // C Realteil
+      vec2 c_re = ds_add(u_center_re, vec2(uv.x * u_zoom, 0.0));
+      // C Imaginärteil
+      vec2 c_im = ds_add(u_center_im, vec2(uv.y * u_zoom, 0.0));
+
+      // Z initialisieren
+      vec2 z_re = vec2(0.0);
+      vec2 z_im = vec2(0.0);
+      
+      int iter = 0;
+      
+      for(int i=0; i<MAX_ITER; i++) {
+          // z_re_sq = z_re * z_re
+          vec2 z_re_sq = ds_mul(z_re, z_re);
+          // z_im_sq = z_im * z_im
+          vec2 z_im_sq = ds_mul(z_im, z_im);
+          
+          // Abbruch: x^2 + y^2 > 4.0
+          vec2 r2 = ds_add(z_re_sq, z_im_sq);
+          if(ds_gt(r2, 4.0)) break;
+          
+          // temp_im = 2 * z_re * z_im
+          vec2 two = vec2(2.0, 0.0);
+          vec2 z_re_im = ds_mul(z_re, z_im);
+          vec2 temp_im = ds_mul(two, z_re_im);
+          
+          // z_re = z_re_sq - z_im_sq + c_re
+          vec2 sub = ds_add(z_re_sq, vec2(-z_im_sq.x, -z_im_sq.y));
+          z_re = ds_add(sub, c_re);
+          
+          // z_im = temp_im + c_im
+          z_im = ds_add(temp_im, c_im);
+          
+          iter++;
+      }
+      
+      // Färbung
+      float t = float(iter) / float(MAX_ITER);
+      vec3 col = vec3(0.0);
+      if (iter < MAX_ITER) {
+          col = vec3(
+              0.5 + 0.5 * cos(3.0 + t * 20.0 + 0.0),
+              0.5 + 0.5 * cos(3.0 + t * 20.0 + 0.6),
+              0.5 + 0.5 * cos(3.0 + t * 20.0 + 1.0)
+          );
+      }
+      
+      gl_FragColor = vec4(col, 1.0);
+  }
+</script>
+
+<script>
+  const canvas = document.getElementById('glcanvas');
+  const hud = document.getElementById('hud');
+  const gl = canvas.getContext('webgl');
+
+  // --- SHADER SETUP ---
+  const prog = gl.createProgram();
+  const vs = gl.createShader(gl.VERTEX_SHADER);
+  gl.shaderSource(vs, document.getElementById('vs').text);
+  gl.compileShader(vs);
+  const fs = gl.createShader(gl.FRAGMENT_SHADER);
+  gl.shaderSource(fs, document.getElementById('fs').text);
+  gl.compileShader(fs);
+  gl.attachShader(prog, vs);
+  gl.attachShader(prog, fs);
+  gl.linkProgram(prog);
+  gl.useProgram(prog);
+
+  // Buffer
+  const buf = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+  const posLoc = gl.getAttribLocation(prog, "position");
+  gl.enableVertexAttribArray(posLoc);
+  gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+  // Uniforms
+  const locs = {
+    res: gl.getUniformLocation(prog, "u_resolution"),
+    c_re: gl.getUniformLocation(prog, "u_center_re"),
+    c_im: gl.getUniformLocation(prog, "u_center_im"),
+    zoom: gl.getUniformLocation(prog, "u_zoom")
+  };
+
+  // --- MATH HELPERS (CPU Side) ---
+  // JavaScript nutzt standardmäßig Doubles (64 bit).
+  // Wir müssen diese in zwei 32-Bit Floats splitten für den Shader.
+  function splitDouble(val) {
+    const output = new Float32Array(2);
+    output[0] = Math.fround(val); // High part (als float32)
+    output[1] = Math.fround(val - output[0]); // Low part (Rest)
+    return output;
+  }
+
+  // --- STATE ---
+  // Interessanter Startpunkt: Seahorse Valley
+  let centerX = -0.743643887037158;
+  let centerY = 0.131825904205311;
+  let zoom = 1.5; // Start Zoom-Radius (kleiner ist mehr Zoom)
+
+  let isDragging = false;
+  let lastX, lastY;
+
+  function render() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
+    gl.uniform2f(locs.res, canvas.width, canvas.height);
+
+    // Split and upload Coordinates
+    const sX = splitDouble(centerX);
+    const sY = splitDouble(centerY);
+    gl.uniform2f(locs.c_re, sX[0], sX[1]);
+    gl.uniform2f(locs.c_im, sY[0], sY[1]);
+
+    gl.uniform1f(locs.zoom, zoom);
+
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    requestAnimationFrame(render);
+
+    // HUD Update (Logarithmischer Zoom-Level für lesbare Anzeige)
+    hud.innerHTML = `Center: ${centerX.toFixed(10)} + ${centerY.toFixed(10)}i<br>Zoom Radius: ${zoom.toExponential(2)}`;
+  }
+
+  // --- INTERACTION ---
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    // Zoom in auf Cursor
+    const zoomFactor = 0.95;
+
+    // Mausposition relativ zur Mitte (-1 bis 1)
+    const rect = canvas.getBoundingClientRect();
+    const mx = ((e.clientX - rect.left) / canvas.width) * 2 - 1;
+    const my = -(((e.clientY - rect.top) / canvas.height) * 2 - 1);
+    const aspect = canvas.width / canvas.height;
+
+    // Verschiebung berechnen, um zur Maus zu zoomen
+    if (e.deltaY < 0) {
+      // Zoom IN: Wir bewegen das Center leicht Richtung Maus
+      centerX += mx * zoom * aspect * (1 - zoomFactor);
+      centerY += my * zoom * (1 - zoomFactor);
+      zoom *= zoomFactor;
+    } else {
+      zoom /= zoomFactor;
+    }
+  }, { passive: false });
+
+  canvas.addEventListener('mousedown', e => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+  window.addEventListener('mouseup', () => isDragging = false);
+  canvas.addEventListener('mousemove', e => {
+    if (!isDragging) return;
+    const dx = (e.clientX - lastX) / canvas.height * 2; // *2 wegen Koordinaten-System
+    const dy = -(e.clientY - lastY) / canvas.height * 2;
+
+    centerX -= dx * zoom;
+    centerY -= dy * zoom;
+
+    lastX = e.clientX;
+    lastY = e.clientY;
+  });
+
+  render();
+</script>
+</body>
+</html></title>
+</head>
+<body>
+
 </body>
 </html>
