@@ -18,11 +18,13 @@ test('exceptions', () => {
 
   expect(() => C$()).toThrow('False initialisation of C$')
   expect(() => C$({ s: 7 })).toThrow('False initialisation of C$')
+  expect(() => C$('sin 5')).toThrow('Opening paren expected')
 })
 
 test('init complex with numbers', () => {
   expect(C$(0, 0)).toEqual({ re: 0, im: 0 })
   expect(C$(-0, -0)).toEqual({ re: 0, im: 0 })
+  expect(Object.is(C$(-0, -0).re, -0)).toBe(false)
   expect(C$(1)).toEqual({ re: 1, im: 0 })
   expect(C$(1, 1)).toEqual({ re: 1, im: 1 })
 })

@@ -9,6 +9,12 @@ const sqr = (c) => adj({ re: c.re ** 2 - c.im ** 2, im: 2 * c.re * c.im })
 const cub = (c) => adj({ re: c.re ** 3 - 3 * c.re * c.im ** 2, im: 3 * c.re ** 2 * c.im - c.im ** 3 })
 const mul = (c1, c2) => adj({ re: c1.re * c2.re - c1.im * c2.im, im: c1.re * c2.im + c1.im * c2.re })
 const len = (c) => Math.sqrt(c.re ** 2 + c.im ** 2)
+const sqrt = (c) => {
+  const radius = len(c)
+  const re = Math.sqrt(Math.max(0, (radius + c.re) / 2))
+  const im = (c.im < 0 ? -1 : 1) * Math.sqrt(Math.max(0, (radius - c.re) / 2))
+  return adj({ re, im })
+}
 const ln = (c) => ({ re: Math.log(cops.len(c)), im: Math.atan2(c.im, c.re) })
 const exp = (c) => adj({ re: Math.exp(c.re) * Math.cos(c.im), im: Math.exp(c.re) * Math.sin(c.im) })
 const sin = (c) => adj({ re: Math.sin(c.re) * Math.cosh(c.im), im: Math.cos(c.re) * Math.sinh(c.im) })
@@ -28,7 +34,7 @@ const powN = (c, n) => {
   if (n === 4) return sqr(sqr(c))
   if (n === 5) return mul(cub(c), sqr(c))
   if (n === 6) return sqr(cub(c))
-  range(n - 1).reduce((acc) => mul(acc, c), c)
+  return Array.from({ length: n - 1 }).reduce((acc) => mul(acc, c), c)
 }
 
 const equals = (c1, c2) => Math.abs(c1.re - c2.re) < EPSILON && Math.abs(c1.im - c2.im) < EPSILON
@@ -51,6 +57,7 @@ const cops = {
   sqr,
   cub,
   len,
+  sqrt,
   ln,
   pow,
   sin,

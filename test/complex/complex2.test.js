@@ -61,6 +61,11 @@ describe('Mathematical functions', () => {
     expect(cosZ.im).toBeCloseTo(-Math.sinh(1), 1)
   })
 
+  test('sqrt', () => {
+    expect(C$('sqrt(4)')).toEqual(C$(2))
+    expect(C$('sqrt(0)')).toEqual(C$(0))
+  })
+
   test('exponential and logarithm', () => {
     const z = C$(1, 1)
     const expZ = C$('z => exp(z)')(z)
@@ -70,6 +75,28 @@ describe('Mathematical functions', () => {
     const lnZ = C$('z => ln(z)')(expZ)
     expect(lnZ.re).toBeCloseTo(z.re)
     expect(lnZ.im).toBeCloseTo(z.im)
+  })
+})
+
+describe('Direct cops operations', () => {
+  test('arithmetic', () => {
+    expect(cops.add({ re: 1, im: 2 }, { re: 3, im: 4 })).toEqual({ re: 4, im: 6 })
+    expect(cops.sub({ re: 5, im: 3 }, { re: 2, im: 1 })).toEqual({ re: 3, im: 2 })
+    expect(cops.mul({ re: 2, im: 3 }, { re: 4, im: 5 })).toEqual({ re: -7, im: 22 })
+    expect(cops.div({ re: 1, im: 0 }, { re: 0, im: 1 }).im).toBeCloseTo(-1)
+    expect(cops.neg({ re: 3, im: 4 })).toEqual({ re: -3, im: -4 })
+    expect(cops.conj({ re: 3, im: 4 })).toEqual({ re: 3, im: -4 })
+    expect(cops.sqr({ re: 3, im: 4 })).toEqual({ re: -7, im: 24 })
+    expect(cops.cub({ re: 1, im: 1 }).re).toBeCloseTo(-2)
+    expect(cops.cub({ re: 1, im: 1 }).im).toBeCloseTo(2)
+    expect(cops.len({ re: 3, im: 4 })).toBe(5)
+  })
+
+  test('pow optimizations n=4,5,6 and negative', () => {
+    expect(cops.pow({ re: 2, im: 0 }, 4)).toEqual({ re: 16, im: 0 })
+    expect(cops.pow({ re: 2, im: 0 }, 5)).toEqual({ re: 32, im: 0 })
+    expect(cops.pow({ re: 2, im: 0 }, 6)).toEqual({ re: 64, im: 0 })
+    expect(cops.pow({ re: 2, im: 0 }, -1).re).toBeCloseTo(0.5)
   })
 })
 
