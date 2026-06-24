@@ -2,3 +2,4 @@ node_modules
 .history
 ts-built
 test/fixtures
+.claude
