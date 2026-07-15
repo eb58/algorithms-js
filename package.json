@@ -17,7 +17,8 @@
    "scripts": {
       "ts-test": "tsc &&  node ./ts-built/test.js",
       "index-card-app": "tsc",
-      "test": "jest --watchAll",
+      "test": "jest --runInBand --watchAll=false",
+      "test:watch": "jest --watchAll",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "sudoku": "node src/sudoku/sudoku3.js",
       "complex": "node src/complex/complex.js",
@@ -32,7 +33,7 @@
       "plotly": "^1.0.6"
    },
    "devDependencies": {
-      "jest": "29.7.0",
+      "jest": "30.4.0",
       "prettier": "3.6.2",
       "typescript": "^5.8.3"
    }

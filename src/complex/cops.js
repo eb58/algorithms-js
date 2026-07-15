@@ -27,6 +27,8 @@ const div = (c1, c2) => {
 }
 
 const powN = (c, n) => {
+  if (n < 0) return div({ re: 1, im: 0 }, powN(c, -n))
+  if (!Number.isInteger(n)) return exp(mul({ re: n, im: 0 }, ln(c)))
   if (n === 0) return { re: 1, im: 0 }
   if (n === 1) return c
   if (n === 2) return sqr(c)

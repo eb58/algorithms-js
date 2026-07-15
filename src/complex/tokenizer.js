@@ -28,7 +28,6 @@ const tokenizer = (input) => {
     ',': TOKENS.comma
   })
 
-  input = input.replace(/\s+/g, '')
   let strpos = 0
 
   const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_'
@@ -49,6 +48,7 @@ const tokenizer = (input) => {
   })
 
   const getToken = () => {
+    while (strpos < input.length && /\s/.test(input[strpos])) strpos++
     if (strpos >= input.length) return { symbol: TOKENS.end, strpos }
 
     const c = input[strpos]

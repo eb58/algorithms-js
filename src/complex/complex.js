@@ -4,17 +4,18 @@ const tokenizerRef = typeof tokenizer === 'undefined' ? require('./tokenizer.js'
 const TOKENS = tokenizerRef('tokens').getTOKENS()
 
 const splitParam = (s) => {
-  const stripped = s.replace(/\s/g, '')
-  const idx = stripped.indexOf('=>')
+  const normalized = s.trim()
+  const idx = normalized.indexOf('=>')
   return idx < 0
-    ? { params: [], expression: stripped }
+    ? { params: [], expression: normalized }
     : {
-        params: stripped
+        params: normalized
           .slice(0, idx)
           .replace(/[()]/g, '')
           .split(',')
+          .map((param) => param.trim())
           .filter(Boolean),
-        expression: stripped.slice(idx + 2)
+        expression: normalized.slice(idx + 2)
       }
 }
 
