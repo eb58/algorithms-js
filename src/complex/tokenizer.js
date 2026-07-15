@@ -45,11 +45,11 @@ const tokenizer = (input) => {
   const getNumber = () => {
     const start = strpos
     const match = input.slice(start).match(numberPattern)
-    if (!match || input[start + match[0].length] === '.') throw Error(`Invalid number. Pos:${start}`)
+    if (!match || input[start + match[0].length] === '.') throw new Error(`Invalid number. Pos:${start}`)
 
     strpos += match[0].length
     const value = Number(match[0])
-    if (!Number.isFinite(value)) throw Error(`Invalid number. Pos:${start}`)
+    if (!Number.isFinite(value)) throw new Error(`Invalid number. Pos:${start}`)
     return { symbol: TOKENS.number, value, strpos }
   }
 
@@ -64,12 +64,12 @@ const tokenizer = (input) => {
       strpos += 2
       return { symbol: TOKENS.pow, strpos }
     }
-    if (!mapCharToToken[c]) throw Error(`Char ${c} not allowed. Pos:${strpos}`)
+    if (!mapCharToToken[c]) throw new Error(`Char ${c} not allowed. Pos:${strpos}`)
     if (strpos < input.length) strpos++
     return { symbol: mapCharToToken[c], strpos }
   }
 
-  const peek = () => allTokens[allTokens.length - 1]
+  const peek = () => allTokens.at(-1)
 
   const allTokens = []
   do {

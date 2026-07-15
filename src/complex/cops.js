@@ -8,7 +8,7 @@ const sub = (c1, c2) => adj({ re: c1.re - c2.re, im: c1.im - c2.im })
 const sqr = (c) => adj({ re: c.re ** 2 - c.im ** 2, im: 2 * c.re * c.im })
 const cub = (c) => adj({ re: c.re ** 3 - 3 * c.re * c.im ** 2, im: 3 * c.re ** 2 * c.im - c.im ** 3 })
 const mul = (c1, c2) => adj({ re: c1.re * c2.re - c1.im * c2.im, im: c1.re * c2.im + c1.im * c2.re })
-const len = (c) => Math.sqrt(c.re ** 2 + c.im ** 2)
+const len = (c) => Math.hypot(c.re, c.im)
 const sqrt = (c) => {
   const radius = len(c)
   const re = Math.sqrt(Math.max(0, (radius + c.re) / 2))

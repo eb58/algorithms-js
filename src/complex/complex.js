@@ -63,38 +63,51 @@ const parser = (s, scope, paramNames = new Set()) => {
   const parseOperand = () =>
     is(TOKENS.plus) || is(TOKENS.minus) ? unaryNode(consume().symbol, parseBase()) : parseBase()
 
+  const parseScopeValue = (name) => {
+    const value = scope[name]
+    if (typeof value !== 'number' && !isComplexValue(value)) throw new Error(`Invalid value for identifier ${name}`)
+    return numberNode(value)
+  }
+
+  const parseCallArguments = () => {
+    const expressions = [parseExpression()]
+    while (is(TOKENS.comma)) {
+      consume()
+      expressions.push(parseExpression())
+    }
+    return expressions
+  }
+
+  const parseFunctionCall = (name) => {
+    if (!is(TOKENS.lparen)) throw new Error(`Opening paren expected${peek()}`)
+    consume()
+    const expressions = parseCallArguments()
+    if (!is(TOKENS.rparen)) throw new Error(`Closing bracket not found! Pos:${peek().strpos}`)
+    consume()
+    return functionNode(name, expressions, scope)
+  }
+
+  const parseIdentifier = () => {
+    const token = peek()
+    if (paramNames.has(token.name)) return variableNode(consume().name)
+    if (!Object.hasOwn(scope, token.name)) throw new Error(`Unknown identifier ${token.name}. Pos:${token.strpos}`)
+    const name = consume().name
+    return typeof scope[name] === 'function' ? parseFunctionCall(name) : parseScopeValue(name)
+  }
+
+  const parseParenthesized = () => {
+    const token = consume()
+    const node = parseExpression()
+    if (!is(TOKENS.rparen)) throw new Error(`Closing bracket not found!. Pos:${token.strpos}`)
+    consume()
+    return node
+  }
+
   const parseBase = () => {
     const token = peek()
     if (is(TOKENS.number)) return numberNode(consume().value)
-    if (is(TOKENS.ident)) {
-      if (paramNames.has(token.name)) return variableNode(consume().name)
-      if (!Object.hasOwn(scope, token.name)) throw new Error(`Unknown identifier ${token.name}. Pos:${token.strpos}`)
-      if (typeof scope[token.name] !== 'function') {
-        const name = consume().name
-        const value = scope[name]
-        if (typeof value !== 'number' && !isComplexValue(value)) throw new Error(`Invalid value for identifier ${name}`)
-        return numberNode(value)
-      }
-
-      const funcName = consume().name
-      if (!is(TOKENS.lparen)) throw new Error(`Opening paren expected${peek()}`)
-      consume()
-      const expressions = [parseExpression()]
-      while (is(TOKENS.comma)) {
-        consume()
-        expressions.push(parseExpression())
-      }
-      if (!is(TOKENS.rparen)) throw new Error(`Closing bracket not found! Pos:${peek().strpos}`)
-      consume()
-      return functionNode(funcName, expressions, scope)
-    }
-    if (is(TOKENS.lparen)) {
-      consume()
-      const node = parseExpression()
-      if (!is(TOKENS.rparen)) throw new Error(`Closing bracket not found!. Pos:${token.strpos}`)
-      consume()
-      return node
-    }
+    if (is(TOKENS.ident)) return parseIdentifier()
+    if (is(TOKENS.lparen)) return parseParenthesized()
     throw new Error(`Operand expected. Pos:${token.strpos}`)
   }
 
@@ -106,7 +119,7 @@ const parser = (s, scope, paramNames = new Set()) => {
 const C$ = (re, im) => {
   if (typeof re === 'number') return { re: re || 0, im: im || 0 }
   if (typeof re === 'string') {
-    const scope = { ...copsRef, ...(im || {}) }
+    const scope = im ? { ...copsRef, ...im } : copsRef
     const { expression, params } = splitParam(re)
     const positions = params.reduce((acc, name, idx) => ({ ...acc, [name]: idx }), {})
     const ast = parser(expression, scope, new Set(params))
@@ -118,7 +131,7 @@ const C$ = (re, im) => {
           return ast.eval(args, positions)
         }
   }
-  throw Error(`False initialisation of C$ ${re} ${im || ''}`)
+  throw new Error(`False initialisation of C$ ${re} ${im || ''}`)
 }
 
 if (typeof module !== 'undefined' && module.exports) module.exports = C$
