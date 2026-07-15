@@ -1,3 +1,12 @@
+class TokenizerError extends SyntaxError {
+  constructor(message, input, position) {
+    super(message)
+    this.name = 'TokenizerError'
+    this.input = input
+    this.position = position
+  }
+}
+
 const tokenizer = (input) => {
   const TOKENS = Object.freeze({
     ident: 'ident',
@@ -28,65 +37,65 @@ const tokenizer = (input) => {
     ',': TOKENS.comma
   })
 
-  let strpos = 0
-
-  const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_'
-  const isDigit = (c) => c >= '0' && c <= '9'
-  const isIdentifierChar = (c) => isLetter(c) || isDigit(c)
+  const cursor = { index: 0 }
+  const state = { pos: 0 }
   const numberPattern = /^(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?/
-  const getIdentOrNumber = (qualifier) => (qualifier(input[strpos]) ? input[strpos++] + getIdentOrNumber(qualifier) : '')
+  const identifierPattern = /^\w+/
+  const fail = (message, position) => {
+    throw new TokenizerError(message, input, position)
+  }
 
-  const getIdentifier = () => ({
-    symbol: TOKENS.ident,
-    name: getIdentOrNumber(isIdentifierChar),
-    strpos
-  })
+  const getIdentifier = () => {
+    const start = cursor.index
+    const match = input.slice(start).match(identifierPattern)
+    cursor.index += match[0].length
+    return { symbol: TOKENS.ident, name: match[0], strpos: cursor.index }
+  }
 
   const getNumber = () => {
-    const start = strpos
+    const start = cursor.index
     const match = input.slice(start).match(numberPattern)
-    if (!match || input[start + match[0].length] === '.') throw new Error(`Invalid number. Pos:${start}`)
+    if (!match || input[start + match[0].length] === '.') fail(`Invalid number. Pos:${start}`, start)
 
-    strpos += match[0].length
+    cursor.index += match[0].length
     const value = Number(match[0])
-    if (!Number.isFinite(value)) throw new Error(`Invalid number. Pos:${start}`)
-    return { symbol: TOKENS.number, value, strpos }
+    if (!Number.isFinite(value)) fail(`Invalid number. Pos:${start}`, start)
+    return { symbol: TOKENS.number, value, strpos: cursor.index }
   }
 
   const getToken = () => {
-    while (strpos < input.length && /\s/.test(input[strpos])) strpos++
-    if (strpos >= input.length) return { symbol: TOKENS.end, strpos }
+    while (cursor.index < input.length && /\s/.test(input[cursor.index])) cursor.index++
+    if (cursor.index >= input.length) return { symbol: TOKENS.end, strpos: cursor.index }
 
-    const c = input[strpos]
-    if (isLetter(c)) return getIdentifier()
-    if (isDigit(c) || c === '.') return getNumber()
-    if (c === '*' && input[strpos + 1] === '*') {
-      strpos += 2
-      return { symbol: TOKENS.pow, strpos }
+    const start = cursor.index
+    const c = input[start]
+    if (/\d/.test(c) || c === '.') return getNumber()
+    if (/\w/.test(c)) return getIdentifier()
+    if (c === '*' && input[start + 1] === '*') {
+      cursor.index += 2
+      return { symbol: TOKENS.pow, strpos: cursor.index }
     }
-    if (!mapCharToToken[c]) throw new Error(`Char ${c} not allowed. Pos:${strpos}`)
-    if (strpos < input.length) strpos++
-    return { symbol: mapCharToToken[c], strpos }
+    if (!mapCharToToken[c]) fail(`Char ${c} not allowed. Pos:${start}`, start)
+    cursor.index++
+    return { symbol: mapCharToToken[c], strpos: cursor.index }
   }
-
-  const peek = () => allTokens.at(-1)
 
   const allTokens = []
   do {
     allTokens.push(getToken())
-  } while (peek().symbol !== TOKENS.end)
+  } while (allTokens.at(-1).symbol !== TOKENS.end)
 
-  let pos = 0
-  strpos = 0
-
+  cursor.index = 0
   return {
-    strpos: () => strpos,
+    strpos: () => cursor.index,
     getTOKENS: () => TOKENS,
     getToken,
-    peek: () => (pos < allTokens.length ? allTokens[pos] : null),
-    consume: () => (pos < allTokens.length ? allTokens[pos++] : null)
+    peek: () => allTokens[state.pos] ?? null,
+    consume: () => allTokens[state.pos++] ?? null
   }
 }
+
+tokenizer.TokenizerError = TokenizerError
 
 if (typeof globalThis !== 'undefined') globalThis.tokenizer = tokenizer
 if (typeof module !== 'undefined' && module.exports) module.exports = tokenizer
