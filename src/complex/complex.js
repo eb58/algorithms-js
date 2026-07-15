@@ -32,6 +32,8 @@ const unaryNode = (sign, op) => ({ eval: (args, pos) => (sign === TOKENS.minus ?
 const variableNode = (name) => ({ eval: (args, pos) => (typeof args[pos[name]] === 'number' ? { re: args[pos[name]], im: 0 } : args[pos[name]]) })
 const functionNode = (name, params, scope) => ({ eval: (args, pos) => scope[name](...params.map((p) => p.eval(args, pos))) })
 const binaryOpNode = (op, left, right) => ({ eval: (args, pos) => ops[op](left.eval(args, pos), right.eval(args, pos)) })
+const unexpectedToken = (token) => new Error(`Unexpected symbol. Pos:${token.strpos}`)
+const isComplexValue = (value) => value && typeof value.re === 'number' && typeof value.im === 'number'
 
 const parser = (s, scope, paramNames = new Set()) => {
   const { peek, consume } = tokenizerRef(s)
@@ -45,7 +47,10 @@ const parser = (s, scope, paramNames = new Set()) => {
 
   const parseTerm = () => {
     let node = parseFactor()
-    while (is(TOKENS.times) || is(TOKENS.divide)) node = binaryOpNode(consume().symbol, node, parseFactor())
+    while (is(TOKENS.times) || is(TOKENS.divide) || is(TOKENS.ident)) {
+      const op = is(TOKENS.times) || is(TOKENS.divide) ? consume().symbol : TOKENS.times
+      node = binaryOpNode(op, node, parseFactor())
+    }
     return node
   }
 
@@ -63,8 +68,13 @@ const parser = (s, scope, paramNames = new Set()) => {
     if (is(TOKENS.number)) return numberNode(consume().value)
     if (is(TOKENS.ident)) {
       if (paramNames.has(token.name)) return variableNode(consume().name)
-      if (!Object.hasOwn(scope, token.name)) return variableNode(consume().name)
-      if (typeof scope[token.name] !== 'function') return numberNode(scope[consume().name])
+      if (!Object.hasOwn(scope, token.name)) throw new Error(`Unknown identifier ${token.name}. Pos:${token.strpos}`)
+      if (typeof scope[token.name] !== 'function') {
+        const name = consume().name
+        const value = scope[name]
+        if (typeof value !== 'number' && !isComplexValue(value)) throw new Error(`Invalid value for identifier ${name}`)
+        return numberNode(value)
+      }
 
       const funcName = consume().name
       if (!is(TOKENS.lparen)) throw new Error(`Opening paren expected${peek()}`)
@@ -88,7 +98,9 @@ const parser = (s, scope, paramNames = new Set()) => {
     throw new Error(`Operand expected. Pos:${token.strpos}`)
   }
 
-  return parseExpression()
+  const node = parseExpression()
+  if (!is(TOKENS.end)) throw unexpectedToken(peek())
+  return node
 }
 
 const C$ = (re, im) => {

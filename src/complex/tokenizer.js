@@ -32,8 +32,8 @@ const tokenizer = (input) => {
 
   const isLetter = (c) => (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || c === '_'
   const isDigit = (c) => c >= '0' && c <= '9'
-  const isNumberChar = (c) => isDigit(c) || c === '.'
   const isIdentifierChar = (c) => isLetter(c) || isDigit(c)
+  const numberPattern = /^(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?/
   const getIdentOrNumber = (qualifier) => (qualifier(input[strpos]) ? input[strpos++] + getIdentOrNumber(qualifier) : '')
 
   const getIdentifier = () => ({
@@ -42,10 +42,16 @@ const tokenizer = (input) => {
     strpos
   })
 
-  const getNumber = () => ({
-    symbol: TOKENS.number,
-    value: parseFloat(getIdentOrNumber(isNumberChar))
-  })
+  const getNumber = () => {
+    const start = strpos
+    const match = input.slice(start).match(numberPattern)
+    if (!match || input[start + match[0].length] === '.') throw Error(`Invalid number. Pos:${start}`)
+
+    strpos += match[0].length
+    const value = Number(match[0])
+    if (!Number.isFinite(value)) throw Error(`Invalid number. Pos:${start}`)
+    return { symbol: TOKENS.number, value, strpos }
+  }
 
   const getToken = () => {
     while (strpos < input.length && /\s/.test(input[strpos])) strpos++
@@ -53,7 +59,7 @@ const tokenizer = (input) => {
 
     const c = input[strpos]
     if (isLetter(c)) return getIdentifier()
-    if (isDigit(c)) return getNumber()
+    if (isDigit(c) || c === '.') return getNumber()
     if (c === '*' && input[strpos + 1] === '*') {
       strpos += 2
       return { symbol: TOKENS.pow, strpos }

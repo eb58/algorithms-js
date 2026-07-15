@@ -10,7 +10,10 @@
    ],
    "jest": {
       "//": "Comment goes here",
-      "verbose": true
+      "verbose": true,
+      "collectCoverageFrom": [
+         "src/complex/**/*.js"
+      ]
    },
    "author": "eb",
    "contributors": [],
@@ -19,6 +22,7 @@
       "index-card-app": "tsc",
       "test": "jest --runInBand --watchAll=false",
       "test:watch": "jest --watchAll",
+      "test:coverage": "jest --coverage --runInBand --watchAll=false",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "sudoku": "node src/sudoku/sudoku3.js",
       "complex": "node src/complex/complex.js",

@@ -27,6 +27,7 @@ const div = (c1, c2) => {
 }
 
 const powN = (c, n) => {
+  if (n < 0 && c.re === 0 && c.im === 0) throw new RangeError('Zero cannot be raised to a negative power')
   if (n < 0) return div({ re: 1, im: 0 }, powN(c, -n))
   if (!Number.isInteger(n)) return exp(mul({ re: n, im: 0 }, ln(c)))
   if (n === 0) return { re: 1, im: 0 }
