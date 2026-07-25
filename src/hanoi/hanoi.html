@@ -1,19 +1,138 @@
 <!DOCTYPE html>
+<html lang="de">
 
 <head>
-   <title>Towers of Hanoi</title>
-   <script src="https://cdn.jsdelivr.net/npm/raphael@2.3.0/raphael.js"></script>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="theme-color" content="#10131c">
+   <title>Hanoi — Algorithm Observatory</title>
+   <link rel="stylesheet" href="./hanoi.css">
    <script src="./hanoi.js"></script>
-   <script src="./hanoiview.js"></script>
 </head>
 
 <body>
-   <script>
-      const n = 5;
-      const res = hanoi1(n);
-      const view = hanoiview(n);
-      res.forEach((m, i) => setTimeout(() => view.drawModel(m), i * 1000))
-   </script>
+   <div class="noise" aria-hidden="true"></div>
+   <div class="app-shell">
+      <header class="topbar">
+         <a class="wordmark" href="#top" aria-label="Hanoi Startseite">
+            <span class="wordmark__mark"><i></i><i></i><i></i></span>
+            <span>HANOI<span class="wordmark__dot">.</span></span>
+         </a>
+         <div class="topbar__context">
+            <span class="signal-dot"></span>
+            <span>ALGORITHMISCHE CHOREOGRAFIE</span>
+            <span class="topbar__number">01 / 01</span>
+         </div>
+      </header>
+
+      <main id="top">
+         <section class="intro">
+            <div class="intro__copy">
+               <p class="eyebrow"><span class="eyebrow__line"></span>Eine zeitlose Denkaufgabe</p>
+               <h1>Sieh der Logik<br><em>beim Arbeiten</em> zu.</h1>
+               <p class="intro__lead">Drei Stäbe. Ein Stapel. Eine präzise Folge von Entscheidungen. Lass den Algorithmus seine elegante Choreografie entfalten.</p>
+            </div>
+            <div class="intro__aside">
+               <span class="intro__aside-label">Komplexität</span>
+               <strong>O(2<sup>n</sup>)</strong>
+               <span class="intro__aside-note">exponentielles Wachstum,<br>unendliche Geduld</span>
+            </div>
+         </section>
+
+         <section class="workspace" aria-label="Hanoi Simulation">
+            <div class="workspace__header">
+               <div>
+                  <p class="section-kicker">LIVE SIMULATION <span></span></p>
+                  <h2>Die Türme von Hanoi</h2>
+               </div>
+               <div class="status" aria-live="polite">
+                  <span class="status__pulse"></span>
+                  <span id="status-label">Bereit zum Start</span>
+               </div>
+            </div>
+
+            <div class="simulation">
+               <div class="simulation__topline">
+                  <span class="simulation__hint" id="move-hint">Drücke Start, um den ersten Zug zu sehen.</span>
+                  <span class="simulation__counter"><b id="move-count">0</b> <span>/</span> <span id="optimal-count">31</span> ZÜGE</span>
+               </div>
+
+               <div class="board" id="board" role="group" aria-label="Die drei Hanoi-Türme">
+                  <!-- Rendered by hanoi-ui.js -->
+               </div>
+               <div class="board__legend" aria-hidden="true">
+                  <span><i class="legend-dot legend-dot--source"></i> QUELLE</span>
+                  <span><i class="legend-dot legend-dot--auxiliary"></i> HILFSSTAB</span>
+                  <span><i class="legend-dot legend-dot--target"></i> ZIEL</span>
+               </div>
+
+               <div class="progress" aria-label="Fortschritt">
+                  <span class="progress__bar" id="progress-bar"></span>
+                  <span class="progress__glow" id="progress-glow"></span>
+               </div>
+            </div>
+
+            <div class="controls">
+               <div class="controls__primary">
+                  <button class="button button--primary" id="play-button" type="button">
+                     <span class="button__icon button__icon--play" id="play-icon"></span>
+                     <span id="play-label">Start</span>
+                  </button>
+                  <button class="button button--icon" id="step-back" type="button" aria-label="Einen Zug zurück" title="Einen Zug zurück">←</button>
+                  <button class="button button--icon" id="step-forward" type="button" aria-label="Einen Zug vor" title="Einen Zug vor">→</button>
+                  <button class="button button--ghost" id="reset-button" type="button">Neu aufbauen</button>
+               </div>
+               <div class="controls__secondary">
+                  <label class="range-control" for="speed-range">
+                     <span>Tempo</span>
+                     <output id="speed-output">1×</output>
+                     <input id="speed-range" type="range" min="0.5" max="2" step="0.5" value="1" aria-label="Animationsgeschwindigkeit">
+                  </label>
+                  <button class="button button--manual" id="manual-button" type="button">
+                     <span class="manual-icon">⌘</span> Manuell spielen
+                  </button>
+               </div>
+            </div>
+         </section>
+
+         <section class="details">
+            <div class="settings-card">
+               <div class="card-heading">
+                  <span class="card-heading__number">01</span>
+                  <div><span class="card-heading__kicker">PARAMETER</span><h3>Dein Aufbau</h3></div>
+               </div>
+               <div class="disc-setting">
+                  <div class="disc-setting__labels"><span>Anzahl der Scheiben</span><output id="disc-output">5</output></div>
+                  <input id="disc-range" type="range" min="3" max="8" step="1" value="5" aria-label="Anzahl der Scheiben">
+                  <div class="range-labels"><span>3</span><span>8</span></div>
+               </div>
+               <p class="card-note">Mehr Scheiben machen den Weg länger — und die Belohnung schöner.</p>
+            </div>
+
+            <div class="history-card">
+               <div class="card-heading">
+                  <span class="card-heading__number">02</span>
+                  <div><span class="card-heading__kicker">BEWEGUNGSPROTOKOLL</span><h3>Letzte Züge</h3></div>
+               </div>
+               <div class="history-list" id="history-list" aria-live="polite"></div>
+            </div>
+
+            <div class="quote-card">
+               <span class="quote-mark">“</span>
+               <p>Eine Reise von tausend Meilen beginnt mit dem ersten Schritt.</p>
+               <span class="quote-author">— Laozi, <em>Daodejing</em>, Kapitel 64</span>
+            </div>
+         </section>
+      </main>
+
+      <footer class="footer">
+         <span>HANOI / 01</span>
+         <span>Eine kleine Studie in Rekursion &amp; Geduld</span>
+         <span>Scroll to explore <b>↓</b></span>
+      </footer>
+   </div>
+
+   <script src="./hanoi-ui.js"></script>
 </body>
 
 </html>
