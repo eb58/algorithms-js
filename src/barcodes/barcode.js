@@ -168,6 +168,32 @@ const decoder = (input, type) => {
   return lines.length ? decodeWidths(lines, type) : ''
 }
 
+const interleavedPattern = (code) => [
+  'n', 'n', 'n', 'n',
+  ...code.match(/../g).flatMap(([first, second]) =>
+    Array.from({ length: 5 }, (_, i) => [CHAR_SET[Number(first)][i], CHAR_SET[Number(second)][i]]).flat()),
+  'w', 'n', 'n'
+]
+
+// Echte Balken teilen sich bildweit zwei stabile Breitenklassen. Text kann zufällig ein gültiges
+// Ziffernmuster bilden, streut innerhalb der vermeintlich schmalen und breiten Striche aber stark.
+const interleavedWidthFit = ({ code, widths }) => {
+  if (code.length % 2) return { error: Infinity, start: 0 }
+
+  const pattern = interleavedPattern(code)
+  return Array.from({ length: max(1, widths.length - pattern.length + 1) }, (_, start) => {
+    const window = widths.slice(start, start + pattern.length)
+    if (window.length < pattern.length) return { error: Infinity, start }
+    const narrow = window.filter((_, i) => pattern[i] === 'n')
+    const wide = window.filter((_, i) => pattern[i] === 'w')
+    const mean = (values) => values.reduce((sum, value) => sum + value, 0) / values.length
+    const relativeSpread = (values, average) => Math.sqrt(values.reduce((sum, value) => sum + (value - average) ** 2, 0) / values.length) / average
+    const narrowMean = mean(narrow)
+    const wideMean = mean(wide)
+    return { error: relativeSpread(narrow, narrowMean) + relativeSpread(wide, wideMean) + max(0, 1.5 - wideMean / narrowMean), start }
+  }).reduce((best, current) => (current.error < best.error ? current : best))
+}
+
 // ---------------------------------------------------------------------------
 // Bildoperationen
 // ---------------------------------------------------------------------------
@@ -318,7 +344,7 @@ const bands = (image) => {
 
 // Eine Bildzeile in Balkenbreiten schneiden - inklusive Auftrennung an breiten Weißlücken,
 // weil auf Formularen neben dem Barcode Text in derselben Zeile steht
-const candidatesFromColumns = (source, y, columns, seen) => {
+const candidatesFromColumns = (source, y, columns, seen, band) => {
   const runs = valuesToRuns(columns)
   const bins = runs.map((run) => run.bin)
   const widths = runs.map((run) => run.count)
@@ -337,7 +363,17 @@ const candidatesFromColumns = (source, y, columns, seen) => {
     const key = `${source}:${segment}`
     if (seen.has(key)) return
     seen.add(key)
-    found.push({ y, widths: segment, atEdge: end === widths.length })
+    found.push({
+      y,
+      x: widths.slice(0, start).reduce((sum, width) => sum + width, 0),
+      width: segment.reduce((sum, width) => sum + width, 0),
+      widths: segment,
+      atEdge: end === widths.length,
+      bandStart: band.start,
+      bandEnd: band.end,
+      bandHeight: band.end - band.start + 1,
+      viewWidth: band.viewWidth
+    })
   }
 
   const gap = max(20, 4 * median(widths))
@@ -364,8 +400,9 @@ function* candidates(view, { angles, samples }, seen) {
   for (const angle of angles) {
     const { rotated, found } = view(angle)
     for (const { start, end } of found) {
-      for (const row of sampledRows(start, end, samples)) yield* candidatesFromColumns(`${angle}:${row}`, row, columnsFromRow(rotated, row), seen)
-      yield* candidatesFromColumns(`${angle}:band${start}`, start, columnsFromBand(rotated, start, end), seen)
+      const band = { start, end, viewWidth: rotated.width }
+      for (const row of sampledRows(start, end, samples)) yield* candidatesFromColumns(`${angle}:${row}`, row, columnsFromRow(rotated, row), seen, band)
+      yield* candidatesFromColumns(`${angle}:band${start}`, start, columnsFromBand(rotated, start, end), seen, band)
     }
   }
 }
@@ -389,10 +426,16 @@ const DEFAULTS = {
 const countCodes = (hits) => hits.reduce((acc, { code }) => acc.set(code, (acc.get(code) ?? 0) + 1), new Map())
 
 // Am Bildrand fehlen Stopmuster und Ruhezone: dort lohnt ein zweiter Versuch mit gekürztem Code plus synthetischem Stop
-const truncatedVariants = ({ y, widths }) => {
+const truncatedVariants = ({ y, x, width, widths, bandStart, bandEnd, bandHeight, viewWidth }) => {
   const narrow = median(widths)
   return Array.from({ length: max(0, ceil((widths.length - 14) / 10)) }, (_, i) => ({
     y,
+    x,
+    width,
+    bandStart,
+    bandEnd,
+    bandHeight,
+    viewWidth,
     widths: [...widths.slice(0, 14 + i * 10), narrow * 3, narrow, narrow]
   }))
 }
@@ -422,6 +465,60 @@ const hitsForPass = (view, pass, seen, options) => {
 // so eine einzelne Lesung den vielfach belegten richtigen Code.
 const removePartialCodes = (hits) => hits.filter((hit) => !hits.some((other) => other.code !== hit.code && other.code.includes(hit.code) && other.votes > hit.votes))
 
+const MAX_WIDTH_ERROR = 0.5
+const MIN_HIT_QUALITY = 70
+
+const hasCheckDigit = ({ code }) => {
+  const sum = code.slice(0, -1).split('').reverse().reduce((acc, digit, i) => acc + Number(digit) * (i % 2 ? 1 : 3), 0)
+  return (10 - (sum % 10)) % 10 === Number(code.at(-1))
+}
+
+const overlaps = (a, b) =>
+  min(a.bandEnd, b.bandEnd) >= max(a.bandStart, b.bandStart) &&
+  min(a.x + a.width, b.x + b.width) - max(a.x, b.x) > min(a.width, b.width) * 0.3
+
+const hitQuality = (hit) =>
+  hit.votes *
+  hit.code.length *
+  (hasCheckDigit(hit) ? 4 : 1) *
+  Math.sqrt(min(hit.bandHeight, 200) / 100) *
+  min(1, hit.width / 250)
+
+const hasQuietZone = (hit) => {
+  if (!hit.atEdge) return true
+  const narrow = [...hit.widths].sort((a, b) => a - b)[hit.widths.length >> 2]
+  return hit.viewWidth - hit.x - hit.width >= narrow * 10
+}
+
+const preferHit = (a, b) =>
+  hasCheckDigit(a) === hasCheckDigit(b) && a.votes === b.votes
+    ? a.code.length - b.code.length // gleicher Beleg: den vollständigen längeren Code bevorzugen
+    : hitQuality(a) - hitQuality(b)
+
+// Interleaved 2 of 5 kodiert Ziffern paarweise und füllt ungerade kurze Nummern links mit 0 auf.
+const normalizeInterleavedCode = (code) => (code.startsWith('00000') ? code.slice(1) : code)
+
+const selectInterleavedHits = (hits, minVotes) => {
+  const plausible = hits.filter((hit) => hit.widthError <= MAX_WIDTH_ERROR && hasQuietZone(hit))
+  const withoutOverreads = plausible.filter((hit) =>
+    !plausible.some((other) =>
+      hit !== other &&
+      overlaps(hit, other) &&
+      (hit.code.includes(other.code) || other.code.includes(hit.code)) &&
+      preferHit(other, hit) > 0))
+  const ranked = withoutOverreads
+    .filter((hit) =>
+      (hit.votes >= minVotes && hitQuality(hit) >= MIN_HIT_QUALITY) ||
+      (hit.bandHeight >= 200 && hit.widthError <= 0.3))
+    .sort((a, b) => hitQuality(b) - hitQuality(a))
+  const selected = ranked.reduce((acc, hit) => (acc.some((other) => overlaps(hit, other)) ? acc : [...acc, hit]), [])
+
+  return selected
+    .sort((a, b) => a.y - b.y)
+    .map((hit) => ({ ...hit, code: normalizeInterleavedCode(hit.code) }))
+    .reduce((acc, hit) => (acc.some(({ code }) => code === hit.code) ? acc : [...acc, hit]), [])
+}
+
 /**
  * Sucht Barcodes in einem Bild und liefert die Treffer mit Fundstelle und Stimmenzahl:
  * `[{ code, y, votes }]`, sortiert von oben nach unten.
@@ -447,7 +544,15 @@ const scanBarcodes = (source, options = {}) => {
   // Bandes sind ein Beleg, kein Konsens - sonst liefe der feine Durchgang bei schrägen Scans nie an
   const distinctReadings = (hits) =>
     hits.reduce((acc, { code, widths }) => acc.set(code, (acc.get(code) ?? new Set()).add(widths.join())), new Map())
-  const enough = (hits) => (opts.first ? hits.length > 0 : [...distinctReadings(hits).values()].some((set) => set.size >= opts.minConsensus))
+  const enough = (hits) => {
+    if (opts.first) return hits.length > 0
+
+    // Formulartext erzeugt gelegentlich ebenfalls mehrere gültig aussehende Codes. Nur ein klarer
+    // Spitzenreiter darf deshalb den feineren Durchgang überspringen.
+    const readings = distinctReadings(hits)
+    const [[bestCode, bestVotes] = ['', 0], [, nextVotes = 0] = []] = [...countCodes(hits)].sort(([, a], [, b]) => b - a)
+    return readings.get(bestCode)?.size >= opts.minConsensus && bestVotes >= nextVotes * 1.5
+  }
   const allPasses = (img) => {
     const seen = new Set() // über alle Durchgänge, damit dieselbe Zeile den Konsens nicht doppelt stützt
     const view = viewsFor(img)
@@ -459,14 +564,36 @@ const scanBarcodes = (source, options = {}) => {
   if (!rawHits.length) rawHits.push(...allPasses(invert(guessed))) // Polarität war falsch geraten
 
   const counts = countCodes(rawHits)
-  const threshold = max(opts.minVotes, max(0, ...counts.values()) * opts.confidence)
-  const hits = rawHits
-    .filter(({ code }) => counts.get(code) >= threshold)
-    .sort((a, b) => a.y - b.y || b.code.length - a.code.length)
-    .reduce((acc, hit) => (acc.some(({ code }) => code === hit.code) ? acc : [...acc, hit]), [])
-    .map(({ code, y }) => ({ code, y, votes: counts.get(code) }))
+  const expectedRuns = (code) => (opts.type === 'interleaved' ? code.length * 5 + 7 : code.length * 10 + 11)
+  const measuredHits = rawHits.map((hit) => {
+    if (opts.type !== 'interleaved') return { ...hit, fit: abs(hit.widths.length - expectedRuns(hit.code)), widthError: 0 }
 
-  return opts.partials ? hits : removePartialCodes(hits)
+    const { error: widthError, start } = interleavedWidthFit(hit)
+    const widths = hit.widths.slice(start, start + expectedRuns(hit.code))
+    const offset = hit.widths.slice(0, start).reduce((sum, width) => sum + width, 0)
+    return {
+      ...hit,
+      x: hit.x + offset,
+      width: widths.reduce((sum, width) => sum + width, 0),
+      widths,
+      fit: abs(widths.length - expectedRuns(hit.code)),
+      widthError
+    }
+  })
+  const compareMeasurements = (a, b) => a.widthError - b.widthError || a.fit - b.fit || b.bandHeight - a.bandHeight
+  const stats = measuredHits.reduce((acc, hit) => {
+    const previous = acc.get(hit.code)
+    return acc.set(hit.code, !previous || compareMeasurements(hit, previous) < 0 ? hit : previous)
+  }, new Map())
+  const summarized = rawHits
+    .sort((a, b) => a.y - b.y || b.code.length - a.code.length)
+    .reduce((acc, hit) => (acc.some(({ code }) => code === hit.code) ? acc : [...acc, { ...stats.get(hit.code), votes: counts.get(hit.code) }]), [])
+  const threshold = max(opts.minVotes, max(0, ...counts.values()) * opts.confidence)
+  const legacyHits = summarized.filter(({ votes }) => votes >= threshold)
+  const hits = opts.type === 'interleaved' && !opts.partials && !opts.first ? selectInterleavedHits(summarized, opts.minVotes) : legacyHits
+  const selected = opts.partials ? hits : opts.type === 'interleaved' ? hits : removePartialCodes(hits)
+
+  return selected.map(({ code, y, votes }) => ({ code, y, votes }))
 }
 
 /** Alle verlässlich gelesenen Barcodes als Strings, von oben nach unten - die übliche Einstiegs-API. */

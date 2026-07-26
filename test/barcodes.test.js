@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const { barcodesFrom, barcodeFrom, barcodesFromRegions, barcodeCandidates, scanBarcodes, decoder } = require('../src/barcodes/barcode')
+const { barcodesFrom, barcodeFrom, barcodesFromRegions, scanBarcodes, decoder } = require('../src/barcodes/barcode')
 
 const W = 3
 const N = 1
@@ -23,7 +23,8 @@ const widthsToBitmap = (widths, height = 8) => {
 const readIniResults = (filePath) => {
   const lines = fs.readFileSync(filePath, 'utf8').split(/\r?\n/)
   const start = lines.indexOf('[RESULTS]')
-  const end = lines.indexOf('[NEWRESULTS]')
+  const nextSection = lines.findIndex((line, i) => i > start && /^\[.+\]$/.test(line))
+  const end = nextSection < 0 ? lines.length : nextSection
   return lines.slice(start + 1, end).filter(Boolean).reduce((acc, line) => {
     const idx = line.indexOf('=')
     acc[line.slice(0, idx)] = line.slice(idx + 1)
@@ -38,17 +39,18 @@ const interleavedFixtureCases = (folder) => {
     .filter(([file]) => fs.existsSync(file))
 }
 
-// Geprüft wird die Trefferquote: jeder Sollcode muss unter den gelesenen Kandidaten stecken.
-// Die Formulare tragen Text in derselben Zeile wie den Barcode, deshalb liest der Scanner
-// dort zusätzlich Rauschen - das trennt erst die Stimmenauswertung in barcodesFrom().
-const expectInterleavedFolder = (folder) =>
-  interleavedFixtureCases(folder).forEach(([file, code]) => {
-    const expectedCodes = code.split(',').filter(Boolean)
-    const candidates = barcodeCandidates(file).map((hit) => hit.code)
-    expect(expectedCodes.filter((expected) => candidates.some((candidate) => candidate.includes(expected)))).toEqual(expectedCodes)
-  })
+const INTERLEAVED_FOLDERS = ['INTERLEAVE25_T1', 'INTERLEAVE25_T2', 'INTERLEAVE25_T3']
+
+INTERLEAVED_FOLDERS.forEach((folder) =>
+  describe(`${folder} results.ini`, () =>
+    test.each(interleavedFixtureCases(folder))('%s', (file, codes) => {
+      const expected = codes.split(',').filter(Boolean).sort()
+      expect(barcodesFrom(file).sort()).toEqual(expected)
+    }))
+)
 
 const CLEAN_FIXTURE = path.join('test', 'fixtures', 'INTERLEAVE25_T1', '248824711220.png')
+const SKEWED_FIXTURE = path.join('test', 'fixtures', 'INTERLEAVE25_T1', '248832621220.png')
 
 // decoder() ist die Stufe unter der Suche: ein bereits freigestellter Barcode, ohne Bandsuche.
 // Diese drei Tests prüfen genau diesen Kern über seine drei Eingabeformen.
@@ -76,6 +78,10 @@ test('reads a scanned form barcode', () => {
   expect(barcodeFrom(CLEAN_FIXTURE)).toBe('3003294131')
 })
 
+test('refines an ambiguous first pass instead of returning form text', () => {
+  expect(barcodeFrom(SKEWED_FIXTURE)).toBe('3003294148')
+})
+
 test('scan hits carry position and votes', () => {
   const [hit] = scanBarcodes(CLEAN_FIXTURE).filter(({ code }) => code === '3003294131')
 
@@ -93,9 +99,3 @@ test('limits the scan to a region', () => {
   expect(barcodesFrom(CLEAN_FIXTURE, { region: above })).toEqual([])
   expect(barcodesFromRegions(CLEAN_FIXTURE, [above, {}])).toEqual([[], expect.arrayContaining(['3003294131'])])
 })
-
-test('decodes interleave25 t1 fixtures', () => expectInterleavedFolder('INTERLEAVE25_T1'))
-
-test('decodes interleave25 t2 fixtures', () => expectInterleavedFolder('INTERLEAVE25_T2'))
-
-test('decodes interleave25 t3 fixtures', () => expectInterleavedFolder('INTERLEAVE25_T3'))
