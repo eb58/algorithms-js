@@ -174,14 +174,21 @@ const decoder = (input, type) => {
 
 const median = (xs) => [...xs].sort((a, b) => a - b)[xs.length >> 1]
 
-const columnsFromRow = ({ width, data }, row) => data.slice(row * width, (row + 1) * width)
+// subarray statt slice: die Zeile wird nur gelesen, eine Kopie je Bildzeile wäre verschenkt.
+// Der slice-Zweig fängt Bitmaps ab, die als normales Array hereingereicht werden.
+const columnsFromRow = ({ width, data }, row) => data.subarray?.(row * width, (row + 1) * width) ?? data.slice(row * width, (row + 1) * width)
 
-const columnsFromBand = ({ width, data }, start, end) =>
-  Array.from({ length: width }, (_, x) => {
+// Schleife statt Array.from(): der Callback lässt sich nicht in die Builtin inlinen, das kostet hier das Dreifache
+const columnsFromBand = ({ width, data }, start, end) => {
+  const rows = end - start + 1
+  const columns = new Array(width)
+  for (let x = 0; x < width; x++) {
     let sum = 0
     for (let y = start; y <= end; y++) sum += data[y * width + x]
-    return round(sum / (end - start + 1))
-  })
+    columns[x] = round(sum / rows)
+  }
+  return columns
+}
 
 const rotateImage = (image, angle) => {
   if (!angle) return image
