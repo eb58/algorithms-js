@@ -1,8 +1,14 @@
+const { readPng } = require('./png')
+
+// ---------------------------------------------------------------------------
+// Breiten -> Ziffern
+// ---------------------------------------------------------------------------
+
 const CHAR_SET = ['nnwwn', 'wnnnw', 'nwnnw', 'wwnnn', 'nnwnw', 'wnwnn', 'nwwnn', 'nnnww', 'wnnwn', 'nwnwn']
 const RUN_WHITE = 255
 const RUN_BLACK = 0
 
-const isBitmap = (input) =>  input &&  typeof input === 'object' &&  Number.isInteger(input.width) &&  Number.isInteger(input.height) &&  input.data &&  typeof input.data.length === 'number'
+const isBitmap = (input) => input && typeof input === 'object' && Number.isInteger(input.width) && Number.isInteger(input.height) && input.data && typeof input.data.length === 'number'
 const isMatrix = (input) => Array.isArray(input) && Array.isArray(input[0])
 const matrixToColumns = (matrix) => matrix[0].map((_, x) => matrix.reduce((sum, row) => sum + (row[x] ?? 0), 0) / matrix.length)
 
@@ -12,8 +18,7 @@ const imageDataToColumns = (data, width, height) => {
     let sum = 0
     for (let y = 0; y < height; y++) {
       const idx = (y * width + x) * channels
-      const gray = channels === 4 ? Math.round((data[idx] + data[idx + 1] + data[idx + 2]) / 3) : data[idx]
-      sum += gray
+      sum += channels === 4 ? Math.round((data[idx] + data[idx + 1] + data[idx + 2]) / 3) : data[idx]
     }
     return sum / height
   })
@@ -60,11 +65,13 @@ const looksLikeInterleavedStart = (runs) => Math.max(...runs) / Math.min(...runs
 
 const looksLikeInterleavedStop = ([wide, narrowA, narrowB]) => wide / Math.max(narrowA, narrowB) >= 1.1
 
+const columnsToWidths = (columns) => trimQuietZones(valuesToRuns(columns)).map((run) => run.count)
+
 const normalizeInput = (input) => {
-  if (input && typeof input === 'object' && Array.isArray(input.columns)) return trimQuietZones(valuesToRuns(input.columns)).map((run) => run.count)
-  if (Array.isArray(input)) return isMatrix(input) ? trimQuietZones(valuesToRuns(matrixToColumns(input))).map((run) => run.count) : input.slice()
+  if (input && typeof input === 'object' && Array.isArray(input.columns)) return columnsToWidths(input.columns)
+  if (Array.isArray(input)) return isMatrix(input) ? columnsToWidths(matrixToColumns(input)) : input.slice()
   if (!isBitmap(input)) return []
-  return trimQuietZones(valuesToRuns(imageDataToColumns(input.data, input.width, input.height))).map((run) => run.count)
+  return columnsToWidths(imageDataToColumns(input.data, input.width, input.height))
 }
 
 const decodeWidths = (rawLines, type) => {
@@ -103,25 +110,311 @@ const decodeWidths = (rawLines, type) => {
       .sort((a, b) => a.start - b.start)
       .map(({ code }) => code)
       .join(',')
-  } else {
-    const startChar = lines.splice(0, 6).filter((_, n) => n % 2 === 0).map((s) => (s > barThreshold ? 'w' : 'n')).join('')
-    const endChar = lines.splice(-5, 5).filter((_, n) => n % 2 === 0).map((s) => (s > barThreshold ? 'w' : 'n')).join('')
-
-    if (startChar !== 'wwn' || endChar !== 'wnw') return ''
-
-    const code = []
-    while (lines.length > 0) {
-      const a = lines.splice(0, 10).filter((_, n) => n % 2 === 0).map((s) => (s > barThreshold ? 'w' : 'n')).join('')
-      code.push(CHAR_SET.indexOf(a))
-    }
-    return code.join('')
   }
+
+  const startChar = lines.splice(0, 6).filter((_, n) => n % 2 === 0).map((s) => (s > barThreshold ? 'w' : 'n')).join('')
+  const endChar = lines.splice(-5, 5).filter((_, n) => n % 2 === 0).map((s) => (s > barThreshold ? 'w' : 'n')).join('')
+
+  if (startChar !== 'wwn' || endChar !== 'wnw') return ''
+
+  const code = []
+  while (lines.length > 0) {
+    const a = lines.splice(0, 10).filter((_, n) => n % 2 === 0).map((s) => (s > barThreshold ? 'w' : 'n')).join('')
+    code.push(CHAR_SET.indexOf(a))
+  }
+  return code.join('')
 }
 
 const decoder = (input, type) => {
   const lines = normalizeInput(input)
-  if (!lines.length) return ''
-  return decodeWidths(lines, type)
+  return lines.length ? decodeWidths(lines, type) : ''
 }
 
-if (typeof module !== 'undefined') module.exports = { decoder }
+// ---------------------------------------------------------------------------
+// Bildoperationen
+// ---------------------------------------------------------------------------
+
+const median = (xs) => [...xs].sort((a, b) => a - b)[xs.length >> 1]
+
+const columnsFromRow = ({ width, data }, row) => data.slice(row * width, (row + 1) * width)
+
+const columnsFromBand = ({ width, data }, start, end) =>
+  Array.from({ length: width }, (_, x) => {
+    let sum = 0
+    for (let y = start; y <= end; y++) sum += data[y * width + x]
+    return Math.round(sum / (end - start + 1))
+  })
+
+const rotateImage = (image, angle) => {
+  if (!angle) return image
+
+  const rad = (angle * Math.PI) / 180
+  const sin = Math.abs(Math.sin(rad))
+  const cos = Math.abs(Math.cos(rad))
+  const width = Math.ceil(image.width * cos + image.height * sin)
+  const height = Math.ceil(image.width * sin + image.height * cos)
+  const data = new Uint8ClampedArray(width * height).fill(255)
+  const srcCx = image.width / 2
+  const srcCy = image.height / 2
+  const cosA = Math.cos(-rad)
+  const sinA = Math.sin(-rad)
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const dx = x - width / 2
+      const dy = y - height / 2
+      const srcX = Math.round(dx * cosA - dy * sinA + srcCx)
+      const srcY = Math.round(dx * sinA + dy * cosA + srcCy)
+      if (srcX >= 0 && srcX < image.width && srcY >= 0 && srcY < image.height) data[y * width + x] = image.data[srcY * image.width + srcX]
+    }
+  }
+
+  return { width, height, data }
+}
+
+const cropImage = (image, region) => {
+  if (!region) return image
+
+  const x = Math.max(0, Math.min(image.width, Math.round(region.x ?? 0)))
+  const y = Math.max(0, Math.min(image.height, Math.round(region.y ?? 0)))
+  const width = Math.max(0, Math.min(image.width - x, Math.round(region.width ?? image.width - x)))
+  const height = Math.max(0, Math.min(image.height - y, Math.round(region.height ?? image.height - y)))
+  const data = Uint8ClampedArray.from({ length: width * height }, (_, i) => image.data[(y + Math.floor(i / width)) * image.width + x + (i % width)])
+
+  return { width, height, data }
+}
+
+const invert = (image) => ({ ...image, data: image.data.map((v) => 255 - v) })
+
+// Weiß-auf-schwarz-Scans invertieren, sonst hält die Bandsuche das ganze Bild für Barcode.
+// Nur eine Vermutung: bei einem eng beschnittenen Barcode überwiegt Schwarz ganz normal.
+const isDark = (image) => image.data.reduce((acc, v) => acc + v, 0) / image.data.length < 128
+
+const loadImage = (source) => (typeof source === 'string' ? readPng(source) : source)
+
+// ---------------------------------------------------------------------------
+// Kandidatensuche im Bild
+// ---------------------------------------------------------------------------
+
+// Aufsteigend nach Kosten: die meisten Scans sind nach dem ersten Durchgang gelesen. Der gedrehte Durchgang
+// ist für leicht schief eingescannte Formulare nötig, die bei 0° unlesbar bleiben.
+const PASSES = [
+  { angles: [0], samples: 10 },
+  { angles: [0, -3], samples: 60 }
+]
+
+const MIN_BAND_HEIGHT = 4
+const MIN_WIDTHS = 30
+const MAX_WIDTHS = 180
+
+const sampledRows = (start, end, samples) => {
+  const height = end - start + 1
+  return height <= samples
+    ? Array.from({ length: height }, (_, idx) => start + idx)
+    : Array.from({ length: samples }, (_, i) => start + Math.round((i * (height - 1)) / (samples - 1)))
+}
+
+// Zeilen mit vielen Hell-Dunkel-Wechseln zu Bändern zusammenfassen.
+// Obergrenze großzügig: auf Formularen steht neben dem Barcode Text in derselben Zeile
+const bands = (image) => {
+  const isBarcodeRow = (y) => {
+    let black = 0
+    let transitions = 0
+    let prev = false
+    let hasPrev = false
+
+    for (let x = 0; x < image.width; x++) {
+      const dark = image.data[y * image.width + x] < 200
+      if (dark) black += 1
+      if (hasPrev && dark !== prev) transitions += 1
+      if (dark || hasPrev) {
+        hasPrev = true
+        prev = dark
+      }
+    }
+
+    return transitions >= 25 && transitions <= 400 && black >= 20 && black <= image.width * 0.9
+  }
+
+  const found = []
+  let start = -1
+  for (let y = 0; y <= image.height; y++) {
+    const hit = y < image.height && isBarcodeRow(y)
+    if (hit && start < 0) start = y
+    else if (!hit && start >= 0) {
+      if (y - start >= MIN_BAND_HEIGHT) found.push({ start, end: y - 1 })
+      start = -1
+    }
+  }
+  return found
+}
+
+// Eine Bildzeile in Balkenbreiten schneiden - inklusive Auftrennung an breiten Weißlücken,
+// weil auf Formularen neben dem Barcode Text in derselben Zeile steht
+const candidatesFromColumns = (source, y, columns, seen) => {
+  const runs = valuesToRuns(Array.from(columns))
+  const bins = runs.map((run) => run.bin)
+  const widths = runs.map((run) => run.count)
+  const found = []
+
+  const push = (from, to) => {
+    let start = from
+    let end = to
+    while (start < end && bins[start] === RUN_WHITE) start += 1
+    while (end > start && bins[end - 1] === RUN_WHITE) end -= 1
+    if (end - start < MIN_WIDTHS || end - start > MAX_WIDTHS) return
+
+    const segment = widths.slice(start, end)
+    // Schlüssel mit Herkunftszeile: dieselbe Zeile darf in einem späteren Durchgang nicht erneut mitstimmen,
+    // zwei verschiedene Zeilen mit gleichem Ergebnis sind dagegen zwei echte Stimmen
+    const key = `${source}:${segment}`
+    if (seen.has(key)) return
+    seen.add(key)
+    found.push({ y, widths: segment, atEdge: end === widths.length })
+  }
+
+  const gap = Math.max(20, 4 * median(widths))
+  const segmentStart = widths.reduce((from, run, i) => (bins[i] === RUN_WHITE && run > gap ? (push(from, i), i + 1) : from), 0)
+  push(segmentStart, widths.length)
+  push(0, widths.length)
+
+  return found
+}
+
+function* candidates(image, { angles, samples }, seen) {
+  for (const angle of angles) {
+    const rotated = rotateImage(image, angle)
+    for (const { start, end } of bands(rotated)) {
+      for (const row of sampledRows(start, end, samples)) yield* candidatesFromColumns(`${angle}:${row}`, row, columnsFromRow(rotated, row), seen)
+      yield* candidatesFromColumns(`${angle}:band${start}`, start, columnsFromBand(rotated, start, end), seen)
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Erkennung: Kandidaten dekodieren, Treffer über Konsens absichern
+// ---------------------------------------------------------------------------
+
+const DEFAULTS = {
+  type: 'interleaved',
+  minDigits: 6,
+  minVotes: 2, // ein einzeln gelesener Code ist meist Rauschen aus dem Formulartext
+  confidence: 0.3, // ... und ein Code weit unter den Stimmen des besten Treffers ebenfalls
+  minConsensus: 3, // ab so vielen gleichen Treffern ist ein weiterer Durchgang überflüssig
+  passes: PASSES,
+  partials: false,
+  first: false,
+  region: null
+}
+
+const countCodes = (hits) => hits.reduce((acc, { code }) => acc.set(code, (acc.get(code) ?? 0) + 1), new Map())
+
+// Am Bildrand fehlen Stopmuster und Ruhezone: dort lohnt ein zweiter Versuch mit gekürztem Code plus synthetischem Stop
+const truncatedVariants = ({ y, widths }) => {
+  const narrow = median(widths)
+  return Array.from({ length: Math.max(0, Math.ceil((widths.length - 14) / 10)) }, (_, i) => ({
+    y,
+    widths: [...widths.slice(0, 14 + i * 10), narrow * 3, narrow, narrow]
+  }))
+}
+
+const hitsForPass = (image, pass, seen, options) => {
+  const { type, minDigits, minConsensus, first } = options
+  const isCode = (code) => code.length >= minDigits && /^\d+$/.test(code)
+  const decode = (cand) => ({ ...cand, code: decodeWidths(cand.widths, type) })
+
+  const decoded = []
+  const counts = new Map()
+  for (const cand of candidates(image, pass, seen)) {
+    const hit = decode(cand)
+    decoded.push(hit)
+    if (!first || !isCode(hit.code)) continue
+    // Abbruch erst ab minConsensus: die ersten Lesungen eines Bandes liefern oft nur ein Bruchstück des Codes
+    counts.set(hit.code, (counts.get(hit.code) ?? 0) + 1)
+    if (counts.get(hit.code) >= minConsensus) return decoded.filter(({ code }) => code === hit.code)
+  }
+
+  const retries = decoded.filter(({ atEdge, code }) => atEdge && !isCode(code)).flatMap(truncatedVariants).map(decode)
+  return [...decoded, ...retries].filter(({ code }) => isCode(code))
+}
+
+const removePartialCodes = (hits) => hits.filter((hit) => !hits.some((other) => other.code !== hit.code && other.code.includes(hit.code)))
+
+/**
+ * Sucht Barcodes in einem Bild und liefert die Treffer mit Fundstelle und Stimmenzahl:
+ * `[{ code, y, votes }]`, sortiert von oben nach unten.
+ *
+ * Jede ausgewertete Bildzeile ist eine Stimme; `votes` sagt also, wie oft derselbe Code
+ * gelesen wurde, und ist damit das Maß für die Verlässlichkeit eines Treffers.
+ *
+ * @param {string|{width:number,height:number,data:ArrayLike<number>}} source Pfad zu einem PNG oder Bitmap
+ * @param {object} [options]
+ * @param {'interleaved'|'standard'} [options.type='interleaved'] Barcode-Typ
+ * @param {{x?:number,y?:number,width?:number,height?:number}} [options.region] Scanbereich eingrenzen
+ * @param {boolean} [options.first=false] abbrechen, sobald ein Code minConsensus-mal gelesen wurde
+ * @param {number} [options.minVotes=2] wie oft ein Code gelesen sein muss, um als Treffer zu gelten
+ * @param {number} [options.minConsensus=3] ab so vielen gleichen Lesungen gilt ein Treffer als abgesichert
+ * @param {number} [options.confidence=0.3] Mindestanteil an den Stimmen des besten Treffers (0 schaltet ab)
+ * @param {number} [options.minDigits=6] Mindestlänge eines gültigen Codes
+ * @param {boolean} [options.partials=false] auch Codes liefern, die in einem längeren Treffer stecken
+ */
+const scanBarcodes = (source, options = {}) => {
+  const opts = { ...DEFAULTS, ...options }
+  const image = cropImage(loadImage(source), opts.region)
+  // Für den Abbruch der Kaskade zählen nur unterschiedliche Lesungen: zehn identische Zeilen desselben
+  // Bandes sind ein Beleg, kein Konsens - sonst liefe der feine Durchgang bei schrägen Scans nie an
+  const distinctReadings = (hits) =>
+    hits.reduce((acc, { code, widths }) => acc.set(code, (acc.get(code) ?? new Set()).add(widths.join())), new Map())
+  const enough = (hits) => (opts.first ? hits.length > 0 : [...distinctReadings(hits).values()].some((set) => set.size >= opts.minConsensus))
+  const allPasses = (img) => {
+    const seen = new Set() // über alle Durchgänge, damit dieselbe Zeile den Konsens nicht doppelt stützt
+    return opts.passes.reduce((acc, pass) => (enough(acc) ? acc : [...acc, ...hitsForPass(img, pass, seen, opts)]), [])
+  }
+
+  const guessed = isDark(image) ? invert(image) : image
+  const rawHits = allPasses(guessed)
+  if (!rawHits.length) rawHits.push(...allPasses(invert(guessed))) // Polarität war falsch geraten
+
+  const counts = countCodes(rawHits)
+  const threshold = Math.max(opts.minVotes, Math.max(0, ...counts.values()) * opts.confidence)
+  const hits = rawHits
+    .filter(({ code }) => counts.get(code) >= threshold)
+    .sort((a, b) => a.y - b.y || b.code.length - a.code.length)
+    .reduce((acc, hit) => (acc.some(({ code }) => code === hit.code) ? acc : [...acc, hit]), [])
+    .map(({ code, y }) => ({ code, y, votes: counts.get(code) }))
+
+  return opts.partials ? hits : removePartialCodes(hits)
+}
+
+/** Alle verlässlich gelesenen Barcodes als Strings, von oben nach unten - die übliche Einstiegs-API. */
+const barcodesFrom = (source, options) => scanBarcodes(source, options).map(({ code }) => code)
+
+/** Der bestbelegte Barcode oder '' - mit `{ first: true }` bricht die Suche beim ersten Treffer ab. */
+const barcodeFrom = (source, options) =>  scanBarcodes(source, options).sort((a, b) => b.votes - a.votes || b.code.length - a.code.length)[0]?.code ?? ''
+
+/** Ein Ergebnis je Scanbereich: `regions` ist eine Liste von Rechtecken, das Bild wird nur einmal geladen. */
+const barcodesFromRegions = (source, regions, options) => regions.map((region) => barcodesFrom(loadImage(source), { ...options, region }))
+
+/** Alles, was der Scanner überhaupt lesen konnte - ungefiltert, für Diagnose und schwierige Vorlagen. */
+const barcodeCandidates = (source, options) => scanBarcodes(source, { ...options, minVotes: 1, confidence: 0, partials: true })
+
+// node src/barcodes/barcode.js <bild.png> [--first] [--all]
+if (require.main === module) {
+  const [file, ...flags] = process.argv.slice(2)
+  const options = { first: flags.includes('--first') }
+  if (!file) console.log('Aufruf: node src/barcodes/barcode.js <bild.png> [--first] [--all]')
+  else (flags.includes('--all') ? barcodeCandidates(file, options) : scanBarcodes(file, options)).forEach(({ code, y, votes }) => console.log(`${code}\ty=${y}\tvotes=${votes}`))
+}
+
+module.exports = {
+  barcodesFrom,
+  barcodeFrom,
+  barcodesFromRegions,
+  barcodeCandidates,
+  scanBarcodes,
+  decoder,
+  decodeWidths,
+  loadImage,
+  cropImage,
+  rotateImage
+}

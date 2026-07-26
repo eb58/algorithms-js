@@ -24,6 +24,7 @@
       "test:watch": "jest --watchAll",
       "test:coverage": "jest --coverage --runInBand --watchAll=false",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
+      "barcode": "node src/barcodes/barcode.js",
       "sudoku": "node src/sudoku/sudoku3.js",
       "magic-hexagon": "node src/magic-hexagon/magic-hexagon.js",
       "complex": "node src/complex/complex.js",
