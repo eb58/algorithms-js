@@ -417,7 +417,10 @@ const hitsForPass = (view, pass, seen, options) => {
   return [...decoded, ...retries].filter(({ code }) => isCode(code))
 }
 
-const removePartialCodes = (hits) => hits.filter((hit) => !hits.some((other) => other.code !== hit.code && other.code.includes(hit.code)))
+// Ein Teilstück nur verwerfen, wenn der längere Code besser belegt ist. Fehllesungen greifen gern
+// eine Zifferngruppe zu weit ("753003275505" statt "3003275505"); ohne den Stimmenvergleich schluckt
+// so eine einzelne Lesung den vielfach belegten richtigen Code.
+const removePartialCodes = (hits) => hits.filter((hit) => !hits.some((other) => other.code !== hit.code && other.code.includes(hit.code) && other.votes > hit.votes))
 
 /**
  * Sucht Barcodes in einem Bild und liefert die Treffer mit Fundstelle und Stimmenzahl:
