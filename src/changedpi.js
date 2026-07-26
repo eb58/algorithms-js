@@ -34,8 +34,8 @@ module.exports = (() => {
 
       return (buf) => {
         let c = -1
-        for (let n = 0; n < buf.length; n++) {
-          c = pngDataTable[(c ^ buf[n]) & 0xff] ^ (c >>> 8)
+        for (const element of buf) {
+          c = pngDataTable[(c ^ element) & 0xff] ^ (c >>> 8)
         }
         return c ^ -1
       }

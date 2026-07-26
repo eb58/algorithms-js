@@ -2,16 +2,8 @@ const CHAR_SET = ['nnwwn', 'wnnnw', 'nwnnw', 'wwnnn', 'nnwnw', 'wnwnn', 'nwwnn',
 const RUN_WHITE = 255
 const RUN_BLACK = 0
 
-const isBitmap = (input) =>
-  input &&
-  typeof input === 'object' &&
-  Number.isInteger(input.width) &&
-  Number.isInteger(input.height) &&
-  input.data &&
-  typeof input.data.length === 'number'
-
+const isBitmap = (input) =>  input &&  typeof input === 'object' &&  Number.isInteger(input.width) &&  Number.isInteger(input.height) &&  input.data &&  typeof input.data.length === 'number'
 const isMatrix = (input) => Array.isArray(input) && Array.isArray(input[0])
-
 const matrixToColumns = (matrix) => matrix[0].map((_, x) => matrix.reduce((sum, row) => sum + (row[x] ?? 0), 0) / matrix.length)
 
 const imageDataToColumns = (data, width, height) => {
@@ -106,7 +98,7 @@ const decodeWidths = (rawLines, type) => {
     }
 
     return matches
-      .sort((a, b) => b.code.length - a.code.length || a.start - b.start)
+      .toSorted((a, b) => b.code.length - a.code.length || a.start - b.start)
       .reduce((acc, match) => (acc.some(({ start, end }) => match.start < end && match.end > start) ? acc : [...acc, match]), [])
       .sort((a, b) => a.start - b.start)
       .map(({ code }) => code)

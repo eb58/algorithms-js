@@ -14,10 +14,8 @@ const comb1 = (xs, k, pred) => {
       res[level] = xs[i]
       if (level < k - 1) {
         run(level + 1, i + 1)
-      } else {
-        if (!pred || pred(res)) {
-          result.push(res.slice())
-        }
+      } else if (!pred || pred(res)) {
+        result.push(res.slice())
       }
     }
   }
@@ -46,30 +44,30 @@ const comb2 = (xs, k) =>
     !k
       ? [[]]
       : range(S.size - k + 1).reduce((a, i) => {
-          return [...a, ...combS(slice(S, i + 1), k - 1).map((T) => new Set([...T, at(S, i)]))]
-        }, [])
+        return [...a, ...combS(slice(S, i + 1), k - 1).map((T) => new Set([...T, at(S, i)]))]
+      }, [])
 }
 
 const combBS = (S, k) =>
   !k
     ? [[]]
     : range(bitset.size(S) - k + 1).reduce((a, i) => {
-        return [...a, ...combBS(bitset.slice(S, i + 1), k - 1).map((T) => bitset.add(T, bitset.at(S, i)))]
-      }, [])
+      return [...a, ...combBS(bitset.slice(S, i + 1), k - 1).map((T) => bitset.add(T, bitset.at(S, i)))]
+    }, [])
 
 // comb3 --- too slow  but quite interesting!!!
 const comb3a = (xs, k) =>
   k === 1
     ? xs.map((x) => [x])
     : comb3a(xs, k - 1).reduce(
-        (a, ys) => [
-          ...a,
-          ...array(xs)
-            .largerThan(array(ys).max())
-            .map((x) => [...ys, x]),
-        ],
-        []
-      )
+      (a, ys) => [
+        ...a,
+        ...array(xs)
+          .largerThan(array(ys).max())
+          .map((x) => [...ys, x]),
+      ],
+      []
+    )
 
 comb4 = (() => {
   const range = (n) => [...Array(n).keys()]
