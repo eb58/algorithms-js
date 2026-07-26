@@ -1,5 +1,10 @@
 const { readPng } = require('./png')
 
+// Einmalig binden statt in jeder Schleife über das Global zu gehen: unter Jest läuft der Code
+// in einer vm-Sandbox, in der jeder Zugriff auf ein Global durch einen Proxy geht - dort kostet
+// `Math.round(x)` gegenüber `round(x)` den Faktor 100, in node ist es gleich schnell.
+const { abs, ceil, cos, floor, max, min, round, sin, PI } = Math
+
 // ---------------------------------------------------------------------------
 // Breiten -> Ziffern
 // ---------------------------------------------------------------------------
@@ -7,6 +12,11 @@ const { readPng } = require('./png')
 const CHAR_SET = ['nnwwn', 'wnnnw', 'nwnnw', 'wwnnn', 'nnwnw', 'wnwnn', 'nwwnn', 'nnnww', 'wnnwn', 'nwnwn']
 const RUN_WHITE = 255
 const RUN_BLACK = 0
+
+// Muster als Bitmaske der breiten Balken: die Klassifikation liefert direkt zwei Positionen,
+// damit fallen im heißen Pfad Zwischenstrings und ihre indexOf-Suche weg
+const patternToMask = (pattern) => [...pattern].reduce((mask, c, n) => (c === 'w' ? mask | (1 << n) : mask), 0)
+const DIGIT_BY_MASK = CHAR_SET.reduce((acc, pattern, digit) => acc.fill(digit, patternToMask(pattern), patternToMask(pattern) + 1), new Int8Array(32).fill(-1))
 
 const isBitmap = (input) => input && typeof input === 'object' && Number.isInteger(input.width) && Number.isInteger(input.height) && input.data && typeof input.data.length === 'number'
 const isMatrix = (input) => Array.isArray(input) && Array.isArray(input[0])
@@ -18,7 +28,7 @@ const imageDataToColumns = (data, width, height) => {
     let sum = 0
     for (let y = 0; y < height; y++) {
       const idx = (y * width + x) * channels
-      sum += channels === 4 ? Math.round((data[idx] + data[idx + 1] + data[idx + 2]) / 3) : data[idx]
+      sum += channels === 4 ? round((data[idx] + data[idx + 1] + data[idx + 2]) / 3) : data[idx]
     }
     return sum / height
   })
@@ -26,7 +36,14 @@ const imageDataToColumns = (data, width, height) => {
 
 const valuesToRuns = (values) => {
   if (!values.length) return []
-  const threshold = (Math.min(...values) + Math.max(...values)) / 2
+  let lo = Infinity
+  let hi = -Infinity
+  // Indiziert statt for-of: values ist meist ein Uint8ClampedArray, dort kostet der Iterator das Sechsfache
+  for (let i = 0; i < values.length; i++) {
+    if (values[i] < lo) lo = values[i]
+    if (values[i] > hi) hi = values[i]
+  }
+  const threshold = (lo + hi) / 2
   const runs = []
   let count = 1
   let bin = values[0] > threshold ? RUN_WHITE : RUN_BLACK
@@ -53,17 +70,46 @@ const trimQuietZones = (runs) => {
   return runs.slice(start, end)
 }
 
-const classifyInterleavedGroup = (group) => {
-  const ranked = group.map((width, index) => ({ width, index })).sort((a, b) => b.width - a.width)
-  const wide = new Set(ranked.slice(0, 2).map(({ index }) => index))
-  const minWide = Math.min(...ranked.slice(0, 2).map(({ width }) => width))
-  const maxNarrow = Math.max(...ranked.slice(2).map(({ width }) => width))
-  return minWide / maxNarrow < 1.1 ? '' : group.map((_, index) => (wide.has(index) ? 'w' : 'n')).join('')
+// Fünf Balken ab `from` im Abstand `step`: die zwei breitesten ergeben die Ziffer,
+// zu geringer Abstand zum breitesten schmalen Balken verwirft die Gruppe (-1)
+const classifyInterleavedGroup = (widths, from, step) => {
+  let first = -1
+  let second = -1
+  let firstAt = -1
+  let secondAt = -1
+
+  for (let n = 0; n < 5; n++) {
+    const width = widths[from + n * step]
+    if (width > first) {
+      second = first
+      secondAt = firstAt
+      first = width
+      firstAt = n
+    } else if (width > second) {
+      second = width
+      secondAt = n
+    }
+  }
+
+  let maxNarrow = -1
+  for (let n = 0; n < 5; n++) {
+    if (n !== firstAt && n !== secondAt && widths[from + n * step] > maxNarrow) maxNarrow = widths[from + n * step]
+  }
+
+  return second / maxNarrow < 1.1 ? -1 : DIGIT_BY_MASK[(1 << firstAt) | (1 << secondAt)]
 }
 
-const looksLikeInterleavedStart = (runs) => Math.max(...runs) / Math.min(...runs) < 2.5
+const looksLikeInterleavedStart = (widths, from) => {
+  let lo = Infinity
+  let hi = 0
+  for (let n = 0; n < 4; n++) {
+    if (widths[from + n] < lo) lo = widths[from + n]
+    if (widths[from + n] > hi) hi = widths[from + n]
+  }
+  return hi / lo < 2.5
+}
 
-const looksLikeInterleavedStop = ([wide, narrowA, narrowB]) => wide / Math.max(narrowA, narrowB) >= 1.1
+const looksLikeInterleavedStop = (widths, from) => widths[from] / max(widths[from + 1], widths[from + 2]) >= 1.1
 
 const columnsToWidths = (columns) => trimQuietZones(valuesToRuns(columns)).map((run) => run.count)
 
@@ -74,56 +120,48 @@ const normalizeInput = (input) => {
   return columnsToWidths(imageDataToColumns(input.data, input.width, input.height))
 }
 
-const decodeWidths = (rawLines, type) => {
+const decodeStandard = (rawLines) => {
   const lines = rawLines.slice()
-  const barThreshold = Math.ceil(lines.reduce((acc, item) => acc + item, 0) / lines.length)
+  const barThreshold = ceil(lines.reduce((acc, item) => acc + item, 0) / lines.length)
+  const toPattern = (chunk) => chunk.filter((_, n) => n % 2 === 0).map((s) => (s > barThreshold ? 'w' : 'n')).join('')
 
-  if (type === 'interleaved') {
-    const matches = []
-
-    for (let dataStart = 0; dataStart + 13 <= lines.length; dataStart++) {
-      const start = dataStart >= 4 && looksLikeInterleavedStart(lines.slice(dataStart - 4, dataStart)) ? dataStart - 4 : dataStart
-      for (let end = dataStart + 10; end + 3 <= lines.length; end += 10) {
-        if (!looksLikeInterleavedStop(lines.slice(end, end + 3))) continue
-
-        const code = []
-        let valid = true
-        for (let i = dataStart; i < end; i += 10) {
-          const chunk = lines.slice(i, i + 10)
-          const a = classifyInterleavedGroup(chunk.filter((_, n) => n % 2 === 0))
-          const b = classifyInterleavedGroup(chunk.filter((_, n) => n % 2 !== 0))
-          const da = CHAR_SET.indexOf(a)
-          const db = CHAR_SET.indexOf(b)
-          if (da < 0 || db < 0) {
-            valid = false
-            break
-          }
-          code.push(da, db)
-        }
-        if (valid) matches.push({ start, end: end + 3, code: code.join('') })
-      }
-    }
-
-    return matches
-      .toSorted((a, b) => b.code.length - a.code.length || a.start - b.start)
-      .reduce((acc, match) => (acc.some(({ start, end }) => match.start < end && match.end > start) ? acc : [...acc, match]), [])
-      .sort((a, b) => a.start - b.start)
-      .map(({ code }) => code)
-      .join(',')
-  }
-
-  const startChar = lines.splice(0, 6).filter((_, n) => n % 2 === 0).map((s) => (s > barThreshold ? 'w' : 'n')).join('')
-  const endChar = lines.splice(-5, 5).filter((_, n) => n % 2 === 0).map((s) => (s > barThreshold ? 'w' : 'n')).join('')
-
-  if (startChar !== 'wwn' || endChar !== 'wnw') return ''
+  if (toPattern(lines.splice(0, 6)) !== 'wwn' || toPattern(lines.splice(-5, 5)) !== 'wnw') return ''
 
   const code = []
-  while (lines.length > 0) {
-    const a = lines.splice(0, 10).filter((_, n) => n % 2 === 0).map((s) => (s > barThreshold ? 'w' : 'n')).join('')
-    code.push(CHAR_SET.indexOf(a))
-  }
+  while (lines.length > 0) code.push(CHAR_SET.indexOf(toPattern(lines.splice(0, 10))))
   return code.join('')
 }
+
+const decodeInterleaved = (lines) => {
+  // Jede Zehnergruppe je Startversatz nur einmal klassifizieren: die Suche über alle
+  // Start/Stop-Paare läuft danach auf Tabellenzugriffen statt auf tausenden Neuberechnungen
+  const digits = Array.from({ length: max(0, lines.length - 9) }, (_, i) => {
+    const a = classifyInterleavedGroup(lines, i, 2)
+    const b = classifyInterleavedGroup(lines, i + 1, 2)
+    return a < 0 || b < 0 ? null : `${a}${b}`
+  })
+
+  const matches = []
+  for (let dataStart = 0; dataStart + 13 <= lines.length; dataStart++) {
+    const start = dataStart >= 4 && looksLikeInterleavedStart(lines, dataStart - 4) ? dataStart - 4 : dataStart
+    let code = ''
+    // Scheitert eine Gruppe, scheitern auch alle längeren Codes ab demselben Start
+    for (let i = dataStart; i + 13 <= lines.length; i += 10) {
+      if (!digits[i]) break
+      code += digits[i]
+      if (looksLikeInterleavedStop(lines, i + 10)) matches.push({ start, end: i + 13, code })
+    }
+  }
+
+  return matches
+    .toSorted((a, b) => b.code.length - a.code.length || a.start - b.start)
+    .reduce((acc, match) => (acc.some(({ start, end }) => match.start < end && match.end > start) ? acc : [...acc, match]), [])
+    .sort((a, b) => a.start - b.start)
+    .map(({ code }) => code)
+    .join(',')
+}
+
+const decodeWidths = (lines, type) => (type === 'interleaved' ? decodeInterleaved(lines) : decodeStandard(lines))
 
 const decoder = (input, type) => {
   const lines = normalizeInput(input)
@@ -142,29 +180,29 @@ const columnsFromBand = ({ width, data }, start, end) =>
   Array.from({ length: width }, (_, x) => {
     let sum = 0
     for (let y = start; y <= end; y++) sum += data[y * width + x]
-    return Math.round(sum / (end - start + 1))
+    return round(sum / (end - start + 1))
   })
 
 const rotateImage = (image, angle) => {
   if (!angle) return image
 
-  const rad = (angle * Math.PI) / 180
-  const sin = Math.abs(Math.sin(rad))
-  const cos = Math.abs(Math.cos(rad))
-  const width = Math.ceil(image.width * cos + image.height * sin)
-  const height = Math.ceil(image.width * sin + image.height * cos)
+  const rad = (angle * PI) / 180
+  const spanSin = abs(sin(rad))
+  const spanCos = abs(cos(rad))
+  const width = ceil(image.width * spanCos + image.height * spanSin)
+  const height = ceil(image.width * spanSin + image.height * spanCos)
   const data = new Uint8ClampedArray(width * height).fill(255)
   const srcCx = image.width / 2
   const srcCy = image.height / 2
-  const cosA = Math.cos(-rad)
-  const sinA = Math.sin(-rad)
+  const cosA = cos(-rad)
+  const sinA = sin(-rad)
 
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const dx = x - width / 2
       const dy = y - height / 2
-      const srcX = Math.round(dx * cosA - dy * sinA + srcCx)
-      const srcY = Math.round(dx * sinA + dy * cosA + srcCy)
+      const srcX = round(dx * cosA - dy * sinA + srcCx)
+      const srcY = round(dx * sinA + dy * cosA + srcCy)
       if (srcX >= 0 && srcX < image.width && srcY >= 0 && srcY < image.height) data[y * width + x] = image.data[srcY * image.width + srcX]
     }
   }
@@ -175,20 +213,28 @@ const rotateImage = (image, angle) => {
 const cropImage = (image, region) => {
   if (!region) return image
 
-  const x = Math.max(0, Math.min(image.width, Math.round(region.x ?? 0)))
-  const y = Math.max(0, Math.min(image.height, Math.round(region.y ?? 0)))
-  const width = Math.max(0, Math.min(image.width - x, Math.round(region.width ?? image.width - x)))
-  const height = Math.max(0, Math.min(image.height - y, Math.round(region.height ?? image.height - y)))
-  const data = Uint8ClampedArray.from({ length: width * height }, (_, i) => image.data[(y + Math.floor(i / width)) * image.width + x + (i % width)])
+  const x = max(0, min(image.width, round(region.x ?? 0)))
+  const y = max(0, min(image.height, round(region.y ?? 0)))
+  const width = max(0, min(image.width - x, round(region.width ?? image.width - x)))
+  const height = max(0, min(image.height - y, round(region.height ?? image.height - y)))
+  const data = Uint8ClampedArray.from({ length: width * height }, (_, i) => image.data[(y + floor(i / width)) * image.width + x + (i % width)])
 
   return { width, height, data }
 }
 
-const invert = (image) => ({ ...image, data: image.data.map((v) => 255 - v) })
+const invert = (image) => {
+  const data = new Uint8ClampedArray(image.data.length)
+  for (let i = 0; i < data.length; i++) data[i] = 255 - image.data[i]
+  return { ...image, data }
+}
 
 // Weiß-auf-schwarz-Scans invertieren, sonst hält die Bandsuche das ganze Bild für Barcode.
 // Nur eine Vermutung: bei einem eng beschnittenen Barcode überwiegt Schwarz ganz normal.
-const isDark = (image) => image.data.reduce((acc, v) => acc + v, 0) / image.data.length < 128
+const isDark = ({ data }) => {
+  let sum = 0
+  for (let i = 0; i < data.length; i++) sum += data[i]
+  return sum / data.length < 128
+}
 
 const loadImage = (source) => (typeof source === 'string' ? readPng(source) : source)
 
@@ -211,7 +257,7 @@ const sampledRows = (start, end, samples) => {
   const height = end - start + 1
   return height <= samples
     ? Array.from({ length: height }, (_, idx) => start + idx)
-    : Array.from({ length: samples }, (_, i) => start + Math.round((i * (height - 1)) / (samples - 1)))
+    : Array.from({ length: samples }, (_, i) => start + round((i * (height - 1)) / (samples - 1)))
 }
 
 // Zeilen mit vielen Hell-Dunkel-Wechseln zu Bändern zusammenfassen.
@@ -222,18 +268,21 @@ const bands = (image) => {
     let transitions = 0
     let prev = false
     let hasPrev = false
+    const offset = y * image.width
+    const maxBlack = image.width * 0.9
 
     for (let x = 0; x < image.width; x++) {
-      const dark = image.data[y * image.width + x] < 200
+      const dark = image.data[offset + x] < 200
       if (dark) black += 1
       if (hasPrev && dark !== prev) transitions += 1
       if (dark || hasPrev) {
         hasPrev = true
         prev = dark
       }
+      if (transitions > 400 || black > maxBlack) return false // beide wachsen nur, die Zeile ist damit erledigt
     }
 
-    return transitions >= 25 && transitions <= 400 && black >= 20 && black <= image.width * 0.9
+    return transitions >= 25 && black >= 20
   }
 
   const found = []
@@ -252,7 +301,7 @@ const bands = (image) => {
 // Eine Bildzeile in Balkenbreiten schneiden - inklusive Auftrennung an breiten Weißlücken,
 // weil auf Formularen neben dem Barcode Text in derselben Zeile steht
 const candidatesFromColumns = (source, y, columns, seen) => {
-  const runs = valuesToRuns(Array.from(columns))
+  const runs = valuesToRuns(columns)
   const bins = runs.map((run) => run.bin)
   const widths = runs.map((run) => run.count)
   const found = []
@@ -273,7 +322,7 @@ const candidatesFromColumns = (source, y, columns, seen) => {
     found.push({ y, widths: segment, atEdge: end === widths.length })
   }
 
-  const gap = Math.max(20, 4 * median(widths))
+  const gap = max(20, 4 * median(widths))
   const segmentStart = widths.reduce((from, run, i) => (bins[i] === RUN_WHITE && run > gap ? (push(from, i), i + 1) : from), 0)
   push(segmentStart, widths.length)
   push(0, widths.length)
@@ -281,10 +330,22 @@ const candidatesFromColumns = (source, y, columns, seen) => {
   return found
 }
 
-function* candidates(image, { angles, samples }, seen) {
+// Winkel 0 kommt in jedem Durchgang vor: Drehung und Bandsuche je Winkel nur einmal rechnen
+const viewsFor = (image) => {
+  const cache = new Map()
+  return (angle) => {
+    if (!cache.has(angle)) {
+      const rotated = rotateImage(image, angle)
+      cache.set(angle, { rotated, found: bands(rotated) })
+    }
+    return cache.get(angle)
+  }
+}
+
+function* candidates(view, { angles, samples }, seen) {
   for (const angle of angles) {
-    const rotated = rotateImage(image, angle)
-    for (const { start, end } of bands(rotated)) {
+    const { rotated, found } = view(angle)
+    for (const { start, end } of found) {
       for (const row of sampledRows(start, end, samples)) yield* candidatesFromColumns(`${angle}:${row}`, row, columnsFromRow(rotated, row), seen)
       yield* candidatesFromColumns(`${angle}:band${start}`, start, columnsFromBand(rotated, start, end), seen)
     }
@@ -312,20 +373,20 @@ const countCodes = (hits) => hits.reduce((acc, { code }) => acc.set(code, (acc.g
 // Am Bildrand fehlen Stopmuster und Ruhezone: dort lohnt ein zweiter Versuch mit gekürztem Code plus synthetischem Stop
 const truncatedVariants = ({ y, widths }) => {
   const narrow = median(widths)
-  return Array.from({ length: Math.max(0, Math.ceil((widths.length - 14) / 10)) }, (_, i) => ({
+  return Array.from({ length: max(0, ceil((widths.length - 14) / 10)) }, (_, i) => ({
     y,
     widths: [...widths.slice(0, 14 + i * 10), narrow * 3, narrow, narrow]
   }))
 }
 
-const hitsForPass = (image, pass, seen, options) => {
+const hitsForPass = (view, pass, seen, options) => {
   const { type, minDigits, minConsensus, first } = options
   const isCode = (code) => code.length >= minDigits && /^\d+$/.test(code)
   const decode = (cand) => ({ ...cand, code: decodeWidths(cand.widths, type) })
 
   const decoded = []
   const counts = new Map()
-  for (const cand of candidates(image, pass, seen)) {
+  for (const cand of candidates(view, pass, seen)) {
     const hit = decode(cand)
     decoded.push(hit)
     if (!first || !isCode(hit.code)) continue
@@ -368,7 +429,8 @@ const scanBarcodes = (source, options = {}) => {
   const enough = (hits) => (opts.first ? hits.length > 0 : [...distinctReadings(hits).values()].some((set) => set.size >= opts.minConsensus))
   const allPasses = (img) => {
     const seen = new Set() // über alle Durchgänge, damit dieselbe Zeile den Konsens nicht doppelt stützt
-    return opts.passes.reduce((acc, pass) => (enough(acc) ? acc : [...acc, ...hitsForPass(img, pass, seen, opts)]), [])
+    const view = viewsFor(img)
+    return opts.passes.reduce((acc, pass) => (enough(acc) ? acc : [...acc, ...hitsForPass(view, pass, seen, opts)]), [])
   }
 
   const guessed = isDark(image) ? invert(image) : image
@@ -376,7 +438,7 @@ const scanBarcodes = (source, options = {}) => {
   if (!rawHits.length) rawHits.push(...allPasses(invert(guessed))) // Polarität war falsch geraten
 
   const counts = countCodes(rawHits)
-  const threshold = Math.max(opts.minVotes, Math.max(0, ...counts.values()) * opts.confidence)
+  const threshold = max(opts.minVotes, max(0, ...counts.values()) * opts.confidence)
   const hits = rawHits
     .filter(({ code }) => counts.get(code) >= threshold)
     .sort((a, b) => a.y - b.y || b.code.length - a.code.length)

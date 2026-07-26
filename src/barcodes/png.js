@@ -31,7 +31,7 @@ const readPng = (filePath) => {
   for (let y = 0; y < height; y++) {
     const rowOffset = y * rowSize
     if (inflated[rowOffset] !== 0) throw new Error(`Unsupported PNG filter ${inflated[rowOffset]}`)
-    for (let x = 0; x < width; x++) data[y * width + x] = inflated[rowOffset + 1 + x]
+    data.set(inflated.subarray(rowOffset + 1, rowOffset + 1 + width), y * width)
   }
 
   return { width, height, data }
