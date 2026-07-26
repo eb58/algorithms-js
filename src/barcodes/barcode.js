@@ -230,6 +230,8 @@ const invert = (image) => {
 
 // Weiß-auf-schwarz-Scans invertieren, sonst hält die Bandsuche das ganze Bild für Barcode.
 // Nur eine Vermutung: bei einem eng beschnittenen Barcode überwiegt Schwarz ganz normal.
+// Schleife statt reduce(): das kostet über ein Vollbild das Dreizehnfache. Sampling wäre nochmal
+// schneller, aber drei Fixtures liegen unter einer Helligkeitsstufe an der Polaritätsschwelle.
 const isDark = ({ data }) => {
   let sum = 0
   for (let i = 0; i < data.length; i++) sum += data[i]
@@ -452,7 +454,7 @@ const scanBarcodes = (source, options = {}) => {
 const barcodesFrom = (source, options) => scanBarcodes(source, options).map(({ code }) => code)
 
 /** Der bestbelegte Barcode oder '' - mit `{ first: true }` bricht die Suche beim ersten Treffer ab. */
-const barcodeFrom = (source, options) =>  scanBarcodes(source, options).sort((a, b) => b.votes - a.votes || b.code.length - a.code.length)[0]?.code ?? ''
+const barcodeFrom = (source, options) => scanBarcodes(source, options).sort((a, b) => b.votes - a.votes || b.code.length - a.code.length)[0]?.code ?? ''
 
 /** Ein Ergebnis je Scanbereich: `regions` ist eine Liste von Rechtecken, das Bild wird nur einmal geladen. */
 const barcodesFromRegions = (source, regions, options) => regions.map((region) => barcodesFrom(loadImage(source), { ...options, region }))
