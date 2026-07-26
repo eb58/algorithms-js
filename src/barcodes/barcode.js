@@ -42,6 +42,7 @@ const valuesToRuns = (values) => {
   for (let i = 0; i < values.length; i++) {
     if (values[i] < lo) lo = values[i]
     if (values[i] > hi) hi = values[i]
+    if (lo === RUN_BLACK && hi === RUN_WHITE) break
   }
   const threshold = (lo + hi) / 2
   const runs = []
