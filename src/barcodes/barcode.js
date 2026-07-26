@@ -199,7 +199,7 @@ const interleavedWidthFit = ({ code, widths }) => {
 // Bildoperationen
 // ---------------------------------------------------------------------------
 
-const median = (xs) => [...xs].sort((a, b) => a - b)[xs.length >> 1]
+const median = (xs) => Uint32Array.from(xs).sort()[xs.length >> 1]
 
 // subarray statt slice: die Zeile wird nur gelesen, eine Kopie je Bildzeile wäre verschenkt.
 // Der slice-Zweig fängt Bitmaps ab, die als normales Array hereingereicht werden.
