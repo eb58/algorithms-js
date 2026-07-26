@@ -556,7 +556,7 @@ const scanBarcodes = (source, options = {}) => {
     // Spitzenreiter darf deshalb den feineren Durchgang überspringen.
     const readings = distinctReadings(hits)
     const [[bestCode, bestVotes] = ['', 0], [, nextVotes = 0] = []] = [...countCodes(hits)].sort(([, a], [, b]) => b - a)
-    return readings.get(bestCode)?.size >= opts.minConsensus && bestVotes >= nextVotes * 1.5
+    return readings.get(bestCode)?.size >= opts.minConsensus && (hasCheckDigit({ code: bestCode }) || bestVotes >= nextVotes * 1.5)
   }
   const allPasses = (img) => {
     const seen = new Set() // über alle Durchgänge, damit dieselbe Zeile den Konsens nicht doppelt stützt
