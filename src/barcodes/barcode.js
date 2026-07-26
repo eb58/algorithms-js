@@ -272,13 +272,13 @@ const sampledRows = (start, end, samples) => {
 // Zeilen mit vielen Hell-Dunkel-Wechseln zu Bändern zusammenfassen.
 // Obergrenze großzügig: auf Formularen steht neben dem Barcode Text in derselben Zeile
 const bands = (image) => {
+  const maxBlack = image.width * 0.9
   const isBarcodeRow = (y) => {
     let black = 0
     let transitions = 0
     let prev = false
     let hasPrev = false
     const offset = y * image.width
-    const maxBlack = image.width * 0.9
 
     for (let x = 0; x < image.width; x++) {
       const dark = image.data[offset + x] < 200
@@ -294,15 +294,24 @@ const bands = (image) => {
     return transitions >= 25 && black >= 20
   }
 
+  // Im Raster von MIN_BAND_HEIGHT suchen und die Ränder eines Treffers zeilenweise nachziehen:
+  // vier aufeinanderfolgende Zeilen enthalten immer eine Rasterzeile, ein Band der Mindesthöhe
+  // kann also nicht durchfallen. Spart ein Drittel der Zeilenprüfungen bei identischen Bändern -
+  // aber nur bis MIN_BAND_HEIGHT, ab Schritt 5 gehen über die Fixtures Bänder verloren.
   const found = []
-  let start = -1
-  for (let y = 0; y <= image.height; y++) {
-    const hit = y < image.height && isBarcodeRow(y)
-    if (hit && start < 0) start = y
-    else if (!hit && start >= 0) {
-      if (y - start >= MIN_BAND_HEIGHT) found.push({ start, end: y - 1 })
-      start = -1
+  let y = 0
+  while (y < image.height) {
+    if (!isBarcodeRow(y)) {
+      y += MIN_BAND_HEIGHT
+      continue
     }
+
+    let start = y
+    let end = y
+    while (start > 0 && isBarcodeRow(start - 1)) start -= 1
+    while (end + 1 < image.height && isBarcodeRow(end + 1)) end += 1
+    if (end - start + 1 >= MIN_BAND_HEIGHT) found.push({ start, end })
+    y = end + 1
   }
   return found
 }
