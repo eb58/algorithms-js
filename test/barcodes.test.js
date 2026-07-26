@@ -43,7 +43,7 @@ const INTERLEAVED_FOLDERS = ['INTERLEAVE25_T1', 'INTERLEAVE25_T2', 'INTERLEAVE25
 
 INTERLEAVED_FOLDERS.forEach((folder) =>
   describe(`${folder} results.ini`, () =>
-    test.each(interleavedFixtureCases(folder))('%s', (file, codes) => {
+    test.each(interleavedFixtureCases(folder))('%s   %s', (file, codes) => {
       const expected = codes.split(',').filter(Boolean).sort()
       expect(barcodesFrom(file).sort()).toEqual(expected)
     }))

@@ -499,7 +499,12 @@ const preferHit = (a, b) =>
 const normalizeInterleavedCode = (code) => (code.startsWith('00000') ? code.slice(1) : code)
 
 const selectInterleavedHits = (hits, minVotes) => {
-  const plausible = hits.filter((hit) => hit.widthError <= MAX_WIDTH_ERROR && hasQuietZone(hit))
+  const isPlausible = (hit) => hit.widthError <= MAX_WIDTH_ERROR && hasQuietZone(hit)
+  const isSupportedExtension = (hit) =>
+    hasCheckDigit(hit) &&
+    hit.votes >= minVotes * 2 &&
+    hits.some((other) => isPlausible(other) && hit.code.startsWith(other.code) && hit.bandStart === other.bandStart && hit.bandEnd === other.bandEnd)
+  const plausible = hits.filter((hit) => isPlausible(hit) || isSupportedExtension(hit))
   const withoutOverreads = plausible.filter((hit) =>
     !plausible.some((other) =>
       hit !== other &&
