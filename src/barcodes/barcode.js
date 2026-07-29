@@ -34,8 +34,12 @@ const imageDataToColumns = (data, width, height) => {
   })
 }
 
+// Zwei parallele Arrays statt eines Objekts je Lauf: die Aufrufer lesen Farben und Breiten
+// ohnehin getrennt, und über ein Vollbild ist die Objektallokation der teuerste Anteil.
 const valuesToRuns = (values) => {
-  if (!values.length) return []
+  const bins = []
+  const counts = []
+  if (!values.length) return { bins, counts }
   let lo = Infinity
   let hi = -Infinity
   // Indiziert statt for-of: values ist meist ein Uint8ClampedArray, dort kostet der Iterator das Sechsfache
@@ -45,7 +49,6 @@ const valuesToRuns = (values) => {
     if (lo === RUN_BLACK && hi === RUN_WHITE) break
   }
   const threshold = (lo + hi) / 2
-  const runs = []
   let count = 1
   let bin = values[0] > threshold ? RUN_WHITE : RUN_BLACK
 
@@ -53,22 +56,24 @@ const valuesToRuns = (values) => {
     const next = values[i] > threshold ? RUN_WHITE : RUN_BLACK
     if (next === bin) count += 1
     else {
-      runs.push({ bin, count })
+      bins.push(bin)
+      counts.push(count)
       bin = next
       count = 1
     }
   }
 
-  runs.push({ bin, count })
-  return runs
+  bins.push(bin)
+  counts.push(count)
+  return { bins, counts }
 }
 
-const trimQuietZones = (runs) => {
+const trimQuietZones = ({ bins, counts }) => {
   let start = 0
-  let end = runs.length
-  while (start + 1 < end && runs[start].bin === RUN_WHITE && runs[start].count > runs[start + 1].count * 2) start += 1
-  while (end - 2 >= start && runs[end - 1].bin === RUN_WHITE && runs[end - 1].count > runs[end - 2].count * 2) end -= 1
-  return runs.slice(start, end)
+  let end = counts.length
+  while (start + 1 < end && bins[start] === RUN_WHITE && counts[start] > counts[start + 1] * 2) start += 1
+  while (end - 2 >= start && bins[end - 1] === RUN_WHITE && counts[end - 1] > counts[end - 2] * 2) end -= 1
+  return counts.slice(start, end)
 }
 
 // Fünf Balken ab `from` im Abstand `step`: die zwei breitesten ergeben die Ziffer,
@@ -76,28 +81,26 @@ const trimQuietZones = (runs) => {
 const classifyInterleavedGroup = (widths, from, step) => {
   let first = -1
   let second = -1
+  let third = -1 // der breiteste schmale Balken ist genau der drittbreiteste der Gruppe
   let firstAt = -1
   let secondAt = -1
 
-  for (let n = 0; n < 5; n++) {
-    const width = widths[from + n * step]
+  for (let n = 0, at = from; n < 5; n++, at += step) {
+    const width = widths[at]
     if (width > first) {
+      third = second
       second = first
       secondAt = firstAt
       first = width
       firstAt = n
     } else if (width > second) {
+      third = second
       second = width
       secondAt = n
-    }
+    } else if (width > third) third = width
   }
 
-  let maxNarrow = -1
-  for (let n = 0; n < 5; n++) {
-    if (n !== firstAt && n !== secondAt && widths[from + n * step] > maxNarrow) maxNarrow = widths[from + n * step]
-  }
-
-  return second / maxNarrow < 1.1 ? -1 : DIGIT_BY_MASK[(1 << firstAt) | (1 << secondAt)]
+  return second / third < 1.1 ? -1 : DIGIT_BY_MASK[(1 << firstAt) | (1 << secondAt)]
 }
 
 const looksLikeInterleavedStart = (widths, from) => {
@@ -112,7 +115,7 @@ const looksLikeInterleavedStart = (widths, from) => {
 
 const looksLikeInterleavedStop = (widths, from) => widths[from] / max(widths[from + 1], widths[from + 2]) >= 1.1
 
-const columnsToWidths = (columns) => trimQuietZones(valuesToRuns(columns)).map((run) => run.count)
+const columnsToWidths = (columns) => trimQuietZones(valuesToRuns(columns))
 
 const normalizeInput = (input) => {
   if (input && typeof input === 'object' && Array.isArray(input.columns)) return columnsToWidths(input.columns)
@@ -135,12 +138,14 @@ const decodeStandard = (rawLines) => {
 
 const decodeInterleaved = (lines) => {
   // Jede Zehnergruppe je Startversatz nur einmal klassifizieren: die Suche über alle
-  // Start/Stop-Paare läuft danach auf Tabellenzugriffen statt auf tausenden Neuberechnungen
-  const digits = Array.from({ length: max(0, lines.length - 9) }, (_, i) => {
-    const a = classifyInterleavedGroup(lines, i, 2)
-    const b = classifyInterleavedGroup(lines, i + 1, 2)
-    return a < 0 || b < 0 ? null : `${a}${b}`
-  })
+  // Start/Stop-Paare läuft danach auf Tabellenzugriffen statt auf tausenden Neuberechnungen.
+  // Die zweite Ziffer einer Gruppe ist zugleich die erste der nächsten - deshalb erst alle
+  // Gruppen klassifizieren und dann paaren, statt jede für beide Rollen neu zu berechnen.
+  const groups = new Int8Array(max(0, lines.length - 8))
+  for (let i = 0; i < groups.length; i++) groups[i] = classifyInterleavedGroup(lines, i, 2)
+
+  const digits = Array.from({ length: max(0, lines.length - 9) }, (_, i) =>
+    (groups[i] < 0 || groups[i + 1] < 0 ? null : `${groups[i]}${groups[i + 1]}`))
 
   const matches = []
   for (let dataStart = 0; dataStart + 13 <= lines.length; dataStart++) {
@@ -199,48 +204,56 @@ const interleavedWidthFit = ({ code, widths }) => {
 // Bildoperationen
 // ---------------------------------------------------------------------------
 
-const median = (xs) => Uint32Array.from(xs).sort()[xs.length >> 1]
+// new statt from(): der Konstruktor kopiert das Array direkt, from() geht über den Iterator
+const median = (xs) => new Uint32Array(xs).sort()[xs.length >> 1]
 
 // subarray statt slice: die Zeile wird nur gelesen, eine Kopie je Bildzeile wäre verschenkt.
 // Der slice-Zweig fängt Bitmaps ab, die als normales Array hereingereicht werden.
 const columnsFromRow = ({ width, data }, row) => data.subarray?.(row * width, (row + 1) * width) ?? data.slice(row * width, (row + 1) * width)
 
-// Schleife statt Array.from(): der Callback lässt sich nicht in die Builtin inlinen, das kostet hier das Dreifache
+// Zeilenweise summieren statt spaltenweise: spaltenweise sprang der Lesezeiger je Pixel um eine
+// Bildbreite weiter und traf nie denselben Cache-Block zweimal. Ergebnis identisch, nur die
+// Reihenfolge der Additionen ändert sich - und die sind ganzzahlig, also exakt.
+// Uint8ClampedArray wie bei columnsFromRow, damit valuesToRuns nur eine Elementform sieht.
 const columnsFromBand = ({ width, data }, start, end) => {
   const rows = end - start + 1
-  const columns = new Array(width)
-  for (let x = 0; x < width; x++) {
-    let sum = 0
-    for (let y = start; y <= end; y++) sum += data[y * width + x]
-    columns[x] = round(sum / rows)
+  const sums = new Int32Array(width)
+  for (let y = start; y <= end; y++) {
+    const offset = y * width
+    for (let x = 0; x < width; x++) sums[x] += data[offset + x]
   }
+  const columns = new Uint8ClampedArray(width)
+  for (let x = 0; x < width; x++) columns[x] = round(sums[x] / rows)
   return columns
 }
 
 const rotateImage = (image, angle) => {
   if (!angle) return image
 
+  // Quellmaße einmal binden: im Pixelloop wären es sonst vier Property-Zugriffe je Zielpixel
+  const { width: srcWidth, height: srcHeight, data: srcData } = image
   const rad = (angle * PI) / 180
   const spanSin = abs(sin(rad))
   const spanCos = abs(cos(rad))
-  const width = ceil(image.width * spanCos + image.height * spanSin)
-  const height = ceil(image.width * spanSin + image.height * spanCos)
+  const width = ceil(srcWidth * spanCos + srcHeight * spanSin)
+  const height = ceil(srcWidth * spanSin + srcHeight * spanCos)
   const data = new Uint8ClampedArray(width * height).fill(255)
-  const srcCx = image.width / 2
-  const srcCy = image.height / 2
+  const srcCx = srcWidth / 2
+  const srcCy = srcHeight / 2
   const cosA = cos(-rad)
   const sinA = sin(-rad)
   const firstDx = -width / 2
 
   for (let y = 0; y < height; y++) {
     const dy = y - height / 2
+    const rowOffset = y * width
     let srcX = firstDx * cosA - dy * sinA + srcCx
     let srcY = firstDx * sinA + dy * cosA + srcCy
 
     for (let x = 0; x < width; x++) {
       const sourceX = round(srcX)
       const sourceY = round(srcY)
-      if (sourceX >= 0 && sourceX < image.width && sourceY >= 0 && sourceY < image.height) data[y * width + x] = image.data[sourceY * image.width + sourceX]
+      if (sourceX >= 0 && sourceX < srcWidth && sourceY >= 0 && sourceY < srcHeight) data[rowOffset + x] = srcData[sourceY * srcWidth + sourceX]
       srcX += cosA
       srcY += sinA
     }
@@ -271,10 +284,19 @@ const invert = (image) => {
 // Nur eine Vermutung: bei einem eng beschnittenen Barcode überwiegt Schwarz ganz normal.
 // Schleife statt reduce(): das kostet über ein Vollbild das Dreizehnfache. Sampling wäre nochmal
 // schneller, aber drei Fixtures liegen unter einer Helligkeitsstufe an der Polaritätsschwelle.
+// Stattdessen blockweise prüfen, ob das Ergebnis schon feststeht: die Summe wächst nur, ein heller
+// Scan steht nach gut der Hälfte fest. Ganzzahlig verglichen und damit exakt wie die Division.
 const isDark = ({ data }) => {
+  const limit = 128 * data.length
   let sum = 0
-  for (let i = 0; i < data.length; i++) sum += data[i]
-  return sum / data.length < 128
+  for (let i = 0; i < data.length; i++) {
+    sum += data[i]
+    if ((i & 8191) === 8191) {
+      if (sum >= limit) return false
+      if (sum + 255 * (data.length - i - 1) < limit) return true
+    }
+  }
+  return sum < limit
 }
 
 const loadImage = (source) => (typeof source === 'string' ? readPng(source) : source)
@@ -314,12 +336,14 @@ const bands = (image) => {
 
     let black = 1
     let transitions = 0
-    let prev = true
+    let prev = 1
 
+    // 0/1 statt Boolean und Addition statt Verzweigung: ob ein Pixel dunkel ist, lässt sich nicht
+    // vorhersagen - die Sprungvorhersage lief hier über jedes Bildpixel ins Leere
     for (x += 1; x < width; x++) {
-      const dark = data[offset + x] < 200
-      if (dark) black += 1
-      if (dark !== prev) transitions += 1
+      const dark = data[offset + x] < 200 ? 1 : 0
+      black += dark
+      transitions += dark ^ prev
       prev = dark
       if (transitions > 400 || black > maxBlack) return false // beide wachsen nur, die Zeile ist damit erledigt
     }
@@ -352,9 +376,7 @@ const bands = (image) => {
 // Eine Bildzeile in Balkenbreiten schneiden - inklusive Auftrennung an breiten Weißlücken,
 // weil auf Formularen neben dem Barcode Text in derselben Zeile steht
 const candidatesFromColumns = (source, y, columns, seen, band) => {
-  const runs = valuesToRuns(columns)
-  const bins = runs.map((run) => run.bin)
-  const widths = runs.map((run) => run.count)
+  const { bins, counts: widths } = valuesToRuns(columns)
   const found = []
 
   const push = (from, to) => {
