@@ -230,14 +230,19 @@ const rotateImage = (image, angle) => {
   const srcCy = image.height / 2
   const cosA = cos(-rad)
   const sinA = sin(-rad)
+  const firstDx = -width / 2
 
   for (let y = 0; y < height; y++) {
+    const dy = y - height / 2
+    let srcX = firstDx * cosA - dy * sinA + srcCx
+    let srcY = firstDx * sinA + dy * cosA + srcCy
+
     for (let x = 0; x < width; x++) {
-      const dx = x - width / 2
-      const dy = y - height / 2
-      const srcX = round(dx * cosA - dy * sinA + srcCx)
-      const srcY = round(dx * sinA + dy * cosA + srcCy)
-      if (srcX >= 0 && srcX < image.width && srcY >= 0 && srcY < image.height) data[y * width + x] = image.data[srcY * image.width + srcX]
+      const sourceX = round(srcX)
+      const sourceY = round(srcY)
+      if (sourceX >= 0 && sourceX < image.width && sourceY >= 0 && sourceY < image.height) data[y * width + x] = image.data[sourceY * image.width + sourceX]
+      srcX += cosA
+      srcY += sinA
     }
   }
 
@@ -299,22 +304,23 @@ const sampledRows = (start, end, samples) => {
 // Zeilen mit vielen Hell-Dunkel-Wechseln zu Bändern zusammenfassen.
 // Obergrenze großzügig: auf Formularen steht neben dem Barcode Text in derselben Zeile
 const bands = (image) => {
-  const maxBlack = image.width * 0.9
+  const { width, height, data } = image
+  const maxBlack = width * 0.9
   const isBarcodeRow = (y) => {
-    let black = 0
-    let transitions = 0
-    let prev = false
-    let hasPrev = false
-    const offset = y * image.width
+    const offset = y * width
+    let x = 0
+    while (x < width && data[offset + x] >= 200) x += 1
+    if (x === width) return false
 
-    for (let x = 0; x < image.width; x++) {
-      const dark = image.data[offset + x] < 200
+    let black = 1
+    let transitions = 0
+    let prev = true
+
+    for (x += 1; x < width; x++) {
+      const dark = data[offset + x] < 200
       if (dark) black += 1
-      if (hasPrev && dark !== prev) transitions += 1
-      if (dark || hasPrev) {
-        hasPrev = true
-        prev = dark
-      }
+      if (dark !== prev) transitions += 1
+      prev = dark
       if (transitions > 400 || black > maxBlack) return false // beide wachsen nur, die Zeile ist damit erledigt
     }
 
@@ -327,7 +333,7 @@ const bands = (image) => {
   // aber nur bis MIN_BAND_HEIGHT, ab Schritt 5 gehen über die Fixtures Bänder verloren.
   const found = []
   let y = 0
-  while (y < image.height) {
+  while (y < height) {
     if (!isBarcodeRow(y)) {
       y += MIN_BAND_HEIGHT
       continue
@@ -336,7 +342,7 @@ const bands = (image) => {
     let start = y
     let end = y
     while (start > 0 && isBarcodeRow(start - 1)) start -= 1
-    while (end + 1 < image.height && isBarcodeRow(end + 1)) end += 1
+    while (end + 1 < height && isBarcodeRow(end + 1)) end += 1
     if (end - start + 1 >= MIN_BAND_HEIGHT) found.push({ start, end })
     y = end + 1
   }
