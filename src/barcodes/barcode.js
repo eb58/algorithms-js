@@ -144,27 +144,35 @@ const decodeInterleaved = (lines) => {
   const groups = new Int8Array(max(0, lines.length - 8))
   for (let i = 0; i < groups.length; i++) groups[i] = classifyInterleavedGroup(lines, i, 2)
 
-  const digits = Array.from({ length: max(0, lines.length - 9) }, (_, i) =>
-    (groups[i] < 0 || groups[i + 1] < 0 ? null : `${groups[i]}${groups[i + 1]}`))
+  const pairs = new Int8Array(max(0, lines.length - 9)).fill(-1)
+  for (let i = 0; i < pairs.length; i++) {
+    if (groups[i] >= 0 && groups[i + 1] >= 0) pairs[i] = groups[i] * 10 + groups[i + 1]
+  }
 
   const matches = []
   for (let dataStart = 0; dataStart + 13 <= lines.length; dataStart++) {
     const start = dataStart >= 4 && looksLikeInterleavedStart(lines, dataStart - 4) ? dataStart - 4 : dataStart
-    let code = ''
     // Scheitert eine Gruppe, scheitern auch alle längeren Codes ab demselben Start
     for (let i = dataStart; i + 13 <= lines.length; i += 10) {
-      if (!digits[i]) break
-      code += digits[i]
-      if (looksLikeInterleavedStop(lines, i + 10)) matches.push({ start, end: i + 13, code })
+      if (pairs[i] < 0) break
+      if (looksLikeInterleavedStop(lines, i + 10)) matches.push({ start, end: i + 13, dataStart, dataEnd: i })
     }
   }
 
-  return matches
-    .toSorted((a, b) => b.code.length - a.code.length || a.start - b.start)
-    .reduce((acc, match) => (acc.some(({ start, end }) => match.start < end && match.end > start) ? acc : [...acc, match]), [])
-    .sort((a, b) => a.start - b.start)
-    .map(({ code }) => code)
-    .join(',')
+  const codeLength = ({ dataStart, dataEnd }) => dataEnd - dataStart
+  matches.sort((a, b) => codeLength(b) - codeLength(a) || a.start - b.start)
+
+  const selected = []
+  for (const match of matches) {
+    if (!selected.some(({ start, end }) => match.start < end && match.end > start)) selected.push(match)
+  }
+  selected.sort((a, b) => a.start - b.start)
+
+  return selected.map(({ dataStart, dataEnd }) => {
+    let code = ''
+    for (let i = dataStart; i <= dataEnd; i += 10) code += pairs[i] < 10 ? `0${pairs[i]}` : pairs[i]
+    return code
+  }).join(',')
 }
 
 const decodeWidths = (lines, type) => (type === 'interleaved' ? decodeInterleaved(lines) : decodeStandard(lines))
