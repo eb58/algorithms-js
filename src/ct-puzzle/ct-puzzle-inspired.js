@@ -1,4 +1,4 @@
-const { createPlacements } = require('./ct-puzzle')
+const { createPlacements, createStartPairs } = require('./ct-puzzle')
 const { availableParallelism } = require('node:os')
 const { Worker, isMainThread, parentPort, workerData } = require('node:worker_threads')
 
@@ -9,20 +9,6 @@ const CROSS_PIECE = 10
 const CROSS_BIT = 1 << CROSS_PIECE
 const T12_BIT = 1 << 11
 const { perPiece } = createPlacements({ canonicalT12: false })
-
-const rotations = [([x, y, z]) => [x, y, z], ([x, y, z]) => [2 - x, 3 - y, z], ([x, y, z]) => [2 - x, y, 4 - z], ([x, y, z]) => [x, 3 - y, 4 - z]]
-const placementKey = (cells) =>
-  [...cells]
-    .sort((a, b) => a - b)
-    .map((cell) => String(cell).padStart(2, '0'))
-    .join('')
-const rotatedKey = (cells, rotation) =>
-  placementKey(
-    cells.map((cell) => {
-      const [x, y, z] = rotation([cell % 3, Math.floor(cell / 3) % 4, Math.floor(cell / 12)])
-      return x + 3 * y + 12 * z
-    })
-  )
 
 const masks = Array.from({ length: 60 }, (_, cell) => (cell < WORD_BITS ? [1 << cell, 0] : [0, 1 << (cell - WORD_BITS)]))
 const boundaryMask = (predicate) =>
@@ -44,23 +30,16 @@ const encode = ({ cells, pieceBit }) => {
   return { cells, low, high, pieceBit, first: Math.min(...cells), last: Math.max(...cells) }
 }
 
-const crosses = perPiece[CROSS_PIECE].filter(({ cells }) => {
-  const keys = rotations.map((rotation) => rotatedKey(cells, rotation))
-  return keys[0] === [...keys].sort()[0]
-}).map(encode)
-const t12Placements = perPiece[11].map(encode)
 const placements = perPiece.slice(0, CROSS_PIECE).flat().map(encode)
-const starts = crosses.flatMap((cross) => {
-  const crossKey = placementKey(cross.cells)
-  const stabilizers = rotations.filter((rotation) => rotatedKey(cross.cells, rotation) === crossKey)
-  return t12Placements
-    .filter((t12) => !(cross.low & t12.low || cross.high & t12.high))
-    .filter((t12) => {
-      const keys = stabilizers.map((rotation) => rotatedKey(t12.cells, rotation))
-      return keys[0] === [...keys].sort()[0]
-    })
-    .map((t12) => ({ cross, t12 }))
-})
+const starts = createStartPairs().map(({ cross, t12 }) => ({ cross: encode(cross), t12: encode(t12) }))
+const crossCount = new Set(
+  starts.map(({ cross }) =>
+    cross.cells
+      .slice()
+      .sort((a, b) => a - b)
+      .join(',')
+  )
+).size
 
 const hasSingleCellHole = (low, high) => {
   const holeLow =
@@ -163,4 +142,4 @@ if (!isMainThread) {
     process.exitCode = 1
   })
 
-module.exports = { crossCount: crosses.length, startCount: starts.length, hasSingleCellHole, solveInspired, solveParallel }
+module.exports = { crossCount, startCount: starts.length, hasSingleCellHole, solveInspired, solveParallel }
