@@ -1,11 +1,11 @@
-const { crossCount, startCount, hasSingleCellHole } = require('../src/ct-puzzle/ct-puzzle-inspired')
+const { crossCount, startCount, hasIsolatedEmptyCell } = require('../src/ct-puzzle/ct-puzzle-inspired')
 
 test('the symmetric cross yields twelve starts before the second piece is placed', () => {
   expect(crossCount).toBe(12)
   expect(startCount).toBe(1405)
 })
 
-test('bitwise hole detection agrees with an explicit neighbor check', () => {
+test('hole detection agrees with an explicit neighbor check', () => {
   const full = (1 << 30) - 1
   const boards = [
     [0, 0],
@@ -29,5 +29,5 @@ test('bitwise hole detection agrees with an explicit neighbor check', () => {
         z === 4 || occupied(low, high, cell + 12)
       ].every(Boolean)
     })
-  boards.forEach(([low, high]) => expect(hasSingleCellHole(low, high)).toBe(reference(low, high)))
+  boards.forEach(([low, high]) => expect(hasIsolatedEmptyCell(low, high)).toBe(reference(low, high)))
 })

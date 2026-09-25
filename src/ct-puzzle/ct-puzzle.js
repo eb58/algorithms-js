@@ -1,60 +1,5 @@
 const SIZE = [3, 4, 5]
 const CELL_COUNT = SIZE.reduce((product, value) => product * value, 1)
-const WORD_BITS = 30
-const FULL_WORD = (1 << WORD_BITS) - 1
-const CELL_BITS = Array.from({ length: CELL_COUNT }, (_, cell) => (cell < WORD_BITS ? [1 << cell, 0] : [0, 1 << (cell - WORD_BITS)]))
-const NEIGHBORS = Array.from({ length: CELL_COUNT }, (_, cell) => {
-  const x = cell % SIZE[0]
-  const y = Math.floor(cell / SIZE[0]) % SIZE[1]
-  const z = Math.floor(cell / (SIZE[0] * SIZE[1]))
-  return [
-    x > 0 ? cell - 1 : -1,
-    x < SIZE[0] - 1 ? cell + 1 : -1,
-    y > 0 ? cell - SIZE[0] : -1,
-    y < SIZE[1] - 1 ? cell + SIZE[0] : -1,
-    z > 0 ? cell - SIZE[0] * SIZE[1] : -1,
-    z < SIZE[2] - 1 ? cell + SIZE[0] * SIZE[1] : -1
-  ].filter((neighbor) => neighbor >= 0)
-})
-
-const createRegionCheck = () => {
-  const seen = new Uint32Array(CELL_COUNT)
-  const queue = new Uint8Array(CELL_COUNT)
-  let stamp = 0
-  return (low, high, used) => {
-    stamp++
-    const fourAvailable = !(used & (1 << 8))
-    const sixAvailable = !(used & (1 << 11))
-    let fourRegions = 0
-    let sixRegions = 0
-    for (let cell = 0; cell < CELL_COUNT; cell++) {
-      const [cellLow, cellHigh] = CELL_BITS[cell]
-      if (seen[cell] === stamp || low & cellLow || high & cellHigh) continue
-      let head = 0
-      let tail = 1
-      queue[0] = cell
-      seen[cell] = stamp
-      while (head < tail) {
-        const neighbors = NEIGHBORS[queue[head++]]
-        for (let index = 0; index < neighbors.length; index++) {
-          const neighbor = neighbors[index]
-          const [neighborLow, neighborHigh] = CELL_BITS[neighbor]
-          if (seen[neighbor] === stamp || low & neighborLow || high & neighborHigh) continue
-          seen[neighbor] = stamp
-          queue[tail++] = neighbor
-        }
-      }
-      // Every disconnected cavity needs whole pieces: ordinary pieces have 5 cubes,
-      // while T9 has 4 and T12 has 6. At most one cavity can use each special piece.
-      const remainder = tail % 5
-      if (remainder === 4 && fourAvailable) fourRegions++
-      else if (remainder === 1 && sixAvailable) sixRegions++
-      else if (remainder !== 0) return false
-      if (fourRegions > 1 || sixRegions > 1) return false
-    }
-    return true
-  }
-}
 
 // The coordinates are reconstructed from the relative definitions published
 // with Ewald Rieger's original c't-puzzle solver (Forth Magazin 4/2004).
@@ -218,8 +163,7 @@ const createPlacements = ({ canonicalT12 = true } = {}) => {
             const cells = shape.map((point) => cellIndex(x + point[0], y + point[1], z + point[2]))
             const placement = {
               cells,
-              piece: pieceIndex,
-              pieceBit: 1 << pieceIndex
+              piece: pieceIndex
             }
             placements.push(placement)
           }
@@ -260,8 +204,7 @@ const createStartPairs = () => {
     })
 }
 
-const createSolver = ({ holeCheck = false } = {}) => {
-  const hasValidRegions = createRegionCheck()
+const createSolver = () => {
   const { perPiece } = createPlacements({ canonicalT12: false })
   const starts = createStartPairs()
   const columnCount = CELL_COUNT + PIECES.length
@@ -271,9 +214,6 @@ const createSolver = ({ holeCheck = false } = {}) => {
   const down = [...up]
   const column = [...up]
   const size = Array(columnCount + 1).fill(0)
-  const rowLow = []
-  const rowHigh = []
-  const rowPiece = []
   const crossRows = new Map()
   const t12Rows = new Map()
   left[0] = columnCount
@@ -292,13 +232,6 @@ const createSolver = ({ holeCheck = false } = {}) => {
         size[header]++
         return node
       })
-      const low = cells.reduce((mask, cell) => (cell < WORD_BITS ? mask | (1 << cell) : mask), 0)
-      const high = cells.reduce((mask, cell) => (cell >= WORD_BITS ? mask | (1 << (cell - WORD_BITS)) : mask), 0)
-      row.forEach((node) => {
-        rowLow[node] = low
-        rowHigh[node] = high
-        rowPiece[node] = 1 << piece
-      })
       if (piece === 10) crossRows.set(placementKey(cells), row[0])
       if (piece === 11) t12Rows.set(placementKey(cells), row[0])
       row.forEach((node, index) => {
@@ -314,9 +247,6 @@ const createSolver = ({ holeCheck = false } = {}) => {
   const D = Int32Array.from(down)
   const C = Int32Array.from(column)
   const S = Int32Array.from(size)
-  const LOW = Int32Array.from(rowLow)
-  const HIGH = Int32Array.from(rowHigh)
-  const PIECE = Int32Array.from(rowPiece)
 
   const cover = (header) => {
     R[L[header]] = R[header]
@@ -350,24 +280,6 @@ const createSolver = ({ holeCheck = false } = {}) => {
     uncover(C[row])
   }
 
-  const searchWithRegions = (low, high, used, depth) => {
-    if (R[0] === 0) return 1
-    if (depth >= 7 && !hasValidRegions(low, high, used)) return 0
-    let chosen = R[0]
-    for (let header = R[chosen]; header !== 0; header = R[header]) if (S[header] < S[chosen]) chosen = header
-    if (!S[chosen]) return 0
-
-    cover(chosen)
-    let count = 0
-    for (let row = D[chosen]; row !== chosen; row = D[row]) {
-      for (let node = R[row]; node !== row; node = R[node]) cover(C[node])
-      count += searchWithRegions(low | LOW[row], high | HIGH[row], used | PIECE[row], depth + 1)
-      for (let node = L[row]; node !== row; node = L[node]) uncover(C[node])
-    }
-    uncover(chosen)
-    return count
-  }
-
   const search = () => {
     if (R[0] === 0) return 1
     let chosen = R[0]
@@ -392,15 +304,15 @@ const createSolver = ({ holeCheck = false } = {}) => {
     const t12 = t12Rows.get(placementKey(start.t12.cells))
     select(cross)
     select(t12)
-    const count = holeCheck ? searchWithRegions(LOW[cross] | LOW[t12], HIGH[cross] | HIGH[t12], PIECE[cross] | PIECE[t12], 2) : search()
+    const count = search()
     unselect(t12)
     unselect(cross)
     return count
   }
 }
 
-const solve = (startIndices, options) => {
-  const solveOne = createSolver(options)
+const solve = (startIndices) => {
+  const solveOne = createSolver()
   const indices = startIndices || createStartPairs().map((_, index) => index)
   return indices.reduce((count, index) => count + solveOne(index), 0)
 }
