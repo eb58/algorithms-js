@@ -161,21 +161,6 @@
   .dims dt { color: var(--muted); }
   .dims dd { margin: 0; }
 
-  .unit-row {
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-    font-size: 13px; color: var(--muted);
-  }
-  .unit-row input {
-    width: 72px;
-    padding: 5px 8px;
-    border: 1px solid var(--line);
-    border-radius: 5px;
-    background: var(--bg);
-    color: var(--ink);
-    font-family: var(--mono);
-    font-size: 13px;
-  }
-
   .toggles { display: flex; flex-direction: column; gap: 8px; }
   .toggle { display: flex; align-items: center; gap: 10px; cursor: pointer; }
   .toggle input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
@@ -193,12 +178,6 @@
   .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
   .btn:disabled { opacity: .45; cursor: not-allowed; }
   .hint { color: var(--muted); font-size: 12.5px; margin: 6px 0 0; }
-
-  .note {
-    font-size: 12.5px; color: var(--muted);
-    border-top: 1px solid var(--line); padding-top: 14px; margin-top: auto;
-  }
-  .note p { margin: 0 0 6px; max-width: 60ch; }
 
   :focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
@@ -766,13 +745,7 @@
   // ------------------------------------------------------------------
   //  Zustand + UI
   // ------------------------------------------------------------------
-  const state = { selected: "all", xray: false, edges: true, grid: true, spin: false, unit: 10 };
-  try {
-    const u = parseFloat(localStorage.getItem("kp-unit"));
-    if (u > 0) state.unit = u;
-  } catch (e) {}
-  const unitInput = document.getElementById("unit");
-  unitInput.value = state.unit;
+  const state = { selected: "all", xray: false, edges: true, grid: true, spin: false };
 
   const list = document.getElementById("partList");
   const entries = [{ id: "all", name: "Alle Teile", all: true }, ...PARTS];
@@ -793,7 +766,6 @@
   });
 
   function fmt(v) { return String(v).replace(".", ","); }
-  function mm(v) { return fmt(Math.round(v * state.unit * 10) / 10); }
 
   const info = document.getElementById("info");
   function renderInfo() {
@@ -926,16 +898,6 @@
   }
   [tX,tE,tG,tS].forEach(t => t.addEventListener("change", applyToggles));
   if (reduceMotion) { tS.disabled = true; }
-
-  unitInput.addEventListener("input", () => {
-    const v = parseFloat(unitInput.value.replace(",", "."));
-    if (v > 0) {
-      state.unit = v;
-      try { localStorage.setItem("kp-unit", String(v)); } catch (e) {}
-      renderInfo();
-    }
-  });
-
 
   // ------------------------------------------------------------------
   //  Zusammenbau
