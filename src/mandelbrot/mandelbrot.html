@@ -70,6 +70,18 @@
     #help table { border-collapse: collapse; width: 100%; }
     #help td { padding: 4px 8px; border-bottom: 1px solid var(--line); }
     #help td:first-child { color: var(--acc); white-space: nowrap; }
+    @media (max-width: 700px) {
+      #panel { width: 100vw; border-left: 0; padding-top: 64px; }
+      body.open #tools { right: 12px; }
+      body.open #hud { display: none; }
+      #hud { top: 8px; left: 8px; min-width: 0; padding: 7px 10px; }
+      #hud .big { font-size: 16px; }
+      #hud .sub { font-size: 11px; max-width: 46vw; }
+      #tools { top: 8px; right: 8px; gap: 4px; }
+      #tools button { width: 36px; height: 36px; }
+      #tFull { display: none; }
+      .row { grid-template-columns: 90px 1fr 52px; }
+    }
     #err { position: fixed; inset: 0; display: none; place-items: center; color: #f88; font-size: 16px; }
   </style>
 </head>
@@ -88,7 +100,7 @@
   <button id="tShot" title="Bild speichern (S)">⤓</button>
   <button id="tFull" title="Vollbild (F)">⛶</button>
   <button id="tHelp" title="Hilfe (H)">?</button>
-  <button id="tPanel" title="Einstellungen (P)">☰</button>
+  <button id="tPanel" title="Einstellungen (P)">✕</button>
 </div>
 
 <aside id="panel" class="glass">
@@ -294,7 +306,6 @@
     }
     return U;
   };
-  const calc = program('#fsCalc'), show = program('#fsShow');
   const texture = (unit, filter = gl.NEAREST, wrap = gl.CLAMP_TO_EDGE) => {
     const t = gl.createTexture();
     gl.activeTexture(gl.TEXTURE0 + unit);
@@ -303,15 +314,26 @@
     return t;
   };
   const target = unit => ({ unit, t: texture(unit), f: gl.createFramebuffer() });
-  const refTex = texture(0), full = target(1), prev = target(2), palTex = texture(3, gl.LINEAR, gl.REPEAT);
   const alloc = (tg, w, h) => {
     gl.activeTexture(gl.TEXTURE0 + tg.unit);
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, w, h, 0, gl.RG, gl.FLOAT, null);
     gl.bindFramebuffer(gl.FRAMEBUFFER, tg.f);
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tg.t, 0);
   };
-  gl.useProgram(show.p);
-  [['full', 1], ['prev', 2], ['pal', 3]].forEach(([k, u]) => gl.uniform1i(show[k], u));
+  // Auch nach Kontextverlust (Mobilgeräte: App-Wechsel, Speicherdruck) alles neu anlegen
+  let calc, show, full, prev;
+  const initGL = () => {
+    gl.getExtension('EXT_color_buffer_float');
+    [calc, show] = [program('#fsCalc'), program('#fsShow')];
+    texture(0);
+    texture(3, gl.LINEAR, gl.REPEAT);
+    [full, prev] = [target(1), target(2)];
+    gl.useProgram(show.p);
+    [['full', 1], ['prev', 2], ['pal', 3]].forEach(([k, u]) => gl.uniform1i(show[k], u));
+  };
+  initGL();
+  canvas.addEventListener('webglcontextlost', e => e.preventDefault());
+  canvas.addEventListener('webglcontextrestored', () => { initGL(); ref = null; cw = ch = 0; uploadPal(); });
 
   // --- Einstellungen (in localStorage) ---
   const DEF = { pal: 'Klassisch', map: 1, dens: 1, phase: 0, cycle: 0, inside: '#000000', angle: 0, relief: 0.45, height: 1, light: 45, gloss: 0.25,
@@ -375,7 +397,9 @@
   };
 
   // --- Ansicht: ls = log2 der halben Bildhöhe, rot = Drehung ---
-  const HOME = { re: '-0.75', im: '0', z: 1.25, r: 0 };
+  // Übersicht so, dass die ganze Menge auch im Hochformat in die Breite passt
+  const fitZ = () => Math.max(1.25, Math.log2(1.45 * innerHeight / innerWidth));
+  const HOME = { re: '-0.75', im: '0', r: 0, get z() { return fitZ(); } };
   let P = 64, cx = 0n, cy = 0n, ls = 1.25, rot = 0, placeMul = 1, ref = null;
   const precFor = l => Math.max(64, Math.ceil(-l) + 64);
   const updPrec = () => { const p = precFor(ls); [cx, cy, P] = [rescale(cx, P, p), rescale(cy, P, p), p]; };
@@ -455,6 +479,7 @@
 
   const frame = t => {
     requestAnimationFrame(frame);
+    if (gl.isContextLost()) return;
     const dt = Math.min(t - lastT, 500);
     lastT = t;
     anim?.(t);
@@ -493,7 +518,7 @@
   // --- HUD & Panel-Synchronisation ---
   const zoom10 = () => (1.25 - ls) * Math.log10(2);
   const hud = () => {
-    $('#hZoom').innerHTML = `1e${zoom10().toFixed(2)} <small>Vergrößerung</small>`;
+    $('#hZoom').innerHTML = `1e${Math.max(0, zoom10()).toFixed(2)} <small>Vergrößerung</small>`;
     $('#hInfo').textContent = `${maxIter().toLocaleString('de')} Iterationen · ${P} Bit · Referenz ${ref?.len.toLocaleString('de')}`;
     $('#hBar').style.width = `${Math.min(100, 100 * (Math.min(hi, ch) - Math.max(lo, 0)) / ch)}%`;
     const out = document.querySelector('[data-k=iter]')?.parentElement.querySelector('output');
@@ -567,7 +592,7 @@
   const fly = (dest, dur = S.fly * 1000) => new Promise(resolve => {
     flightDone?.(false);
     flightDone = resolve;
-    const L = Math.max(1.25, ls), tp = precFor(dest.z), tx = fromDec(dest.re, tp), ty = fromDec(dest.im, tp);
+    const L = Math.max(fitZ(), ls), tp = precFor(dest.z), tx = fromDec(dest.re, tp), ty = fromDec(dest.im, tp);
     const destRot = S.align ? dest.r ?? 0 : 0, need = dest.p ? Math.max(1, 6 * dest.p / autoIter(dest.z)) : 1;
     const [sx, sy, sl, sr, ex, ey] = [toNum(cx, P), toNum(cy, P), ls, rot, toNum(tx, tp), toNum(ty, tp)];
     const panD = Math.hypot(ex - sx, ey - sy), tPan = panD > 1e-3 ? Math.min(2500, 700 + 1500 * panD) : 0;
@@ -649,7 +674,7 @@
         x.onclick = e => { e.stopPropagation(); S.mine.splice(S.mine.indexOf(pl), 1); save(); renderPlaces(); };
         b.lastChild.append(x);
       }
-      b.onclick = () => { stopTour(); highlight(pl); fly(pl); };
+      b.onclick = () => { stopTour(); highlight(pl); closeOnMobile(); fly(pl); };
       box.append(b);
     });
   };
@@ -686,7 +711,7 @@
   const readInputs = () => ({ re: $('#re').value.replace(/\s/g, ''), im: $('#im').value.replace(/\s/g, ''), z: 1.25 - +$('#zoom').value / Math.log10(2), r: rot, name: 'Eingabe' });
   const guard = f => () => { try { f(); } catch (e) { toast(String(e)); } };
   $('#jump').onclick = guard(() => { stopTour(); placeMul = 1; setView(readInputs()); });
-  $('#flyto').onclick = guard(() => { stopTour(); fromDec(readInputs().re, 64); fly(readInputs()); });
+  $('#flyto').onclick = guard(() => { stopTour(); closeOnMobile(); fromDec(readInputs().re, 64); fly(readInputs()); });
   $('#zin').onclick = () => { zoomAt([0, 0], -2); };
   $('#zout').onclick = () => { zoomAt([0, 0], 2); };
   $('#reset').onclick = () => { stopTour(); placeMul = 1; setView(HOME); };
@@ -701,8 +726,11 @@
     renderPlaces();
     toast('Ort gespeichert');
   };
-  $('#tour').onclick = $('#tTour').onclick = toggleTour;
-  $('#tPanel').onclick = () => document.body.classList.toggle('open');
+  const setPanel = open => { document.body.classList.toggle('open', open); $('#tPanel').textContent = open ? '✕' : '☰'; };
+  const closeOnMobile = () => innerWidth <= 700 && setPanel(false);
+  $('#tour').onclick = () => { closeOnMobile(); toggleTour(); };
+  $('#tTour').onclick = toggleTour;
+  $('#tPanel').onclick = () => setPanel(!document.body.classList.contains('open'));
   $('#tFull').onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
   $('#tHelp').onclick = () => $('#help').classList.toggle('show');
   $('#help').onclick = () => $('#help').classList.remove('show');
@@ -752,7 +780,7 @@
   uploadPal();
   renderPals();
   renderPlaces();
-  if (innerWidth < 900 || params.has('clean')) document.body.classList.remove('open');
+  setPanel(innerWidth >= 900 && !params.has('clean'));
   if (params.has('clean')) $('#hud').style.display = $('#tools').style.display = 'none';
   if (params.has('tour')) tour();
   requestAnimationFrame(frame);
