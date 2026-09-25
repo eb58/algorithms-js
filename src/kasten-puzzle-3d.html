@@ -766,6 +766,7 @@
   });
 
   function fmt(v) { return String(v).replace(".", ","); }
+  const mm = v => fmt(Math.round(v * 100) / 10);
 
   const info = document.getElementById("info");
   function renderInfo() {
