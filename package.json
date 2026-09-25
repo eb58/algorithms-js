@@ -28,8 +28,8 @@
       "sudoku": "node src/sudoku/sudoku3.js",
       "magic-hexagon": "node src/magic-hexagon/magic-hexagon.js",
       "complex": "node src/complex/complex.js",
+      "ct-puzzle:dlx": "node src/ct-puzzle/ct-puzzle-dlx.js",
       "ct-puzzle": "node src/ct-puzzle/ct-puzzle.js",
-      "ct-puzzle:inspired": "node src/ct-puzzle/ct-puzzle-inspired.js",
       "pentomino": "node --inspect src/pentomino/pentomino.js"
    },
    "dependencies": {
