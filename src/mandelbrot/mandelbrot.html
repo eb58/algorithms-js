@@ -1,101 +1,761 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="de">
-  <head>
-    <meta content="text/html; charset=UTF-8" http-equiv="Content-Type" />
-    <title>Mandelbrot</title>
-  </head>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mandelbrot Deep Zoom</title>
   <style>
-    button {
-      font-size: 24px;
-      margin: 5px 0 20px 0;
+    :root {
+      --bg: rgba(14, 16, 24, 0.82); --line: rgba(255,255,255,0.09); --fg: #e8ebf2; --dim: #8b93a7;
+      --acc: #7cc4ff; --acc2: #ffb86b; --r: 10px;
     }
+    * { box-sizing: border-box; }
+    body { margin: 0; overflow: hidden; background: #000; color: var(--fg); font: 13px/1.4 system-ui, 'Segoe UI', sans-serif; }
+    canvas#c { display: block; position: fixed; inset: 0; width: 100vw; height: 100vh; touch-action: none; cursor: crosshair; }
+    .glass { background: var(--bg); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border: 1px solid var(--line); border-radius: var(--r); box-shadow: 0 8px 30px rgba(0,0,0,.45); }
+
+    #hud { position: fixed; top: 12px; left: 12px; padding: 10px 14px; min-width: 230px; pointer-events: none; font-variant-numeric: tabular-nums; }
+    #hud .big { font-size: 20px; font-weight: 600; letter-spacing: .02em; }
+    #hud .big small { font-size: 12px; color: var(--dim); font-weight: 400; }
+    #hud .sub { color: var(--dim); font-size: 12px; }
+    #hud .bar { height: 3px; background: var(--line); border-radius: 2px; margin-top: 7px; overflow: hidden; }
+    #hud .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--acc), var(--acc2)); transition: width .15s; }
+    #flight { color: var(--acc2); font-weight: 600; margin-top: 4px; display: none; }
+
+    #tools { position: fixed; top: 12px; right: 12px; display: flex; gap: 6px; z-index: 3; transition: right .3s; }
+    body.open #tools { right: 352px; }
+    button { font: inherit; color: var(--fg); background: rgba(255,255,255,.07); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; cursor: pointer; transition: background .15s, border-color .15s; }
+    button:hover { background: rgba(255,255,255,.14); border-color: rgba(255,255,255,.2); }
+    button.pri { background: linear-gradient(135deg, #3b82f6, #7c3aed); border-color: transparent; font-weight: 600; }
+    button.pri:hover { filter: brightness(1.15); }
+    #tools button { width: 38px; height: 38px; padding: 0; font-size: 16px; background: var(--bg); backdrop-filter: blur(14px); }
+
+    #panel { position: fixed; top: 0; right: 0; bottom: 0; width: 340px; margin: 0; border-radius: 0; border-width: 0 0 0 1px; overflow-y: auto; transform: translateX(100%); transition: transform .3s; z-index: 2; padding: 14px 14px 30px; }
+    body.open #panel { transform: none; }
+    #panel h1 { font-size: 16px; margin: 2px 0 12px; font-weight: 650; letter-spacing: .02em; }
+    #panel h1 span { background: linear-gradient(90deg, var(--acc), var(--acc2)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    details { border-top: 1px solid var(--line); padding: 8px 0; }
+    summary { cursor: pointer; font-weight: 600; list-style: none; padding: 4px 0; display: flex; justify-content: space-between; user-select: none; }
+    summary::after { content: '›'; color: var(--dim); transition: transform .2s; }
+    details[open] summary::after { transform: rotate(90deg); }
+    .row { display: grid; grid-template-columns: 96px 1fr 58px; align-items: center; gap: 8px; margin: 7px 0; }
+    .row > span { color: var(--dim); }
+    .row output { text-align: right; font-variant-numeric: tabular-nums; color: var(--fg); font-size: 12px; }
+    .row.two { grid-template-columns: 96px 1fr; }
+    .btns { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
+    .btns button { flex: 1; }
+    input[type=range] { width: 100%; accent-color: var(--acc); }
+    select, textarea, input[type=text] { width: 100%; font: inherit; color: var(--fg); background: rgba(0,0,0,.35); border: 1px solid var(--line); border-radius: 7px; padding: 5px 7px; }
+    textarea { font: 11px/1.35 ui-monospace, Consolas, monospace; resize: vertical; height: 46px; word-break: break-all; }
+    input[type=color] { width: 100%; height: 26px; border: 1px solid var(--line); border-radius: 6px; background: none; padding: 0; }
+    label.chk { display: flex; gap: 7px; align-items: center; margin: 6px 0; cursor: pointer; }
+    #pals { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px 0; }
+    #pals div { height: 26px; border-radius: 6px; cursor: pointer; border: 2px solid transparent; }
+    #pals div.on { border-color: #fff; }
+    #places { display: flex; flex-direction: column; gap: 5px; margin: 8px 0; }
+    .place { display: grid; grid-template-columns: 1fr auto; align-items: center; text-align: left; padding: 7px 10px; }
+    .place b { font-weight: 600; }
+    .place small { display: block; color: var(--dim); font-size: 11px; }
+    .place em { font-style: normal; font-size: 11px; color: var(--acc); background: rgba(124,196,255,.1); border-radius: 5px; padding: 1px 6px; }
+    .place.on { border-color: var(--acc2); }
+    .place .x { margin-left: 6px; color: var(--dim); }
+    #mini { width: 100%; border-radius: 8px; cursor: pointer; display: block; margin-top: 6px; }
+    .hint { color: var(--dim); font-size: 11.5px; margin: 4px 0; }
+
+    #toast { position: fixed; bottom: 24px; left: 50%; transform: translate(-50%, 20px); opacity: 0; padding: 9px 16px; transition: .25s; pointer-events: none; z-index: 5; }
+    #toast.show { opacity: 1; transform: translate(-50%, 0); }
+    #help { position: fixed; inset: 0; display: none; place-items: center; background: rgba(0,0,0,.5); z-index: 6; }
+    #help.show { display: grid; }
+    #help > div { padding: 20px 26px; max-width: 520px; }
+    #help table { border-collapse: collapse; width: 100%; }
+    #help td { padding: 4px 8px; border-bottom: 1px solid var(--line); }
+    #help td:first-child { color: var(--acc); white-space: nowrap; }
+    #err { position: fixed; inset: 0; display: none; place-items: center; color: #f88; font-size: 16px; }
   </style>
-  <body>
-    <div style="width: 800px; margin: 10px">
-      <h1>Mandelbrot Set Viewer</h1>
-      <canvas id="myCanvas" width="800" height="800"></canvas>
-      <div id="controls">
-        <button onclick="resetView()">Zurücksetzen</button>
-        <button onclick="changeColScheme()">Farbschema</button>
-        <label for="iterSlider">Iterationen</label>
-        <input onchange="changeIteration(this.value)" type="range" min="100" max="2000" value="100" id="iterSlider" />
-        <span id="iterations">100</span>
-      </div>
-      <p style="text-align: center">Click the image to zoom in</p>
-      <p style="text-align: center">Zoom: <span id="zoomLevel">1.0</span>x </p>
-    </div>
-    <script>
-      const range = (n) => [...Array(n).keys()]
-      const timer = (start = performance.now()) => ({ elapsedTime: () => ((performance.now() - start) / 1000).toFixed(3) })
-      const rand255 = () => Math.floor(Math.random() * 255)
+</head>
+<body class="open">
+<canvas id="c"></canvas>
 
-      const COLORS = range(100).map(() => Uint8ClampedArray.from([rand255(), rand255(), rand255(), 255]))
-      const canvas = document.getElementById('myCanvas')
-      const { width, height } = canvas
-      const ctx = canvas.getContext('2d')
-      const imageData = ctx.getImageData(0, 0, width, height)
+<div id="hud" class="glass">
+  <div class="big" id="hZoom">1e0</div>
+  <div class="sub" id="hInfo"></div>
+  <div class="bar"><i id="hBar"></i></div>
+  <div id="flight"></div>
+</div>
 
-      const initialView = {
-        centerX: -0.75,
-        centerY: 0,
-        width: 2.55,
-        maxIterations: 100,
-        zoomFactor: 1,
-        colorScheme: 1
-      }
-      let view = { ...initialView }
+<div id="tools">
+  <button id="tTour" title="Tour starten/stoppen (T)">▶</button>
+  <button id="tShot" title="Bild speichern (S)">⤓</button>
+  <button id="tFull" title="Vollbild (F)">⛶</button>
+  <button id="tHelp" title="Hilfe (H)">?</button>
+  <button id="tPanel" title="Einstellungen (P)">☰</button>
+</div>
 
-      let N_CHUNKS = 16
-      let RECEIVED_CHUNKS = 0
-      let t = timer()
-      const workers = range(N_CHUNKS).map(() => {
-        const worker = new Worker('mandelbrot.worker.js')
-        worker.onmessage = (msg) => {
-          imageData.data.set(msg.data.chunkImageData, msg.data.startRow * width * 4)
-          if (++RECEIVED_CHUNKS === N_CHUNKS) {
-            console.log('finished', t.elapsedTime())
-            ctx.putImageData(imageData, 0, 0)
-          }
+<aside id="panel" class="glass">
+  <h1><span>Mandelbrot</span> Deep Zoom</h1>
+
+  <details open>
+    <summary>Orte &amp; Tour</summary>
+    <div class="btns"><button class="pri" id="tour">▶ Tour starten</button></div>
+    <label class="row"><span>Flugdauer</span><input type="range" data-k="fly" min="6" max="30" step="1"><output></output></label>
+    <label class="row"><span>Verweilen</span><input type="range" data-k="hold" min="0" max="15" step="0.5"><output></output></label>
+    <label class="chk"><input type="checkbox" data-k="loop"> Endlosschleife</label>
+    <label class="chk"><input type="checkbox" data-k="shuffle"> Zufällige Reihenfolge</label>
+    <label class="chk"><input type="checkbox" data-k="align"> Minibrot beim Anflug ausrichten</label>
+    <div id="places"></div>
+    <div class="btns"><button id="save">＋ Aktuellen Ort merken</button></div>
+  </details>
+
+  <details open>
+    <summary>Navigation</summary>
+    <canvas id="mini" width="312" height="180" title="Klick: Mittelpunkt setzen"></canvas>
+    <label class="row two"><span>Realteil</span><textarea id="re" spellcheck="false"></textarea></label>
+    <label class="row two"><span>Imaginärteil</span><textarea id="im" spellcheck="false"></textarea></label>
+    <label class="row two"><span>Zoom (10^x)</span><input type="text" id="zoom"></label>
+    <label class="row"><span>Drehung</span><input type="range" id="rot" min="-180" max="180" step="1"><output id="rotOut"></output></label>
+    <div class="btns"><button id="jump">Springen</button><button id="flyto">Hinfliegen</button></div>
+    <div class="btns"><button id="zin">＋ Zoom</button><button id="zout">− Zoom</button><button id="reset">Start</button></div>
+    <div class="btns"><button id="copy">Link kopieren</button><button id="shot">PNG speichern</button></div>
+  </details>
+
+  <details open>
+    <summary>Farben</summary>
+    <div id="pals"></div>
+    <label class="row two"><span>Verlauf</span>
+      <select data-k="map"><option value="0">Linear</option><option value="1">Wurzel</option><option value="2">Logarithmisch</option></select></label>
+    <label class="row"><span>Dichte</span><input type="range" data-k="dens" data-log min="-4" max="4" step="0.01"><output></output></label>
+    <label class="row"><span>Verschiebung</span><input type="range" data-k="phase" min="0" max="1" step="0.005"><output></output></label>
+    <label class="row"><span>Farbzyklus</span><input type="range" data-k="cycle" min="-1" max="1" step="0.01"><output></output></label>
+    <label class="row two"><span>Innen</span><input type="color" data-k="inside"></label>
+    <label class="row two"><span>Winkel</span>
+      <select data-k="angle"><option value="0">Aus</option><option value="1">Binärzerlegung</option><option value="2">Feldlinien</option></select></label>
+  </details>
+
+  <details open>
+    <summary>Relief</summary>
+    <label class="row"><span>Stärke</span><input type="range" data-k="relief" min="0" max="1" step="0.01"><output></output></label>
+    <label class="row"><span>Höhe</span><input type="range" data-k="height" data-log min="-4" max="5" step="0.05"><output></output></label>
+    <label class="row"><span>Licht</span><input type="range" data-k="light" min="0" max="360" step="1"><output></output></label>
+    <label class="row"><span>Glanz</span><input type="range" data-k="gloss" min="0" max="1" step="0.01"><output></output></label>
+  </details>
+
+  <details>
+    <summary>Qualität</summary>
+    <label class="row"><span>Iterationen</span><input type="range" data-k="iter" data-log min="-2" max="5" step="0.05"><output></output></label>
+    <label class="row two"><span>Auflösung</span>
+      <select data-k="res"><option value="0.5">50 %</option><option value="0.75">75 %</option><option value="1">100 %</option><option value="0">Geräte-Pixel</option></select></label>
+    <label class="row two"><span>Bewegung</span>
+      <select data-k="quality"><option value="0">Flüssig</option><option value="1">Ausgewogen</option><option value="2">Scharf</option></select></label>
+    <p class="hint">Beim Bewegen wird mit reduzierter Auflösung gerechnet; danach verfeinert sich das Bild von der Mitte aus.</p>
+  </details>
+</aside>
+
+<div id="toast" class="glass"></div>
+<div id="help"><div class="glass">
+  <h3 style="margin-top:0">Bedienung</h3>
+  <table>
+    <tr><td>Mausrad</td><td>Zoom zum Cursor</td></tr>
+    <tr><td>Ziehen</td><td>Verschieben (Touch: zwei Finger zoomen)</td></tr>
+    <tr><td>Doppelklick</td><td>4× hinein, mit Shift heraus</td></tr>
+    <tr><td>Pfeiltasten · Bild↑↓</td><td>Verschieben · Zoomen</td></tr>
+    <tr><td>Q / E</td><td>Drehen</td></tr>
+    <tr><td>+ / −</td><td>Iterationen</td></tr>
+    <tr><td>[ / ]</td><td>Farbdichte</td></tr>
+    <tr><td>T · Leertaste</td><td>Tour starten · stoppen</td></tr>
+    <tr><td>P · F · S · R</td><td>Panel · Vollbild · PNG · Start</td></tr>
+  </table>
+  <p class="hint">Die Tiefe ist nur durch Rechenzeit begrenzt: Referenz-Orbit mit BigInt, Pixel per Perturbation mit erweitertem Exponenten auf der GPU.</p>
+</div></div>
+<div id="err"></div>
+
+<script id="fsCalc" type="x-shader/x-fragment">#version 300 es
+  precision highp float;
+  precision highp int;
+  uniform highp sampler2D u_ref;   // Referenz-Orbit Z_n als (Mantisse.xy, Exponent)
+  uniform int u_refLen, u_maxIter;
+  uniform vec2 u_res, u_scale, u_rot; // u_scale: halbe Bildhöhe als (Mantisse, Exponent)
+  uniform vec3 u_off;                 // Bildmitte minus Referenzpunkt
+  out vec4 o;
+
+  // Exakte Zweierpotenz über die Bits, exp2() ist auf manchen GPUs ungenau
+  float p2(float k) { return k < -126. ? 0. : intBitsToFloat((int(k) + 127) << 23); }
+
+  // Komplexe Zahl m * 2^e mit |m| in [1,2): Float-Mantisse, unbegrenzter Exponent
+  vec3 norm(vec2 m, float e) {
+    float a = max(abs(m.x), abs(m.y));
+    if (a == 0.) return vec3(0., 0., -1e20);
+    float k = float(((floatBitsToInt(a) >> 23) & 255) - 127), h = floor(k * .5);
+    return vec3(m * p2(-h) * p2(h - k), e + k);
+  }
+  vec3 add(vec3 a, vec3 b) { float E = max(a.z, b.z); return norm(a.xy * p2(a.z - E) + b.xy * p2(b.z - E), E); }
+  vec2 cmul(vec2 a, vec2 b) { return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x); }
+  vec3 Z(int n) { return texelFetch(u_ref, ivec2(n & 4095, n >> 12), 0).xyz; }
+
+  void main() {
+    vec2 uv = cmul(u_rot, (2. * gl_FragCoord.xy - u_res) / u_res.y);
+    vec3 dc = add(u_off, norm(uv * u_scale.x, u_scale.y));
+    vec2 dcf = dc.xy * p2(dc.z);
+    vec3 d = dc;
+    int n = 1, i = 1;
+
+    // Phase 1: δ ist zu klein für float → Rechnung mit erweitertem Exponenten
+    for (; i < u_maxIter && d.z < -50. && n < u_refLen - 1; i++) {
+      vec3 z = Z(n);
+      if (z.z < d.z + 2. && z.z + log2(length(z.xy)) < d.z + log2(length(d.xy))) { d = add(z, d); z = vec3(0., 0., -1e20); n = 0; }
+      float ea = z.z + d.z, eq = 2. * d.z, E = max(max(ea, eq), dc.z);
+      d = norm(2. * cmul(z.xy, d.xy) * p2(ea - E) + cmul(d.xy, d.xy) * p2(eq - E) + dc.xy * p2(dc.z - E), E);
+      n++;
+    }
+
+    // Phase 2: normales float, Rebasing (Zhuoran) statt Glitch-Erkennung
+    vec2 df = d.xy * p2(d.z), z = vec2(0.);
+    float r2 = 0.;
+    for (; i < u_maxIter; i++) {
+      vec3 t = Z(n);
+      vec2 Zn = t.xy * p2(t.z);
+      z = Zn + df;
+      r2 = dot(z, z);
+      if (r2 > 1e4) break;
+      if (r2 < dot(df, df) || n >= u_refLen - 1) { df = z; Zn = vec2(0.); n = 0; }
+      df = 2. * cmul(Zn, df) + cmul(df, df) + dcf;
+      n++;
+    }
+    o = i >= u_maxIter ? vec4(-1., 0., 0., 0.) : vec4(max(float(i) + 1. - log2(log2(r2) * .5), 0.), atan(z.y, z.x), 0., 0.);
+  }
+</script>
+
+<script id="fsShow" type="x-shader/x-fragment">#version 300 es
+  precision highp float;
+  precision highp int;
+  uniform highp sampler2D u_full, u_prev;
+  uniform sampler2D u_pal;
+  uniform vec2 u_band;                  // fertig gerechnete Zeilen im Vollbild
+  uniform float u_ps;                   // Maßstab der Vorschau
+  uniform ivec2 u_psize, u_fsize;
+  uniform int u_map, u_angle;
+  uniform float u_dens, u_phase, u_relief, u_height, u_light, u_gloss;
+  uniform vec3 u_inside;
+  out vec4 o;
+
+  bool F;
+  vec2 get(ivec2 p) { return F ? texelFetch(u_full, clamp(p, ivec2(0, u_band.x), ivec2(u_fsize.x - 1, u_band.y - 1.)), 0).xy : texelFetch(u_prev, clamp(p, ivec2(0), u_psize - 1), 0).xy; }
+  float mapv(float mu) { return u_map == 0 ? mu * .02 : u_map == 1 ? sqrt(mu) * .15 : log(mu + 1.) * .5; }
+  float h(ivec2 p, float c) { float m = get(p).x; return m < 0. ? c : log(m + 1.); }
+
+  void main() {
+    vec2 fc = gl_FragCoord.xy;
+    F = fc.y >= u_band.x && fc.y < u_band.y;
+    float s = F ? 1. : u_ps;
+    vec2 tp = fc * s - .5;
+    ivec2 i0 = ivec2(floor(tp)), ic = ivec2(floor(fc * s));
+    vec2 f = fract(tp), c = get(ic);
+    vec2 a = get(i0), b = get(i0 + ivec2(1, 0)), d = get(i0 + ivec2(0, 1)), e = get(i0 + ivec2(1, 1));
+    if (c.x < 0.) { o = vec4(u_inside, 1.); return; }
+    float mu = min(min(a.x, b.x), min(d.x, e.x)) < 0. ? c.x : mix(mix(a.x, b.x, f.x), mix(d.x, e.x, f.x), f.y);
+
+    vec3 col = texture(u_pal, vec2(mapv(mu) * u_dens + u_phase, .5)).rgb;
+    if (u_angle == 1 && c.y > 0.) col *= .55;
+    if (u_angle == 2) col *= .72 + .28 * cos(c.y * 2.);
+
+    if (u_relief > 0.) {
+      float hc = log(mu + 1.);
+      vec2 g = vec2(h(ic + ivec2(1, 0), hc) - h(ic - ivec2(1, 0), hc), h(ic + ivec2(0, 1), hc) - h(ic - ivec2(0, 1), hc)) * s * u_height * 4.;
+      vec3 n = normalize(vec3(-g, 1.)), L = normalize(vec3(cos(u_light), sin(u_light), .9));
+      float dif = max(dot(n, L), 0.), spec = pow(max(reflect(-L, n).z, 0.), 24.) * u_gloss;
+      col = mix(col, col * (.3 + .95 * dif) + spec, u_relief);
+    }
+    o = vec4(col, 1.);
+  }
+</script>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const canvas = $('#c'), gl = canvas.getContext('webgl2', { antialias: false });
+  const fail = msg => { $('#err').style.display = 'grid'; $('#err').textContent = msg; throw msg; };
+  if (!gl || !gl.getExtension('EXT_color_buffer_float')) fail('WebGL2 mit EXT_color_buffer_float wird benötigt.');
+
+  // --- GL-Grundgerüst ---
+  const VS = `#version 300 es
+    void main() { gl_Position = vec4(float((gl_VertexID & 1) * 4 - 1), float((gl_VertexID >> 1) * 4 - 1), 0., 1.); }`;
+  const program = fs => {
+    const p = gl.createProgram();
+    [[gl.VERTEX_SHADER, VS], [gl.FRAGMENT_SHADER, $(fs).text]].forEach(([type, src]) => {
+      const s = gl.createShader(type);
+      gl.shaderSource(s, src);
+      gl.compileShader(s);
+      if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) fail(gl.getShaderInfoLog(s));
+      gl.attachShader(p, s);
+    });
+    gl.linkProgram(p);
+    const U = { p };
+    for (let i = 0; i < gl.getProgramParameter(p, gl.ACTIVE_UNIFORMS); i++) {
+      const n = gl.getActiveUniform(p, i).name;
+      U[n.slice(2)] = gl.getUniformLocation(p, n);
+    }
+    return U;
+  };
+  const calc = program('#fsCalc'), show = program('#fsShow');
+  const texture = (unit, filter = gl.NEAREST, wrap = gl.CLAMP_TO_EDGE) => {
+    const t = gl.createTexture();
+    gl.activeTexture(gl.TEXTURE0 + unit);
+    gl.bindTexture(gl.TEXTURE_2D, t);
+    [[gl.TEXTURE_MIN_FILTER, filter], [gl.TEXTURE_MAG_FILTER, filter], [gl.TEXTURE_WRAP_S, wrap], [gl.TEXTURE_WRAP_T, wrap]].forEach(([k, v]) => gl.texParameteri(gl.TEXTURE_2D, k, v));
+    return t;
+  };
+  const target = unit => ({ unit, t: texture(unit), f: gl.createFramebuffer() });
+  const refTex = texture(0), full = target(1), prev = target(2), palTex = texture(3, gl.LINEAR, gl.REPEAT);
+  const alloc = (tg, w, h) => {
+    gl.activeTexture(gl.TEXTURE0 + tg.unit);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG32F, w, h, 0, gl.RG, gl.FLOAT, null);
+    gl.bindFramebuffer(gl.FRAMEBUFFER, tg.f);
+    gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tg.t, 0);
+  };
+  gl.useProgram(show.p);
+  [['full', 1], ['prev', 2], ['pal', 3]].forEach(([k, u]) => gl.uniform1i(show[k], u));
+
+  // --- Einstellungen (in localStorage) ---
+  const DEF = { pal: 'Klassisch', map: 1, dens: 1, phase: 0, cycle: 0, inside: '#000000', angle: 0, relief: 0.45, height: 1, light: 45, gloss: 0.25,
+    iter: 1, res: 1, quality: 1, fly: 12, hold: 3, loop: true, shuffle: false, align: true, mine: [], custom: null };
+  const S = (() => { try { return { ...DEF, ...JSON.parse(localStorage.getItem('mandel-deepzoom')) }; } catch { return { ...DEF }; } })();
+  const save = () => { try { localStorage.setItem('mandel-deepzoom', JSON.stringify(S)); } catch {} };
+
+  const PALETTES = {
+    Klassisch: ['#000764', '#206bcb', '#edffff', '#ffaa00', '#000200'],
+    Feuer: ['#000000', '#5a0000', '#c81e00', '#ff8c00', '#ffe066', '#ffffff', '#ff8c00', '#5a0000'],
+    Ozean: ['#001219', '#005f73', '#0a9396', '#94d2bd', '#e9d8a6', '#0a9396'],
+    Neon: ['#0b0033', '#ff00a0', '#00ffe1', '#fffb00'],
+    Gold: ['#1a0f00', '#6b4300', '#d4a017', '#fff3c4', '#d4a017', '#6b4300'],
+    Eis: ['#02010a', '#1b2a6b', '#4e8fd6', '#bfe6ff', '#ffffff', '#4e8fd6'],
+    Wald: ['#0b1d0e', '#2d6a4f', '#95d5b2', '#f1faee', '#52b788', '#1b4332'],
+    Abendrot: ['#120136', '#5b1865', '#b83b5e', '#f08a5d', '#f9ed69', '#b83b5e'],
+    Regenbogen: ['#ff0000', '#ffff00', '#00ff00', '#00ffff', '#0000ff', '#ff00ff'],
+    Pastell: ['#fbc4ab', '#f8edeb', '#cdb4db', '#a2d2ff', '#bde0fe', '#ffc8dd'],
+    Graustufen: ['#000000', '#ffffff'],
+    Zufall: null,
+  };
+  const randomPal = () => Array.from({ length: 6 }, (_, i) => `hsl(${Math.random() * 360 | 0},${60 + Math.random() * 40 | 0}%,${[12, 55, 88, 45, 70, 30][i]}%)`);
+  const rgb = c => { const x = document.createElement('canvas').getContext('2d'); x.fillStyle = c; x.fillRect(0, 0, 1, 1); return [...x.getImageData(0, 0, 1, 1).data.slice(0, 3)]; };
+  const stops = name => name === 'Zufall' ? (S.custom ??= randomPal()) : PALETTES[name] ?? PALETTES.Klassisch;
+  const uploadPal = () => {
+    const st = stops(S.pal).map(rgb), n = st.length, data = new Uint8Array(1024 * 4);
+    for (let i = 0; i < 1024; i++) {
+      const x = i / 1024 * n, k = Math.floor(x), f = x - k, a = st[k], b = st[(k + 1) % n];
+      for (let j = 0; j < 3; j++) data[4 * i + j] = a[j] + (b[j] - a[j]) * f;
+      data[4 * i + 3] = 255;
+    }
+    gl.activeTexture(gl.TEXTURE3);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, 1024, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, data);
+    needShow = true;
+  };
+
+  // --- Beliebige Genauigkeit: Festkomma-BigInt mit P Nachkommabits ---
+  const rescale = (v, from, to) => to >= from ? v << BigInt(to - from) : v >> BigInt(from - to);
+  const bitLen = v => (v < 0n ? -v : v).toString(16).length * 4;
+  const toNum = (v, p) => Number(v >> BigInt(p - 60)) / 2 ** 60;
+  const toFE = (v, p) => {
+    let n = Number(v >> BigInt(p - 60)), e = -60;
+    if (Math.abs(n) < 2 ** 30 && v) { const s = Math.max(0, bitLen(v) - 53); n = Number(v >> BigInt(s)); e = s - p; }
+    if (!n) return [0, -1e20];
+    const k = Math.floor(Math.log2(Math.abs(n)));
+    return [n / 2 ** k, e + k];
+  };
+  const cFE = (x, y, p) => {
+    const [mx, ex] = toFE(x, p), [my, ey] = toFE(y, p), e = Math.max(ex, ey);
+    return [mx * 2 ** (ex - e), my * 2 ** (ey - e), e];
+  };
+  const toDec = (v, p, digits = Math.max(16, Math.ceil((p - 52) * 0.30103))) => {
+    const a = v < 0n ? -v : v, frac = ((a & ((1n << BigInt(p)) - 1n)) * 10n ** BigInt(digits)) >> BigInt(p);
+    return `${v < 0n ? '-' : ''}${a >> BigInt(p)}.${frac.toString().padStart(digits, '0')}`;
+  };
+  const fromDec = (s, p) => {
+    const m = String(s).trim().match(/^([+-]?)(\d*)\.?(\d*)$/);
+    if (!m) throw 'Ungültige Zahl';
+    const v = (BigInt((m[2] || '0') + m[3]) << BigInt(p)) / 10n ** BigInt(m[3].length);
+    return m[1] === '-' ? -v : v;
+  };
+
+  // --- Ansicht: ls = log2 der halben Bildhöhe, rot = Drehung ---
+  const HOME = { re: '-0.75', im: '0', z: 1.25, r: 0 };
+  let P = 64, cx = 0n, cy = 0n, ls = 1.25, rot = 0, placeMul = 1, ref = null;
+  const precFor = l => Math.max(64, Math.ceil(-l) + 64);
+  const updPrec = () => { const p = precFor(ls); [cx, cy, P] = [rescale(cx, P, p), rescale(cy, P, p), p]; };
+  const autoIter = l => 300 + 50 * Math.max(0, -l);
+  const maxIter = (l = ls) => Math.min(2e6, Math.round(autoIter(l) * S.iter * placeMul));
+  const setView = ({ re, im, z, r = 0 }) => { ls = z; rot = r; P = precFor(z); cx = fromDec(re, P); cy = fromDec(im, P); dirty = true; };
+  const move = (ux, uy) => {
+    const k = 2 ** (ls + P), c = Math.cos(rot), s = Math.sin(rot);
+    cx += BigInt(Math.round((ux * c - uy * s) * k));
+    cy += BigInt(Math.round((ux * s + uy * c) * k));
+    dirty = true;
+  };
+  const zoomAt = ([ux, uy], dls) => { const f = 1 - 2 ** dls; move(ux * f, uy * f); ls += dls; updPrec(); };
+  const offset = () => cFE(cx - rescale(ref.x, ref.p, P), cy - rescale(ref.y, ref.p, P), P);
+
+  const W = 4096;
+  const computeRef = N => {
+    const p = P, pn = BigInt(p), lim = 10000n << pn, x0 = cx, y0 = cy;
+    const data = new Float32Array(W * Math.ceil((N + 1) / W) * 4);
+    let x = 0n, y = 0n, n = 0;
+    for (; n <= N; n++) {
+      data.set(cFE(x, y, p), 4 * n);
+      const x2 = (x * x) >> pn, y2 = (y * y) >> pn;
+      if (x2 + y2 > lim) { n++; break; }
+      y = ((x * y) >> (pn - 1n)) + y0;
+      x = x2 - y2 + x0;
+    }
+    const h = Math.ceil(n / W);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, W, h, 0, gl.RGBA, gl.FLOAT, data.subarray(0, W * h * 4));
+    ref = { x: x0, y: y0, p, len: n, N };
+  };
+
+  // --- Render-Steuerung ---
+  let dirty = true, needShow = true, cw = 0, ch = 0, lo = 0, hi = 0, rows = 32, ps = 0.5, lastT = 0, mode = '', shotReq = false, anim = null, cycT = 0;
+  const TARGET_MS = [22, 40, 75];
+
+  const prepare = () => {
+    const N = maxIter();
+    let off = ref && offset();
+    // Neue Referenz, wenn der Orbit zu kurz ist oder die Float-Mantisse des Offsets die Pixel nicht mehr auflöst
+    if (!ref || ref.N < N || off[2] > ls + 8) { computeRef(Math.round(N * 1.3)); off = offset(); }
+    gl.useProgram(calc.p);
+    gl.uniform2f(calc.scale, 2 ** (ls - Math.floor(ls)), Math.floor(ls));
+    gl.uniform2f(calc.rot, Math.cos(rot), Math.sin(rot));
+    gl.uniform3f(calc.off, ...off);
+    gl.uniform1i(calc.refLen, ref.len);
+    gl.uniform1i(calc.maxIter, N);
+  };
+  const runCalc = (tg, w, h, y0, y1) => {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, tg.f);
+    gl.viewport(0, 0, w, h);
+    gl.uniform2f(calc.res, w, h);
+    y1 === undefined ? gl.disable(gl.SCISSOR_TEST) : (gl.enable(gl.SCISSOR_TEST), gl.scissor(0, y0, w, y1 - y0));
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  };
+  const display = () => {
+    gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+    gl.disable(gl.SCISSOR_TEST);
+    gl.viewport(0, 0, cw, ch);
+    gl.useProgram(show.p);
+    gl.uniform2f(show.band, Math.max(lo, 0), Math.min(hi, ch));
+    gl.uniform1f(show.ps, ps);
+    gl.uniform2i(show.psize, Math.ceil(cw * ps), Math.ceil(ch * ps));
+    gl.uniform2i(show.fsize, cw, ch);
+    gl.uniform1i(show.map, S.map);
+    gl.uniform1i(show.angle, S.angle);
+    gl.uniform1f(show.dens, S.dens);
+    gl.uniform1f(show.phase, S.phase + cycT);
+    gl.uniform1f(show.relief, S.relief);
+    gl.uniform1f(show.height, S.height);
+    gl.uniform1f(show.light, S.light * Math.PI / 180);
+    gl.uniform1f(show.gloss, S.gloss);
+    gl.uniform3f(show.inside, ...rgb(S.inside).map(v => v / 255));
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+  };
+
+  const frame = t => {
+    requestAnimationFrame(frame);
+    const dt = Math.min(t - lastT, 500);
+    lastT = t;
+    anim?.(t);
+    const f = +S.res || devicePixelRatio, w = Math.round(innerWidth * f), h = Math.round(innerHeight * f);
+    if (w !== cw || h !== ch) {
+      [canvas.width, canvas.height, cw, ch, dirty] = [w, h, w, h, true];
+      alloc(full, w, h);
+      alloc(prev, w, h);
+    }
+    if (dirty) {
+      // Vorschau-Maßstab an die Framezeit anpassen
+      if (mode === 'prev') ps = Math.min(1, Math.max(0.08, ps * (dt < TARGET_MS[S.quality] * 0.8 ? 1.12 : dt > TARGET_MS[S.quality] * 1.25 ? 0.8 : 1)));
+      dirty = false;
+      prepare();
+      runCalc(prev, Math.ceil(w * ps), Math.ceil(h * ps));
+      lo = hi = h >> 1;
+      mode = 'prev';
+      needShow = true;
+      syncUI();
+    } else if (lo > 0 || hi < h) {
+      // Streifenweise von der Mitte nach außen, damit tiefe Frames den GPU-Watchdog nicht auslösen
+      if (mode === 'full') rows = dt < 30 ? Math.min(h, Math.ceil(rows * 1.5)) : dt > 70 ? Math.max(2, rows >> 1) : rows;
+      mode = 'full';
+      gl.useProgram(calc.p);
+      runCalc(full, w, h, hi, hi + rows);
+      runCalc(full, w, h, lo - rows, lo);
+      [hi, lo] = [hi + rows, lo - rows];
+      needShow = true;
+    } else mode = '';
+    if (S.cycle) { cycT = (cycT + S.cycle * dt / 8000) % 1; needShow = true; }
+    if (needShow) { display(); needShow = false; }
+    if (shotReq) { shotReq = false; canvas.toBlob(b => { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = `mandelbrot-1e${zoom10().toFixed(1)}.png`; a.click(); }); }
+    hud();
+  };
+
+  // --- HUD & Panel-Synchronisation ---
+  const zoom10 = () => (1.25 - ls) * Math.log10(2);
+  const hud = () => {
+    $('#hZoom').innerHTML = `1e${zoom10().toFixed(2)} <small>Vergrößerung</small>`;
+    $('#hInfo').textContent = `${maxIter().toLocaleString('de')} Iterationen · ${P} Bit · Referenz ${ref?.len.toLocaleString('de')}`;
+    $('#hBar').style.width = `${Math.min(100, 100 * (Math.min(hi, ch) - Math.max(lo, 0)) / ch)}%`;
+    const out = document.querySelector('[data-k=iter]')?.parentElement.querySelector('output');
+    if (out) out.textContent = maxIter() >= 1e4 ? `${Math.round(maxIter() / 1000)}k` : maxIter();
+  };
+  let uiTimer;
+  const syncUI = () => {
+    clearTimeout(uiTimer);
+    uiTimer = setTimeout(() => {
+      const [re, im] = [toDec(cx, P), toDec(cy, P)];
+      document.activeElement !== $('#re') && ($('#re').value = re);
+      document.activeElement !== $('#im') && ($('#im').value = im);
+      document.activeElement !== $('#zoom') && ($('#zoom').value = zoom10().toFixed(3));
+      $('#rot').value = Math.round(rot * 180 / Math.PI);
+      $('#rotOut').textContent = `${$('#rot').value}°`;
+      history.replaceState(null, '', `#re=${re}&im=${im}&z=${ls.toFixed(4)}&r=${rot.toFixed(4)}${placeMul > 1 ? `&m=${placeMul.toFixed(2)}` : ''}`);
+      drawMini();
+    }, anim ? 250 : 120);
+  };
+  const toast = msg => { $('#toast').textContent = msg; $('#toast').classList.add('show'); setTimeout(() => $('#toast').classList.remove('show'), 1800); };
+
+  // --- Übersichtskarte ---
+  const mini = $('#mini'), mctx = mini.getContext('2d'), MB = { x0: -2.4, x1: 1.0, y: 0.9 };
+  const miniImg = (() => {
+    const { width: w, height: h } = mini, img = mctx.createImageData(w, h);
+    for (let py = 0; py < h; py++) for (let px = 0; px < w; px++) {
+      const x0 = MB.x0 + (MB.x1 - MB.x0) * px / w, y0 = MB.y - 2 * MB.y * py / h;
+      let x = 0, y = 0, i = 0;
+      for (; i < 200 && x * x + y * y < 16; i++) [x, y] = [x * x - y * y + x0, 2 * x * y + y0];
+      const v = i === 200 ? 0 : Math.sqrt(i / 200), k = 4 * (py * w + px);
+      img.data.set([30 + 90 * v, 40 + 160 * v, 70 + 185 * v, 255], k);
+    }
+    return img;
+  })();
+  const drawMini = () => {
+    const { width: w, height: h } = mini, X = x => (x - MB.x0) / (MB.x1 - MB.x0) * w, Y = y => (MB.y - y) / (2 * MB.y) * h;
+    const x = toNum(cx, P), y = toNum(cy, P), r = 2 ** ls, sx = r * innerWidth / innerHeight;
+    mctx.putImageData(miniImg, 0, 0);
+    mctx.strokeStyle = '#ffb86b';
+    mctx.lineWidth = 1.5;
+    if (X(x + sx) - X(x - sx) > 6) mctx.strokeRect(X(x - sx), Y(y + r), X(x + sx) - X(x - sx), Y(y - r) - Y(y + r));
+    mctx.beginPath();
+    mctx.arc(X(x), Y(y), 4, 0, 7);
+    mctx.moveTo(X(x) - 9, Y(y)); mctx.lineTo(X(x) + 9, Y(y)); mctx.moveTo(X(x), Y(y) - 9); mctx.lineTo(X(x), Y(y) + 9);
+    mctx.stroke();
+  };
+  mini.addEventListener('click', e => {
+    stopTour();
+    const b = mini.getBoundingClientRect(), x = MB.x0 + (MB.x1 - MB.x0) * (e.clientX - b.left) / b.width, y = MB.y - 2 * MB.y * (e.clientY - b.top) / b.height;
+    setView({ re: x.toFixed(17), im: y.toFixed(17), z: Math.max(ls, -8), r: rot });
+  });
+
+  // --- Flüge & Tour ---
+  const PLACES = [
+    { name: "Goldener Schnitt", info: "Siegel-Scheibe am Rand der Hauptkardioide", re: "-0.39054838543342", im: "-0.58678718876144", z: -15.823, r: 1.0971, p: 610 },
+    { name: "Elefantental", info: "Rüsselparade nahe der Spitze bei 0,25", re: "0.269194124589789", im: "0.005540526495113", z: -20.606, r: 2.4421, p: 134 },
+    { name: "Seepferdchental", info: "Spiralen zwischen Kardioide und Periode-2-Kreis", re: "-0.743643887037158870778064", im: "0.131825904205312292821097", z: -48.920, r: -0.8750, p: 998 },
+    { name: "Misiurewicz-Wirbel", info: "Spirale um einen Misiurewicz-Punkt", re: "-0.7756837697445748027346383", im: "0.1364673704715429498027001", z: -54.254, r: -1.5251, p: 347 },
+    { name: "Nadel", info: "Minibrot auf der Antenne der reellen Achse", re: "-1.9855403716912853327620681", im: "0.0000000000000000000000000", z: -53.531, r: 0.0000, p: 75 },
+    { name: "Doppelspirale", info: "Verschlungene Arme bei −0,1 + 0,96i", re: "-0.101096363856632154083296781659", im: "0.956286510810084812789602004720", z: -70.666, r: 1.4866, p: 85 },
+    { name: "Sternenkranz", info: "Eingebettete Julia-Menge mit 20 Zacken", re: "-0.00000000000057906085889350831241876116", im: "0.99999999999952248343169679964682201990", z: -97.137, r: -2.3053, p: 578 },
+    { name: "Spiralkranz", info: "Spiralen rund um ein tiefes Minibrot", re: "-0.00000000000057906085889337750829368954", im: "0.99999999999952248343169663725397983800", z: -94.923, r: 1.4099, p: 782 },
+    { name: "Dendritenkette", info: "Verzweigte Äste nahe c = i", re: "-0.000000000000579060858893512845813656761", im: "0.999999999999522483431696820224282993993", z: -98.902, r: 1.2296, p: 306 },
+    { name: "Nadelstern", info: "Stern tief unten auf der Antenne", re: "-1.9855403716912853327731903175833", im: "0.0000000000000000256520696639388", z: -71.939, r: -0.1384, p: 675 },
+    { name: "Wellenmuster", info: "Konzentrische Wellen im Wirbel", re: "-0.7756837697445747872173800846935", im: "0.1364673704715429505197109767559", z: -72.662, r: -1.6634, p: 3123 },
+    { name: "Spiralgarten", info: "Minibrot im Spiralfeld der Doppelspirale", re: "-0.10109636385663215408333246943067934", im: "0.95628651081008481278946631438570845", z: -85.095, r: 1.5286, p: 1955 },
+  ];
+  const ease = u => u - Math.sin(2 * Math.PI * u) / (2 * Math.PI);
+  const wrapAngle = a => Math.atan2(Math.sin(a), Math.cos(a));
+  let flightDone = null;
+  const fly = (dest, dur = S.fly * 1000) => new Promise(resolve => {
+    flightDone?.(false);
+    flightDone = resolve;
+    const L = Math.max(1.25, ls), tp = precFor(dest.z), tx = fromDec(dest.re, tp), ty = fromDec(dest.im, tp);
+    const destRot = S.align ? dest.r ?? 0 : 0, need = dest.p ? Math.max(1, 6 * dest.p / autoIter(dest.z)) : 1;
+    const [sx, sy, sl, sr, ex, ey] = [toNum(cx, P), toNum(cy, P), ls, rot, toNum(tx, tp), toNum(ty, tp)];
+    const panD = Math.hypot(ex - sx, ey - sy), tPan = panD > 1e-3 ? Math.min(2500, 700 + 1500 * panD) : 0;
+    const wOut = (L - sl) * 0.35, wIn = L - dest.z, rest = Math.max(1000, dur - tPan);
+    const tOut = rest * wOut / (wOut + wIn || 1), t0 = performance.now();
+    let entered = false;
+    $('#flight').style.display = 'block';
+    $('#flight').textContent = `✈ ${dest.name ?? 'Flug'}`;
+    anim = t => {
+      const e = Math.max(0, t - t0);
+      if (e < tOut) { ls = sl + (L - sl) * ease(e / tOut); rot = sr * (1 - ease(e / tOut)); updPrec(); }
+      else if (e < tOut + tPan) {
+        const u = ease((e - tOut) / tPan);
+        [ls, rot, P] = [L, 0, 64];
+        cx = BigInt(Math.round((sx + (ex - sx) * u) * 2 ** 64));
+        cy = BigInt(Math.round((sy + (ey - sy) * u) * 2 ** 64));
+      } else {
+        if (!entered) {
+          // Referenz einmalig am Ziel in voller Tiefe, dann bleibt sie für den ganzen Anflug gültig
+          entered = true;
+          placeMul = need;
+          [ls, P, cx, cy] = [dest.z, tp, tx, ty];
+          computeRef(Math.round(maxIter(dest.z) * 1.1));
         }
-        return worker
-      })
-
-      const computeMandelbrot = () => {
-        updateInfo()
-        t = timer()
-        RECEIVED_CHUNKS = 0
-
-        const rowsPerChunk = Math.trunc(height / N_CHUNKS) // rows per chunk
-        for (let n = 0; n < N_CHUNKS; n++) {
-          const startRow = n * rowsPerChunk
-          const endRow = Math.min(height, startRow + rowsPerChunk)
-          workers[n].postMessage({ n, view, width, height, startRow, endRow, COLORS })
-        }
+        const u = Math.min(1, (e - tOut - tPan) / (rest - tOut));
+        ls = L + (dest.z - L) * ease(u);
+        rot = wrapAngle(destRot) * ease(u);
+        const p = precFor(ls);
+        [cx, cy, P] = [rescale(tx, tp, p), rescale(ty, tp, p), p];
+        if (u >= 1) { anim = null; flightDone = null; $('#flight').style.display = touring ? 'block' : 'none'; resolve(true); }
       }
-
-      const zoom = (event) => {
-        const factor = event.ctrlKey ? 2 : 0.5
-        const rect = canvas.getBoundingClientRect()
-        const x = event.clientX - rect.left
-        const y = event.clientY - rect.top
-        view.width *= factor
-        view.centerX = view.centerX + ((x - width / 2) * view.width) / width
-        view.centerY = view.centerY + ((y - height / 2) * view.width) / width
-        view.zoomFactor /= factor
-        computeMandelbrot()
+      dirty = true;
+    };
+  });
+  const stopFlight = () => { if (anim) { anim = null; flightDone?.(false); flightDone = null; } $('#flight').style.display = 'none'; };
+  let touring = false;
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  const tour = async () => {
+    touring = true;
+    $('#tour').textContent = '■ Tour stoppen';
+    $('#tTour').textContent = '■';
+    do {
+      const list = [...PLACES, ...S.mine];
+      S.shuffle && list.sort(() => Math.random() - 0.5);
+      for (const pl of list) {
+        highlight(pl);
+        if (!touring || !await fly(pl)) break;
+        const t0 = performance.now();
+        while (touring && (performance.now() - t0 < S.hold * 1000 || (lo > 0 || hi < ch) && performance.now() - t0 < 12000)) await sleep(100);
+        if (!touring) break;
       }
+    } while (touring && S.loop);
+    stopTour();
+  };
+  const stopTour = () => {
+    touring = false;
+    stopFlight();
+    $('#tour').textContent = '▶ Tour starten';
+    $('#tTour').textContent = '▶';
+  };
+  const toggleTour = () => touring ? stopTour() : tour();
 
-      // UI actions
-      canvas.addEventListener('click', (e) => zoom(e))
-      const resetView = () => ((view = { ...initialView }), computeMandelbrot())
-      const changeColScheme = () => ((view.colorScheme = 3 - view.colorScheme), computeMandelbrot())
-      const changeIteration = (val) => (view.maxIterations = val, computeMandelbrot())
-      const updateInfo = () => {
-        document.getElementById('zoomLevel').textContent = view.zoomFactor
-        document.getElementById('iterations').textContent = view.maxIterations
+  const highlight = pl => document.querySelectorAll('.place').forEach(b => b.classList.toggle('on', b.pl === pl));
+  const renderPlaces = () => {
+    const box = $('#places');
+    box.innerHTML = '';
+    [...PLACES, ...S.mine].forEach(pl => {
+      const b = document.createElement('button');
+      b.className = 'place';
+      b.pl = pl;
+      b.innerHTML = `<span><b></b><small></small></span><span><em>1e${((1.25 - pl.z) * Math.log10(2)).toFixed(0)}</em></span>`;
+      b.querySelector('b').textContent = pl.name;
+      b.querySelector('small').textContent = pl.info ?? 'Eigener Ort';
+      if (S.mine.includes(pl)) {
+        const x = document.createElement('span');
+        x.className = 'x';
+        x.textContent = '✕';
+        x.title = 'Löschen';
+        x.onclick = e => { e.stopPropagation(); S.mine.splice(S.mine.indexOf(pl), 1); save(); renderPlaces(); };
+        b.lastChild.append(x);
       }
+      b.onclick = () => { stopTour(); highlight(pl); fly(pl); };
+      box.append(b);
+    });
+  };
 
-      computeMandelbrot()
-    </script>
-  </body>
+  // --- Panel-Bindings ---
+  const FMT = { dens: v => v.toFixed(2) + '×', phase: v => v.toFixed(2), cycle: v => v.toFixed(2), relief: v => Math.round(v * 100) + ' %', height: v => v.toFixed(2),
+    light: v => v + '°', gloss: v => Math.round(v * 100) + ' %', fly: v => v + ' s', hold: v => v + ' s' };
+  const bound = [];
+  document.querySelectorAll('[data-k]').forEach(el => {
+    const k = el.dataset.k, log = 'log' in el.dataset, out = el.parentElement.querySelector('output');
+    const put = () => { el.type === 'checkbox' ? el.checked = S[k] : el.value = log ? Math.log2(S[k]) : S[k]; out && FMT[k] && (out.textContent = FMT[k](S[k])); };
+    bound.push(put);
+    put();
+    el.addEventListener('input', () => {
+      S[k] = el.type === 'checkbox' ? el.checked : el.type === 'color' ? el.value : log ? 2 ** +el.value : +el.value;
+      out && FMT[k] && (out.textContent = FMT[k](S[k]));
+      save();
+      ['iter', 'res'].includes(k) ? dirty = true : needShow = true;
+    });
+  });
+  const pals = $('#pals');
+  const renderPals = () => {
+    pals.innerHTML = '';
+    Object.keys(PALETTES).forEach(n => {
+      const d = document.createElement('div'), st = stops(n);
+      d.title = n === 'Zufall' ? 'Zufall (erneut klicken für neue Farben)' : n;
+      d.style.background = `linear-gradient(90deg, ${[...st, st[0]].join(',')})`;
+      d.classList.toggle('on', S.pal === n);
+      d.onclick = () => { if (n === 'Zufall' && S.pal === 'Zufall') S.custom = randomPal(); S.pal = n; save(); uploadPal(); renderPals(); };
+      pals.append(d);
+    });
+  };
+
+  const readInputs = () => ({ re: $('#re').value.replace(/\s/g, ''), im: $('#im').value.replace(/\s/g, ''), z: 1.25 - +$('#zoom').value / Math.log10(2), r: rot, name: 'Eingabe' });
+  const guard = f => () => { try { f(); } catch (e) { toast(String(e)); } };
+  $('#jump').onclick = guard(() => { stopTour(); placeMul = 1; setView(readInputs()); });
+  $('#flyto').onclick = guard(() => { stopTour(); fromDec(readInputs().re, 64); fly(readInputs()); });
+  $('#zin').onclick = () => { zoomAt([0, 0], -2); };
+  $('#zout').onclick = () => { zoomAt([0, 0], 2); };
+  $('#reset').onclick = () => { stopTour(); placeMul = 1; setView(HOME); };
+  $('#rot').oninput = e => { rot = e.target.value * Math.PI / 180; $('#rotOut').textContent = `${e.target.value}°`; dirty = true; };
+  $('#copy').onclick = () => { syncUI(); setTimeout(() => navigator.clipboard.writeText(location.href).then(() => toast('Link kopiert'), () => toast('Kopieren nicht möglich')), 150); };
+  $('#shot').onclick = $('#tShot').onclick = () => { shotReq = needShow = true; };
+  $('#save').onclick = () => {
+    const name = prompt('Name für diesen Ort:', `Ort ${S.mine.length + 1}`);
+    if (!name) return;
+    S.mine.push({ name, re: toDec(cx, P), im: toDec(cy, P), z: ls, r: rot });
+    save();
+    renderPlaces();
+    toast('Ort gespeichert');
+  };
+  $('#tour').onclick = $('#tTour').onclick = toggleTour;
+  $('#tPanel').onclick = () => document.body.classList.toggle('open');
+  $('#tFull').onclick = () => document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+  $('#tHelp').onclick = () => $('#help').classList.toggle('show');
+  $('#help').onclick = () => $('#help').classList.remove('show');
+
+  // --- Maus, Touch, Tastatur ---
+  const uvAt = (x, y) => [(2 * x - innerWidth) / innerHeight, (innerHeight - 2 * y) / innerHeight];
+  const user = stopTour;
+  canvas.addEventListener('wheel', e => { e.preventDefault(); user(); zoomAt(uvAt(e.clientX, e.clientY), Math.max(-1, Math.min(1, e.deltaY * 0.002))); }, { passive: false });
+  canvas.addEventListener('dblclick', e => { user(); zoomAt(uvAt(e.clientX, e.clientY), e.shiftKey ? 2 : -2); });
+  const ptrs = new Map();
+  canvas.addEventListener('pointerdown', e => { user(); ptrs.set(e.pointerId, [e.clientX, e.clientY]); canvas.setPointerCapture(e.pointerId); });
+  canvas.addEventListener('pointerup', e => ptrs.delete(e.pointerId));
+  canvas.addEventListener('pointercancel', e => ptrs.delete(e.pointerId));
+  canvas.addEventListener('pointermove', e => {
+    if (!ptrs.has(e.pointerId)) return;
+    const [a, b] = [...ptrs.values()], old = ptrs.size === 2 ? [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.hypot(a[0] - b[0], a[1] - b[1])] : null;
+    const [px, py] = ptrs.get(e.pointerId);
+    ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+    if (!old) return move(-2 * (e.clientX - px) / innerHeight, 2 * (e.clientY - py) / innerHeight);
+    const [c, d] = [...ptrs.values()], mx = (c[0] + d[0]) / 2, my = (c[1] + d[1]) / 2;
+    move(-2 * (mx - old[0]) / innerHeight, 2 * (my - old[1]) / innerHeight);
+    zoomAt(uvAt(mx, my), Math.log2(old[2] / Math.hypot(c[0] - d[0], c[1] - d[1])));
+  });
+  addEventListener('keydown', e => {
+    if (['TEXTAREA', 'INPUT'].includes(e.target.tagName) && e.target.type !== 'range' && e.target.type !== 'checkbox') return;
+    const K = {
+      '+': () => { S.iter *= 1.5; dirty = true; }, '-': () => { S.iter /= 1.5; dirty = true; },
+      ']': () => { S.dens *= 1.25; needShow = true; }, '[': () => { S.dens /= 1.25; needShow = true; },
+      ArrowLeft: () => move(-0.2, 0), ArrowRight: () => move(0.2, 0), ArrowUp: () => move(0, 0.2), ArrowDown: () => move(0, -0.2),
+      PageUp: () => zoomAt([0, 0], -0.5), PageDown: () => zoomAt([0, 0], 0.5),
+      q: () => { rot += 0.05; dirty = true; }, e: () => { rot -= 0.05; dirty = true; },
+      r: () => $('#reset').click(), t: toggleTour, ' ': stopTour, p: () => $('#tPanel').click(), f: () => $('#tFull').click(),
+      s: () => $('#shot').click(), h: () => $('#tHelp').click(), Escape: () => $('#help').classList.remove('show'),
+    }[e.key];
+    if (!K) return;
+    e.preventDefault();
+    if (!['t', ' ', 'p', 'f', 's', 'h', 'Escape', '[', ']'].includes(e.key)) stopTour();
+    K();
+    bound.forEach(f => f());
+    save();
+  });
+
+  // --- Start ---
+  const params = new URLSearchParams(location.hash.slice(1));
+  placeMul = Math.max(1, +params.get('m') || 1);
+  try { params.has('re') ? setView({ re: params.get('re'), im: params.get('im'), z: +params.get('z'), r: +(params.get('r') ?? 0) }) : setView(HOME); } catch { setView(HOME); }
+  uploadPal();
+  renderPals();
+  renderPlaces();
+  if (innerWidth < 900 || params.has('clean')) document.body.classList.remove('open');
+  if (params.has('clean')) $('#hud').style.display = $('#tools').style.display = 'none';
+  if (params.has('tour')) tour();
+  requestAnimationFrame(frame);
+</script>
+</body>
 </html>
