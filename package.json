@@ -9,17 +9,10 @@
       "sudoku"
    ],
    "jest": {
-      "//": "Comment goes here",
-      "verbose": true,
-      "collectCoverageFrom": [
-         "src/complex/**/*.js"
-      ]
+      "verbose": true
    },
    "author": "eb",
-   "contributors": [],
    "scripts": {
-      "ts-test": "tsc &&  node ./ts-built/test.js",
-      "index-card-app": "tsc",
       "test": "jest --runInBand --watchAll=false",
       "test:watch": "jest --watchAll",
       "test:coverage": "jest --coverage --runInBand --watchAll=false",
@@ -27,7 +20,6 @@
       "barcode": "node src/barcodes/barcode.js",
       "sudoku": "node src/sudoku/sudoku3.js",
       "magic-hexagon": "node src/magic-hexagon/magic-hexagon.js",
-      "complex": "node src/complex/complex.js",
       "ct-puzzle:dlx": "node src/ct-puzzle/ct-puzzle-dlx.js",
       "ct-puzzle": "node src/ct-puzzle/ct-puzzle.js",
       "pentomino": "node --inspect src/pentomino/pentomino.js"
@@ -37,12 +29,10 @@
       "dancing-links": "^2.1.1",
       "dlx": "^0.2.1",
       "dlxlib": "^1.0.3",
-      "mathjs": "^14.6.0",
-      "plotly": "^1.0.6"
+      "mathjs": "^14.6.0"
    },
    "devDependencies": {
       "jest": "30.4.0",
-      "prettier": "3.6.2",
-      "typescript": "^5.8.3"
+      "prettier": "3.6.2"
    }
 }
