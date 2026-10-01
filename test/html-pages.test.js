@@ -46,5 +46,5 @@ const uncaughtErrors = (page) =>
   })
 
 ;(chrome ? describe : describe.skip)('HTML pages load without uncaught errors', () => {
-  test.concurrent.each(pages)('%s', async (page) => expect(await uncaughtErrors(page)).toEqual([]), 30000)
+  test.each(pages)('%s', async (page) => expect(await uncaughtErrors(page)).toEqual([]), 30000)
 })
