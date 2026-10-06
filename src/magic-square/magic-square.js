@@ -118,8 +118,12 @@ const magic3x3Solver = () => {
   ])
 }
 
+// All 4x4 solvers return the 880 squares in normal form, one per class of the 8 rotations/reflections
+// (7040 squares in total). The 1 lies in a corner, on an edge or in the center; within each of these
+// orbits one position and, where a reflection fixes that position, one tie-break is chosen:
+//   1 at index 0 with b < e (index 1 < index 4), or 1 at index 1, or 1 at index 5 with g < j (index 6 < index 9).
 const magic4x4Solver1 = () => {
-  const magic4x4 = magicSquare(4, [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+  const magic4x4 = magicSquare(4, [2, 3, 4, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
   const MN = magic4x4.MN
   const chk = (avn, s1, s2) => s1 != s2 && avn.includes(MN - s1) && avn.includes(MN - s2)
   const check = (xs, sq, avn, x1, x2, y1, y2) => chk(avn, xs[0] + sq[x1] + sq[x2], xs[1] + sq[y1] + sq[y2]) || chk(avn, xs[1] + sq[x1] + sq[x2], xs[0] + sq[y1] + sq[y2])
@@ -148,10 +152,18 @@ const magic4x4Solver1 = () => {
     return false
   }
   return magic4x4.solve([
-    { row: [3, 6, 9, 12], combinationRestriction: (combi) => !combi.includes(1) }, // diag2, 1 only at index 0 or 1
-    { row: [0, 5, 10, 15], combinationRestriction: hasCornerPair, placementRestriction: canCompleteRowsAndColumns }, // diag1
+    { row: [3, 6, 9, 12], combinationRestriction: (combi) => !combi.includes(1) }, // diag2, 1 only at index 0, 1 or 5
+    {
+      row: [0, 5, 10, 15], // diag1
+      combinationRestriction: hasCornerPair,
+      placementRestriction: (sq, avn) => (sq[5] !== 1 || sq[6] < sq[9]) && canCompleteRowsAndColumns(sq, avn),
+    },
     { row: [4, 8], restriction: (xs, sq, avn) => sq[0] + xs[0] + xs[1] + sq[12] === MN && check(xs, sq, avn, 5, 6, 9, 10) },
-    { row: [1, 2], restriction: (xs, sq, avn) => sq[0] + xs[0] + xs[1] + sq[3] === MN && check(xs, sq, avn, 5, 9, 6, 10) },
+    {
+      row: [1, 2],
+      restriction: (xs, sq, avn) => sq[0] + xs[0] + xs[1] + sq[3] === MN && check(xs, sq, avn, 5, 9, 6, 10),
+      placementRestriction: (sq) => sq[0] !== 1 || sq[1] < sq[4],
+    },
     { row: [7], restriction: (xs, sq) => xs[0] + sq[4] + sq[5] + sq[6] === MN },
     { row: [11], restriction: (xs, sq) => xs[0] + sq[8] + sq[9] + sq[10] === MN },
     { row: [13], restriction: (xs, sq) => xs[0] + sq[1] + sq[5] + sq[9] === MN },
@@ -178,7 +190,8 @@ const magic4x4Solver2 = () => {
         mask: toMask(values),
         permutations,
         byEndSum: byEndSum(permutations),
-        byEndSumWithOneFirst: byEndSum(permutations.filter((diagonal) => diagonal[0] === 1)),
+        // 1 on the main diagonal only at index 0 or 5 (normal form)
+        byEndSumWithOne: byEndSum(permutations.filter((diagonal) => diagonal[0] === 1 || diagonal[1] === 1)),
       }
     })
   const secondDiagonalCombinations = diagonalCombinations.filter(({ mask }) => !(mask & 1))
@@ -195,7 +208,7 @@ const magic4x4Solver2 = () => {
 
       const usedDiagonalsMask = diagonal1Mask | diagonal2Mask
       const available = fullMask ^ usedDiagonalsMask
-      const firstDiagonalsByEndSum = diagonal1Mask & 1 ? first.byEndSumWithOneFirst : first.byEndSum
+      const firstDiagonalsByEndSum = diagonal1Mask & 1 ? first.byEndSumWithOne : first.byEndSum
 
       for (let d2 = 0; d2 < secondDiagonals.length; d2++) {
         const diagonal2 = secondDiagonals[d2]
@@ -204,6 +217,7 @@ const magic4x4Solver2 = () => {
         for (let d1 = 0; d1 < allowedFirstDiagonals.length; d1++) {
           const diagonal1 = allowedFirstDiagonals[d1]
           const s0 = diagonal1[0], s5 = diagonal1[1], s10 = diagonal1[2], s15 = diagonal1[3]
+          if (s5 === 1 && s6 > s9) continue // normal form tie-break for the 1 in the center
 
           for (let r4 = available; r4; r4 &= r4 - 1) {
             const value4 = 32 - Math.clz32(r4 & -r4)
@@ -212,8 +226,11 @@ const magic4x4Solver2 = () => {
             if (value4 === value8 || !(available & bit8)) continue
 
             const availableAfterPair = available ^ (1 << (value4 - 1)) ^ bit8
-            // Without a 1 on the diagonals, the 1 has to go to index 1.
-            const possibleValues1 = usedDiagonalsMask & 1 ? availableAfterPair : availableAfterPair & 1
+            // Without a 1 on the diagonals, the 1 has to go to index 1;
+            // with the 1 at index 0 the normal form needs value1 < value4.
+            const possibleValues1 = !(usedDiagonalsMask & 1)
+              ? availableAfterPair & 1
+              : s0 === 1 ? availableAfterPair & ((1 << (value4 - 1)) - 1) : availableAfterPair
 
             for (let r1 = possibleValues1; r1; r1 &= r1 - 1) {
               const value1 = 32 - Math.clz32(r1 & -r1)
@@ -261,13 +278,14 @@ const magic4x4Solver3 = () => {
   const results = []
   const pairsWithOne = pairs.map((entries) => entries.filter((pair) => pair[0] === 1))
 
-  // Use the shared symmetry convention: the 1 is at index 0 or 1.
-  for (const oneIndex of [0, 1]) {
+  // Normal form: 1 at index 0 (a, with b < e), index 1 (b) or index 5 (f, with g < j).
+  for (const oneIndex of [0, 1, 5]) {
     for (const first of diagonals) {
-      if (Boolean(first.mask & 1) !== (oneIndex === 0)) continue
-      const firstPermutations = oneIndex === 0
-        ? first.permutations.filter((values) => values[0] === 1)
-        : first.permutations
+      // the 1 lies on the main diagonal [a, f, k, p] exactly for index 0 and 5
+      if (Boolean(first.mask & 1) === (oneIndex === 1)) continue
+      const firstPermutations = oneIndex === 1
+        ? first.permutations
+        : first.permutations.filter((values) => values[oneIndex === 0 ? 0 : 1] === 1)
       for (const second of diagonals) {
         if (second.mask & (first.mask | 1)) continue
         const diagonalMask = first.mask | second.mask
@@ -280,6 +298,7 @@ const magic4x4Solver3 = () => {
           for (let sp = 0; sp < secondPermutations.length; sp++) {
             const secondDiagonal = secondPermutations[sp]
             const d = secondDiagonal[0], g = secondDiagonal[1], j = secondDiagonal[2], m = secondDiagonal[3]
+            if (oneIndex === 5 && g > j) continue
             const topPairs = topPairsBySum[34 - a - d]
             const leftPairs = pairs[34 - a - m]
             for (let tp = 0; tp < topPairs.length; tp++) {
@@ -299,6 +318,7 @@ const magic4x4Solver3 = () => {
                 const leftMask = leftPair[2]
                 if ((leftMask & remainingMask) !== leftMask) continue
                 const e = leftPair[0], i = leftPair[1]
+                if (oneIndex === 0 && e < b) continue
                 const h = 34 - e - f - g
                 const l = 34 - i - j - k
                 if (h < 1 || h > 16 || l < 1 || l > 16 || h === l) continue
@@ -325,29 +345,37 @@ const magic4x4Solver4 = () => {
   // j-i = a+e-d-g; k-l = d+h-a-f; i+l = 17-(e+h-f-g)/2.
   // Only second-row orderings with an even e+h-f-g can lead to an integer i+l.
   const evenSecondRows = rows.map(({ permutations }) => permutations.filter(([e, f, g, h]) => !((e + h - f - g) & 1)))
+  // Normal form: the 1 is a or b in the top row, or f in the second row.
+  const topRowsWithOne = rows.map(({ permutations }) => permutations.filter((row) => row[0] === 1 || row[1] === 1))
+  const evenSecondRowsWithOneAtF = evenSecondRows.map((secondRows) => secondRows.filter((row) => row[1] === 1))
 
-  for (const first of rows) {
-    if (!(first.mask & 1)) continue
-    const topRows = first.permutations.filter((row) => row[0] === 1 || row[1] === 1)
+  for (let fi = 0; fi < rows.length; fi++) {
+    const first = rows[fi]
+    const oneInFirst = first.mask & 1
     for (let si = 0; si < rows.length; si++) {
       const second = rows[si]
       if (first.mask & second.mask) continue
+      if (!oneInFirst && !(second.mask & 1)) continue
       const used = first.mask | second.mask
-      const secondRows = evenSecondRows[si]
+      const topRows = oneInFirst ? topRowsWithOne[fi] : first.permutations
+      const secondRows = oneInFirst ? evenSecondRows[si] : evenSecondRowsWithOneAtF[si]
       for (let tr = 0; tr < topRows.length; tr++) {
         const top = topRows[tr]
         const a = top[0], b = top[1], c = top[2], d = top[3]
         for (let sr = 0; sr < secondRows.length; sr++) {
           const row2 = secondRows[sr]
           const e = row2[0], f = row2[1], g = row2[2], h = row2[3]
+          if (a === 1 && e < b) continue // tie-break b < e
           const il = 17 - (e + h - f - g) / 2
           const ji = a + e - d - g
           const kl = d + h - a - f
           const ik = il + kl
           // Every derived cell is i + const or const - i; only i keeping all of them inside 1..16 can work:
           // j = i+ji, l = il-i, k = ik-i, m = 34-a-e-i, n = 34-b-f-ji-i, o = 34-c-g-ik+i, p = 34-d-h-il+i.
-          // Within [lo, hi] no further range checks are needed.
-          const lo = Math.max(2, 1 - ji, il - 16, ik - 16, 18 - a - e, 18 - b - f - ji, c + g + ik - 33, d + h + il - 33)
+          // Within [lo, hi] no further range checks are needed. With the 1 at f, the tie-break g < j
+          // raises the lower bound of j from 1 to g+1.
+          const minJ = f === 1 ? g + 1 : 1
+          const lo = Math.max(2, minJ - ji, il - 16, ik - 16, 18 - a - e, 18 - b - f - ji, c + g + ik - 33, d + h + il - 33)
           const hi = Math.min(16, 16 - ji, il - 1, ik - 1, 33 - a - e, 33 - b - f - ji, c + g + ik - 18, d + h + il - 18)
           for (let i = lo; i <= hi; i++) {
             if (used & bits[i]) continue
@@ -382,8 +410,10 @@ const magic4x4Solver5 = () => {
       for (let r = 0; r < 4; r++)
         if (p !== q && p !== r && q !== r) orders.push([p, q, r, 6 - p - q - r])
 
-  // Per row combination two pre-filtered orderings, flat in typed arrays:
-  // top: 1 at index 0 or 1 (symmetry convention), second: even e+h-f-g (integer i+l).
+  // Per row combination pre-filtered orderings, flat in typed arrays. Normal form: the 1 is a or b
+  // in the top row, or f in the second row. Second rows need an even e+h-f-g (integer i+l).
+  //   topWithOne: 1 at index 0 or 1, topAll: every ordering (rows without the 1),
+  //   second: even e+h-f-g, secondWithOneAtF: additionally f = 1.
   const rows = []
   for (let a = 1; a <= 16; a++)
     for (let b = a + 1; b <= 16; b++)
@@ -392,9 +422,14 @@ const magic4x4Solver5 = () => {
         if (d <= c || d > 16) continue
         const values = [a, b, c, d]
         const ordered = orders.map((order) => order.map((idx) => values[idx]))
-        const top = ordered.filter((row) => row[0] === 1 || row[1] === 1)
         const second = ordered.filter(([e, f, g, h]) => !((e + h - f - g) & 1))
-        rows.push({ mask: bit(a) | bit(b) | bit(c) | bit(d), top: Int8Array.from(top.flat()), second: Int8Array.from(second.flat()) })
+        rows.push({
+          mask: bit(a) | bit(b) | bit(c) | bit(d),
+          topWithOne: Int8Array.from(ordered.filter((row) => row[0] === 1 || row[1] === 1).flat()),
+          topAll: Int8Array.from(ordered.flat()),
+          second: Int8Array.from(second.flat()),
+          secondWithOneAtF: Int8Array.from(second.filter((row) => row[1] === 1).flat()),
+        })
       }
 
   // Window masks, index offset 128: PLUS[s] holds every i in 1..16 with i+s in 1..16,
@@ -409,17 +444,19 @@ const magic4x4Solver5 = () => {
 
   const results = []
   for (const first of rows) {
-    if (!(first.mask & 1)) continue
-    const top = first.top
+    const oneInFirst = first.mask & 1
+    const top = oneInFirst ? first.topWithOne : first.topAll
     for (const second of rows) {
       if (first.mask & second.mask) continue
+      if (!oneInFirst && !(second.mask & 1)) continue
       const used = first.mask | second.mask
       const rest = 0xffff ^ used
-      const row2 = second.second
+      const row2 = oneInFirst ? second.second : second.secondWithOneAtF
       for (let t = 0; t < top.length; t += 4) {
         const a = top[t], b = top[t + 1], c = top[t + 2], d = top[t + 3]
         for (let s = 0; s < row2.length; s += 4) {
           const e = row2[s], f = row2[s + 1], g = row2[s + 2], h = row2[s + 3]
+          if (a === 1 && e < b) continue // tie-break b < e
           const il = 17 - (e + h - f - g) / 2
           const ji = a + e - d - g
           const ik = il + d + h - a - f
@@ -434,7 +471,7 @@ const magic4x4Solver5 = () => {
             const bi = 1 << (i - 1)
             const j = i + ji
             const bj = 1 << (j - 1)
-            if (!(rest & bj & ~bi)) continue
+            if (!(rest & bj & ~bi) || (f === 1 && j < g)) continue // tie-break g < j for the 1 at f
             const l = il - i
             const bl = 1 << (l - 1)
             if (!(rest & bl & ~(bi | bj))) continue

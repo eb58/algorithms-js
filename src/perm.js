@@ -96,20 +96,32 @@ const perm4 = (xs) => {
   return permX(xs);
 };
 
-const permWithFilter = (f) => {
-  const perm = (xs) =>
-    xs.length < 2
-      ? [xs]
-      : xs.reduce(
-          (a, n, i) => [
-            ...a,
-            ...perm(xs.without(n))
-              .map((y) => [...y, xs[i]])
-              .filter(f),
-          ],
-          [],
-        );
-  return perm;
+// Builds the permutations front to back and calls f on every prefix of length >= 2 before
+// extending it, so a rejected prefix is never expanded. f gets the live prefix array and
+// must not keep a reference to it. The unused elements are swapped to the back of rest, so each
+// level only loops over what is left. The permutations do not come in lexicographic order.
+const permWithFilter = (f) => (xs) => {
+  const result = [];
+  const rest = xs.slice(); // rest[0..k) is the prefix, rest[k..] the unused elements
+  const prefix = [];
+  const extend = (k) => {
+    if (k === rest.length) {
+      result.push(prefix.slice());
+      return;
+    }
+    for (let i = k; i < rest.length; i++) {
+      const chosen = rest[i];
+      rest[i] = rest[k];
+      rest[k] = chosen;
+      prefix.push(chosen);
+      if (k < 1 || f(prefix)) extend(k + 1);
+      prefix.pop();
+      rest[k] = rest[i];
+      rest[i] = chosen;
+    }
+  };
+  extend(0);
+  return result;
 };
 
 const perm6 = (() => {

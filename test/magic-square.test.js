@@ -36,10 +36,41 @@ test('magic-square-3x3-simple', () => {
   squares.forEach((square) => expectMagicSquare(square, 3))
 });
 
-// xtest('magic-square-4x4-simple', () => { // working, but very slow!!
-//   const solver = msSimple.magicSquare4x4
-//   expect(solver([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]).length).toBe(880);
-// });
+// All 7040 4x4 magic squares (no symmetry reduction), computed once by the simple solver.
+let allSimple4x4
+const allMagicSquares4x4 = () =>
+  (allSimple4x4 ||= msSimple.magicSquare4x4(Array.from({ length: 16 }, (_, index) => index + 1)))
+
+test('magic-square-4x4-simple', () => {
+  const squares = allMagicSquares4x4()
+
+  expect(squares).toHaveLength(7040)
+  expectUniqueSquares(squares)
+  squares.forEach((square) => expectMagicSquare(square, 4))
+}, 60000);
+
+// The 8 rotations/reflections of a 4x4 square.
+const symmetries4x4 = (square) => {
+  const rotate = (s) => Array.from({ length: 16 }, (_, i) => s[(3 - (i % 4)) * 4 + Math.floor(i / 4)])
+  const transpose = (s) => Array.from({ length: 16 }, (_, i) => s[(i % 4) * 4 + Math.floor(i / 4)])
+  const result = []
+  let current = square
+  for (let turn = 0; turn < 4; turn++) {
+    result.push(current, transpose(current))
+    current = rotate(current)
+  }
+  return result
+}
+const isNormal4x4 = (s) => (s[0] === 1 && s[1] < s[4]) || s[1] === 1 || (s[5] === 1 && s[6] < s[9])
+
+;[1, 2, 3, 4, 5].forEach((n) => test(`magic-square-4x4 ${n} returns one square per symmetry class`, () => {
+  const squares = ms[`magic4x4Solver${n}`]()
+  expect(squares.every(isNormal4x4)).toBe(true)
+
+  const expanded = new Set(squares.flatMap((square) => symmetries4x4(square).map((s) => s.join(','))))
+  expect(expanded.size).toBe(8 * squares.length)
+  expect([...expanded].sort()).toEqual(allMagicSquares4x4().map((square) => square.join(',')).sort())
+}, 60000));
 
 test('magic-square-3x3', () => {
   const solver = ms.magic3x3Solver;
