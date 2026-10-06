@@ -75,6 +75,16 @@ test('magic-square-4x4 3', () => {
   squares.forEach((square) => expectMagicSquare(square, 4))
 });
 
+test('magic-square-4x4 5', () => {
+  const squares = ms.magic4x4Solver5()
+  expect(squares).toHaveLength(880)
+  expectUniqueSquares(squares)
+  squares.forEach((square) => expectMagicSquare(square, 4))
+  expect(squares.map((square) => square.join(',')).sort()).toEqual(
+    ms.magic4x4Solver4().map((square) => square.join(',')).sort(),
+  )
+});
+
 test('magic-square-4x4 4', () => {
   const squares = ms.magic4x4Solver4()
 

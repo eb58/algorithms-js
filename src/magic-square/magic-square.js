@@ -243,6 +243,52 @@ const magic4x4Solver4 = () => {
   return results
 }
 
+const magic4x4Solver5 = () => {
+  const bits = Array.from({ length: 17 }, (_, value) => value ? 1 << (value - 1) : 0)
+  const rows = comb(range(16).map((i) => i + 1), 4, (values) => sum(values) === 34)
+    .map((values) => ({ mask: values.reduce((mask, value) => mask | bits[value], 0), permutations: perm(values) }))
+  const results = []
+
+  // Layout: a b c d / e f g h / i j k l / m n o p.
+  // Fixing the first two rows leaves only i free:
+  // j-i = a+e-d-g; k-l = d+h-a-f; i+l = 17-(e+h-f-g)/2.
+  for (const first of rows) {
+    if (!(first.mask & 1)) continue
+    const topRows = first.permutations.filter((row) => row[0] === 1 || row[1] === 1)
+    for (const second of rows) {
+      if (first.mask & second.mask) continue
+      const used = first.mask | second.mask
+      for (const [a, b, c, d] of topRows) {
+        for (const [e, f, g, h] of second.permutations) {
+          const offset = e + h - f - g
+          if (offset & 1) continue
+          const il = 17 - offset / 2
+          const ji = a + e - d - g
+          const kl = d + h - a - f
+          for (let i = 2; i <= 16; i++) {
+            if (used & bits[i]) continue
+            const j = i + ji
+            if (j < 1 || j > 16 || ((used | bits[i]) & bits[j])) continue
+            const l = il - i
+            if (l < 1 || l > 16 || ((used | bits[i] | bits[j]) & bits[l])) continue
+            const k = l + kl
+            if (k < 1 || k > 16 || ((used | bits[i] | bits[j] | bits[l]) & bits[k])) continue
+            const m = 34 - a - e - i
+            const n = 34 - b - f - j
+            const o = 34 - c - g - k
+            const p = 34 - d - h - l
+            if (m < 1 || m > 16 || n < 1 || n > 16 || o < 1 || o > 16 || p < 1 || p > 16) continue
+            const remaining = 0xffff ^ (used | bits[i] | bits[j] | bits[k] | bits[l])
+            if ((bits[m] | bits[n] | bits[o] | bits[p]) !== remaining) continue
+            results.push([a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p])
+          }
+        }
+      }
+    }
+  }
+  return results
+}
+
 const setValues = (target, indices, values) => indices.forEach((index, i) => (target[index] = values[i]))
 
 module.exports = {
@@ -251,4 +297,5 @@ module.exports = {
   magic4x4Solver2,
   magic4x4Solver3,
   magic4x4Solver4,
+  magic4x4Solver5,
 }
