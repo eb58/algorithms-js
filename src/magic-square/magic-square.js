@@ -262,16 +262,16 @@ const magic4x4Solver2 = () => {
 const magic4x4Solver3 = () => {
   const numbers = range(16).map((i) => i + 1)
   const bits = range(17).map((value) => value ? 1 << (value - 1) : 0)
-  const pairs = numbers.reduce((pairs, a) => numbers.reduce((pairs, b) => (a !== b && pairs[a + b].push([a, b, bits[a] | bits[b]]), pairs), pairs), range(35).map(() => []))
-  const diagonals = comb(numbers, 4, (values) => sum(values) === 34)
-    .map((values) => {
-      const permutations = perm(values)
-      // Corners a+d+m+p sum to 34 in every 4x4 magic square, so second diagonals [d, g, j, m]
-      // are grouped by d+m and only the group 34-a-p is visited.
-      const byEndSum = range(35).map(() => [])
-      for (const diagonal of permutations) byEndSum[diagonal[0] + diagonal[3]].push(diagonal)
-      return { mask: values.reduce((mask, value) => mask | bits[value], 0), permutations, byEndSum }
-    })
+  // pairs[s]: all ordered pairs [a, b, mask] of distinct numbers with a + b = s
+  const pairs = range(35).map((s) => numbers.filter((a) => s - a >= 1 && s - a <= 16 && s - a !== a).map((a) => [a, s - a, bits[a] | bits[s - a]]))
+  const diagonals = comb(numbers, 4, (values) => sum(values) === 34).map((values) => {
+    const permutations = perm(values)
+    // Corners a+d+m+p sum to 34 in every 4x4 magic square, so second diagonals [d, g, j, m]
+    // are grouped by d+m and only the group 34-a-p is visited.
+    const byEndSum = range(35).map(() => [])
+    for (const diagonal of permutations) byEndSum[diagonal[0] + diagonal[3]].push(diagonal)
+    return { mask: values.reduce((mask, value) => mask | bits[value], 0), permutations, byEndSum }
+  })
   const results = []
   const pairsWithOne = pairs.map((entries) => entries.filter((pair) => pair[0] === 1))
 
