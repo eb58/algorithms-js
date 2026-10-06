@@ -5,6 +5,9 @@ const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = matri
 
 const solve = require('../src/experimental/exact-cover');
 
+// solve returns solutions in search order; compare them as sorted row lists in sorted order.
+const normalized = (solutions) => solutions.map((rows) => [...rows].sort((a, b) => a - b)).sort((a, b) => String(a).localeCompare(String(b), undefined, { numeric: true }));
+
 test('exactCover 1', () => {
   const constraints = [
     [1, 0, 0, 1],
@@ -14,7 +17,7 @@ test('exactCover 1', () => {
     [0, 0, 1, 1],
     [0, 0, 1, 0],
   ];
-  expect(solve(constraints)).toEqual([
+  expect(normalized(solve(constraints))).toEqual([
     [0, 2],
     [0, 3, 5],
     [1, 3, 4],
@@ -30,7 +33,7 @@ test('exactCover 2', () => {
     [0, 0, 1, 0, 1, 1, 0],
     [0, 0, 0, 1, 1, 0, 1],
   ];
-  expect(solve(constraints)).toEqual([[1, 3, 4]]);
+  expect(normalized(solve(constraints))).toEqual([[1, 3, 4]]);
 });
 
 test('exactCover 3', () => {
@@ -62,8 +65,8 @@ test('exactCover 3', () => {
     return ret;
   };
 
-  expect(solve(createConstraintsForPermutations(2))).toEqual([[0, 3], [1, 2]]);
-  expect(solve(createConstraintsForPermutations(3))).toEqual([
+  expect(normalized(solve(createConstraintsForPermutations(2)))).toEqual([[0, 3], [1, 2]]);
+  expect(normalized(solve(createConstraintsForPermutations(3)))).toEqual([
     [0, 4, 8],
     [0, 5, 7],
     [1, 3, 8],

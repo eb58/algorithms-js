@@ -3,14 +3,8 @@ const { rangeFilled } = require('../ol').ol;
 // Does the row put a 1 into a column that is already covered?
 const conflicts = (cover, values) => values.some((v, i) => v === 1 && cover[i] === 1);
 
-// Lexicographic order of two solutions (arrays of row numbers).
-const compareSolutions = (a, b) => {
-  for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i];
-  return a.length - b.length;
-};
-
-// Algorithm X on a 0/1 matrix. Returns the solutions as sorted lists of row numbers, in
-// lexicographic order (the first maxsolutions found, if there are more).
+// Algorithm X on a 0/1 matrix. Returns the solutions as lists of row numbers, both in the
+// order the search finds them (the first maxsolutions found, if there are more).
 const solve = (constraints, maxsolutions = 1000000) => {
   // an empty matrix has nothing to cover: the empty selection is the only solution
   const width = constraints.length > 0 ? constraints[0].length : 0;
@@ -49,7 +43,7 @@ const solve = (constraints, maxsolutions = 1000000) => {
   };
 
   solv(rangeFilled(width), constraints, []);
-  return solutions.map((solution) => [...solution].sort((a, b) => a - b)).sort(compareSolutions);
+  return solutions;
 };
 
 if (typeof module !== 'undefined') module.exports = solve;
