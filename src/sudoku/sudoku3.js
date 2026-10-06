@@ -1,4 +1,4 @@
-const { RANGE81, row, col, block } = require('./sudokuUtils');
+const { RANGE81, row, col, block } = require('./sudokuUtils')
 
 const COORDROW = RANGE81.map(row)
 const COORDCOL = RANGE81.map(col)
@@ -33,8 +33,7 @@ const unsetVal = (model, idx) => {
 // number of set bits of a candidate mask (values 1..9 are bits 1..9)
 const POPCOUNT = Uint8Array.from({ length: 1024 }, (_, mask) => mask.toString(2).replace(/0/g, '').length)
 
-const getCandidates = (model, idx) =>
-  0x3fe & ~(model.usedInRow[COORDROW[idx]] | model.usedInCol[COORDCOL[idx]] | model.usedInBlk[COORDBLK[idx]])
+const getCandidates = (model, idx) => 0x3fe & ~(model.usedInRow[COORDROW[idx]] | model.usedInCol[COORDCOL[idx]] | model.usedInBlk[COORDBLK[idx]])
 
 // The empty cell with the fewest candidates (a cell with one candidate at once), null if all are filled.
 // Leaves the candidate masks of all empty cells in model.cands for findHS.
@@ -54,13 +53,15 @@ const getBestCell = (model) => {
   return bestIdx >= 0 ? { idx: bestIdx, cands: { cnt: bestCnt, vals: model.cands[bestIdx] } } : null
 }
 
-const findHS = (m) => { // find a hidden single: a value that fits only one cell of a block
-  for (let v = 1; v <= 9; v++) { // for all values 
+// Finds a hidden single: a value that fits only one empty cell of a block.
+const findHS = (m) => {
+  for (let v = 1; v <= 9; v++) {
     const val = 1 << v
-    for (let b = 0; b < 9; b++) {  // for all blocks 
-      if( m.usedInBlk[b] & val ) continue //  value already used in block
-      let cnt = 0, idx = -1
-      for (const cell of CELLSINBLK[b]) { // for every empty cell in block
+    for (let b = 0; b < 9; b++) {
+      if (m.usedInBlk[b] & val) continue // value already used in block
+      let cnt = 0
+      let idx = -1
+      for (const cell of CELLSINBLK[b]) {
         if (m.grid[cell] === 0 && m.cands[cell] & val) {
           if (++cnt > 1) break
           idx = cell
@@ -71,7 +72,7 @@ const findHS = (m) => { // find a hidden single: a value that fits only one cell
   }
 }
 
-// Returns the solved grid, or null if there is no solution. The input grid is not changed.
+// grid: 81 numbers 0..9, 0 = empty cell. Returns a new, solved grid, or null if there is no solution.
 const solve3 = (grid) => {
   // true once every cell is filled, false at a dead end (the model is restored then)
   const solve = (m) => {
@@ -79,22 +80,21 @@ const solve3 = (grid) => {
     if (!bestCell) return true
     if (bestCell.cands.cnt === 0) return false
     const cell = bestCell.cands.cnt === 1 ? bestCell : findHS(m) || bestCell
-    for (let i = 1; i <= 9; i++) {
+    for (let i = 1; i <= 9; i++)
       if (cell.cands.vals & (1 << i)) {
         setVal(m, cell.idx, i)
         if (solve(m)) return true
         unsetVal(m, cell.idx)
       }
-    }
     return false
   }
   const model = {
-    emptyCells: RANGE81.filter(x => grid[x] === 0),
+    emptyCells: RANGE81.filter((x) => grid[x] === 0),
     grid: [...grid],
     cands: new Int16Array(81),
     usedInRow: Array(9).fill(0),
     usedInCol: Array(9).fill(0),
-    usedInBlk: Array(9).fill(0),
+    usedInBlk: Array(9).fill(0)
   }
   for (let idx = 0; idx < 81; idx++) {
     const val = grid[idx]

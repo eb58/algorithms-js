@@ -14,12 +14,13 @@ const BOX = Int8Array.from(RANGE81, block)
 const UNITS = Int8Array.from([
   ...[...RANGE81].sort((a, b) => row(a) - row(b) || a - b),
   ...[...RANGE81].sort((a, b) => col(a) - col(b) || a - b),
-  ...[...RANGE81].sort((a, b) => block(a) - block(b) || a - b),
+  ...[...RANGE81].sort((a, b) => block(a) - block(b) || a - b)
 ])
 const POPCOUNT = Uint8Array.from({ length: 512 }, (_, m) => m.toString(2).replace(/0/g, '').length)
 const digitOf = (bit) => 32 - Math.clz32(bit) // single bit -> digit 1..9
 
-// search state, set up by solve4
+// search state, set up by solve4 (module-level for speed; solve4 saves and restores it,
+// so a nested call, e.g. from a future callback, cannot corrupt a running search)
 let grid, rowUsed, colUsed, boxUsed, trail, trailLength
 
 const candidates = (idx) => ALL & ~(rowUsed[ROW[idx]] | colUsed[COL[idx]] | boxUsed[BOX[idx]])
@@ -137,21 +138,26 @@ const search = () => {
   return false
 }
 
-// Returns the solved grid, or null if there is no solution. The input grid is not changed.
+// grid: 81 numbers 0..9, 0 = empty cell. Returns a new, solved grid, or null if there is no solution.
 const solve4 = (input) => {
-  grid = new Int8Array(81)
-  rowUsed = new Int16Array(9)
-  colUsed = new Int16Array(9)
-  boxUsed = new Int16Array(9)
-  trail = new Int8Array(81)
-  trailLength = 0
-  for (let idx = 0; idx < 81; idx++) {
-    const digit = input[idx]
-    if (!digit) continue
-    if (!(candidates(idx) & (1 << (digit - 1)))) return null // the same given twice in a unit
-    place(idx, digit)
+  const outer = [grid, rowUsed, colUsed, boxUsed, trail, trailLength, pairUnit, pairBit]
+  try {
+    grid = new Int8Array(81)
+    rowUsed = new Int16Array(9)
+    colUsed = new Int16Array(9)
+    boxUsed = new Int16Array(9)
+    trail = new Int8Array(81)
+    trailLength = 0
+    for (let idx = 0; idx < 81; idx++) {
+      const digit = input[idx]
+      if (!digit) continue
+      if (!(candidates(idx) & (1 << (digit - 1)))) return null // the same given twice in a unit
+      place(idx, digit)
+    }
+    return search() ? Array.from(grid) : null
+  } finally {
+    ;[grid, rowUsed, colUsed, boxUsed, trail, trailLength, pairUnit, pairBit] = outer
   }
-  return search() ? Array.from(grid) : null
 }
 
 module.exports = solve4
