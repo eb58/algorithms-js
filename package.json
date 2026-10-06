@@ -28,10 +28,6 @@
       "prepare": "git config core.hooksPath .githooks"
    },
    "dependencies": {
-      "@algorithm.ts/dlx": "^4.0.4",
-      "dancing-links": "^2.1.1",
-      "dlx": "^0.2.1",
-      "dlxlib": "^1.0.3",
       "mathjs": "^15.2.0"
    },
    "devDependencies": {

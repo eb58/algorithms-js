@@ -1,6 +1,7 @@
-const dlxlib = require('dlxlib'); 
-const dancingLinks = require('dancing-links')   
-const dlx = require('dlx');    
+const dlx_solve = require('../src/dlx')
+const { createDlx } = require('../src/dlx')
+
+const sorted = (solutions) => solutions.map((x) => [...x].sort()).sort()
 
 test('dlx problem1', () => {
     const problem = [
@@ -11,35 +12,11 @@ test('dlx problem1', () => {
         [0, 1, 0, 0, 0, 0, 1],
         [0, 0, 0, 1, 1, 0, 1],
         [0, 0, 0, 1, 1, 0, 1],
-    ];
-    expect(dlxlib.solve(problem).map(x => x.sort())).toEqual([[0, 3, 4]])
-    expect(dlx.solve(problem).map(x => x.sort())).toEqual([[0, 3, 4]])
+    ]
+    expect(sorted(dlx_solve(problem))).toEqual([[0, 3, 4]])
 })
 
-test('dlx problem2', () => {
-    const  problem = [
-        [1, 0, 0, 0],
-        [0, 1, 1, 0],
-        [1, 0, 0, 1],
-        [0, 0, 1, 1],
-        [0, 1, 0, 0],
-        [0, 0, 1, 0]
-    ];
-
-    // console.log("AAA", dlx_solve(problem,3).map(x => x.sort()))
-    // console.log("BBB", dlxlib.solve(problem).map(x => x.sort()))
-    // console.log("CCC", dlx.solve(problem).map(x => x.sort()))
-    // console.log("DDD", dancingLinks.findAll(problem.map(row => ({ row }))).map(x => x.map(o => o.index)).map(x => x.sort()))
-    
-    // expect(dlx_solve(problem, 3).map(x => x.sort())).toEqual([[0, 3, 4], [1, 2], [2, 4, 5]])
-    expect(dlxlib.solve(problem).map(x => x.sort())).toEqual([[0, 3, 4], [1, 2], [2, 4, 5]])
-    expect(dlx.solve(problem).map(x => x.sort())).toEqual([[0, 3, 4], [1, 2], [2, 4, 5]])
-})
-
-
-
-test('dlx.js returns all solutions, also below maxsolutions', () => {
-    const dlx_solve = require('../src/dlx')
+test('dlx problem2: all solutions, also below maxsolutions', () => {
     const problem = [
         [1, 0, 0, 0],
         [0, 1, 1, 0],
@@ -48,9 +25,20 @@ test('dlx.js returns all solutions, also below maxsolutions', () => {
         [0, 1, 0, 0],
         [0, 0, 1, 0]
     ]
-    const sorted = (solutions) => solutions.map((x) => [...x].sort()).sort()
     expect(sorted(dlx_solve(problem))).toEqual([[0, 3, 4], [1, 2], [2, 4, 5]])
     expect(sorted(dlx_solve(problem, 10))).toEqual([[0, 3, 4], [1, 2], [2, 4, 5]])
     expect(dlx_solve(problem, 2)).toHaveLength(2)
     expect(dlx_solve([[1, 0], [1, 0]])).toEqual([])
+})
+
+test('dlx.js createDlx: sparse rows, count and fixed rows', () => {
+    // problem2 as column indices of the 1s
+    const dlx = createDlx(4, [[0], [1, 2], [0, 3], [2, 3], [1], [2]])
+
+    expect(sorted(dlx.solve())).toEqual([[0, 3, 4], [1, 2], [2, 4, 5]])
+    expect(dlx.count()).toBe(3)
+    // fixing row 2 leaves the solutions that contain it; the structure is restored afterwards
+    expect(sorted(dlx.solve({ fixedRows: [2] }))).toEqual([[1, 2], [2, 4, 5]])
+    expect(dlx.count({ fixedRows: [2, 4] })).toBe(1)
+    expect(dlx.count()).toBe(3)
 })

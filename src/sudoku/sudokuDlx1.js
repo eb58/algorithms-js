@@ -1,5 +1,6 @@
 const { solveSudokuDlx } = require('./sudokuUtils');
-const dlx_solve = require('../dlx');
-const solveSudoku = (grid) => solveSudokuDlx(grid, (matrix) => dlx_solve(matrix,1));
+const { createDlx } = require('../dlx');
+
+const solveSudoku = (grid) => solveSudokuDlx(grid, (rows) => createDlx(324, rows).solve({ maxsolutions: 1 }));
 
 module.exports = solveSudoku;

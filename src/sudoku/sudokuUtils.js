@@ -18,31 +18,20 @@ const CONNECTIONSETS = (() => {
   return RANGE81.map(connectionSet);
 })();
 
+// Exact cover with 324 columns: cell filled, row has n, column has n, box has n.
+// solver gets the rows as column indices (4 per candidate) and returns solutions as row indices.
 const solveSudokuDlx = (grid, solver) => {
   const constraints = [];
   const rinfo = [];
   for (let r = 0; r < 9; r++) {
     for (let c = 0; c < 9; c++) {
       const idx = r * 9 + c;
-      const n = grid[idx] - 1;
-      if (n >= 0) {
-        const constraint = range(324).map(() => 0);
-        constraint[r * 9 + c] = 1;
-        constraint[9 * 9 + r * 9 + n] = 1;
-        constraint[9 * 9 * 2 + c * 9 + n] = 1;
-        constraint[9 * 9 * 3 + (Math.floor(r / 3) * 3 + Math.floor(c / 3)) * 9 + n] = 1;
-        constraints.push(constraint);
+      const given = grid[idx] - 1;
+      const box = Math.floor(r / 3) * 3 + Math.floor(c / 3);
+      for (let n = 0; n < 9; n++) {
+        if (given >= 0 && n !== given) continue;
+        constraints.push([idx, 81 + r * 9 + n, 162 + c * 9 + n, 243 + box * 9 + n]);
         rinfo.push({ idx, n });
-      } else {
-        for (let n = 0; n < 9; n++) {
-          const constraint = range(324).map(() => 0);
-          constraint[r * 9 + c] = 1;
-          constraint[9 * 9 + r * 9 + n] = 1;
-          constraint[9 * 9 * 2 + c * 9 + n] = 1;
-          constraint[9 * 9 * 3 + (Math.floor(r / 3) * 3 + Math.floor(c / 3)) * 9 + n] = 1;
-          constraints.push(constraint);
-          rinfo.push({ idx, n });
-        }
       }
     }
   }
@@ -50,9 +39,7 @@ const solveSudokuDlx = (grid, solver) => {
 
   if (solutions.length <= 0) throw Error('No solution found');
 
-  const solution = solutions[0].map((x) => x.index !== undefined ? x.index : x);
-  // console.log( solution )
-  return solution.map((n) => rinfo[n]).reduce((res, ri) => ((res[ri.idx] = ri.n + 1), res), []);
+  return solutions[0].map((n) => rinfo[n]).reduce((res, ri) => ((res[ri.idx] = ri.n + 1), res), []);
 };
 
 module.exports = {
