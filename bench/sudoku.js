@@ -3,14 +3,14 @@ const { EASY, HARD, toGrid } = require('../src/sudoku/sudokuPuzzles')
 
 // Usage: node bench/sudoku.js [--solver <name>] [--slow]
 //   --solver  run only one solver (sudoku1, sudoku2, sudoku3, sudokuDlx1)
-//   --slow    let sudoku1 and sudoku2 also solve the hard puzzles (can take minutes)
+//   --slow    let sudoku1 also solve the hard puzzles (can take minutes)
 const args = process.argv.slice(2)
 const only = args.includes('--solver') ? args[args.indexOf('--solver') + 1] : null
 const slow = args.includes('--slow')
 
 const solvers = [
   { name: 'sudoku1', slow: true },
-  { name: 'sudoku2', slow: true },
+  { name: 'sudoku2' },
   { name: 'sudoku3' },
   { name: 'sudokuDlx1' },
 ].filter(({ name }) => !only || name === only)

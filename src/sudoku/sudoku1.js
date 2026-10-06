@@ -1,10 +1,13 @@
-const { feedX, candidates } = require('./sudokuUtils');
+const { feedX } = require('../ol').ol;
+const { candidates, hasConflictingGivens } = require('./sudokuUtils');
 const idxOfFirstEmptyCell = (grid) => grid.findIndex(x => x === 0)
 
-const solve1 = (grid) => feedX( // ~55000 ms for hard ones
+const search = (grid) => feedX(
     idxOfFirstEmptyCell(grid),
-    (idx) => idx < 0 ? grid : candidates(grid, idx).reduce((res, val) => res || solve1(grid.with(idx, val)), null)
+    (idx) => idx < 0 ? grid : candidates(grid, idx).reduce((res, val) => res || search(grid.with(idx, val)), null)
 )
 
+// Returns the solved grid, or null if there is no solution. Very slow on hard puzzles.
+const solve1 = (grid) => hasConflictingGivens(grid) ? null : search(grid)
 
 module.exports = solve1

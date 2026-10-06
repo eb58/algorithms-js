@@ -2,6 +2,7 @@ const { createDlx } = require('../dlx');
 
 // Exact cover with 324 columns: cell filled, row has n, column has n, box has n.
 // Every candidate (cell, n) is one row with its 4 column indices.
+// Returns the solved grid, or null if there is no solution.
 const solveSudoku = (grid) => {
   const constraints = [];
   const rinfo = [];
@@ -19,7 +20,7 @@ const solveSudoku = (grid) => {
   }
   const solutions = createDlx(324, constraints).solve({ maxsolutions: 1 });
 
-  if (solutions.length <= 0) throw Error('No solution found');
+  if (solutions.length === 0) return null;
 
   return solutions[0].map((n) => rinfo[n]).reduce((res, ri) => ((res[ri.idx] = ri.n + 1), res), []);
 };

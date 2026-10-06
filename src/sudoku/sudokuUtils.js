@@ -1,13 +1,11 @@
 const range = (n) => [...Array(n).keys()];
-const feedX = (x, f) => f(x);
-
-const gridString = (grid) => grid.reduce((acc, x, idx) => acc + (x === 0 ? ' ' : x) + ((idx + 1) % 9 === 0 ? '\n' : ' '), '');
 
 const RANGE81 = range(9 * 9);
 const RANGE1_9 = range(9).map((x) => x + 1);
 
 const col = (x) => x % 9;
 const row = (x) => Math.floor(x / 9);
+// blocks are numbered column-wise: 0 1 2 down the left third, 3 4 5 in the middle, 6 7 8 on the right
 const block = (x) => Math.floor(col(x) / 3) * 3 + Math.floor(row(x) / 3);
 const isCandidate = (grid, idx, val) => CONNECTIONSETS[idx].every((n) => grid[n] !== val);
 const candidates = (grid, idx) => (grid[idx] == 0 ? RANGE1_9.filter((val) => isCandidate(grid, idx, val)) : undefined);
@@ -18,12 +16,14 @@ const CONNECTIONSETS = (() => {
   return RANGE81.map(connectionSet);
 })();
 
+// The same given number twice in a row, column or block: the grid has no solution.
+const hasConflictingGivens = (grid) => grid.some((val, idx) => val !== 0 && CONNECTIONSETS[idx].some((n) => n !== idx && grid[n] === val));
+
 module.exports = {
+  hasConflictingGivens,
   RANGE1_9,
   RANGE81,
   CONNECTIONSETS,
-  gridString,
-  feedX,
   row,
   col,
   block,
