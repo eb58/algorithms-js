@@ -67,12 +67,24 @@ test('magic-square-4x4 2', () => {
 });
 
 test('magic-square-4x4 3', () => {
-  const solver = ms.magic4x4Solver3
-  const squares = solver()
+  const squares = ms.magic4x4Solver3()
 
   expect(squares).toHaveLength(880)
   expectUniqueSquares(squares)
   squares.forEach((square) => expectMagicSquare(square, 4))
+  expect(squares.map((square) => square.join(',')).sort()).toEqual(
+    ms.magic4x4Solver2().map((square) => square.join(',')).sort(),
+  )
+});
+
+test('magic-square-4x4 4', () => {
+  const squares = ms.magic4x4Solver4()
+  expect(squares).toHaveLength(880)
+  expectUniqueSquares(squares)
+  squares.forEach((square) => expectMagicSquare(square, 4))
+  expect(squares.map((square) => square.join(',')).sort()).toEqual(
+    ms.magic4x4Solver3().map((square) => square.join(',')).sort(),
+  )
 });
 
 test('magic-square-4x4 5', () => {
@@ -82,16 +94,5 @@ test('magic-square-4x4 5', () => {
   squares.forEach((square) => expectMagicSquare(square, 4))
   expect(squares.map((square) => square.join(',')).sort()).toEqual(
     ms.magic4x4Solver4().map((square) => square.join(',')).sort(),
-  )
-});
-
-test('magic-square-4x4 4', () => {
-  const squares = ms.magic4x4Solver4()
-
-  expect(squares).toHaveLength(880)
-  expectUniqueSquares(squares)
-  squares.forEach((square) => expectMagicSquare(square, 4))
-  expect(squares.map((square) => square.join(',')).sort()).toEqual(
-    ms.magic4x4Solver3().map((square) => square.join(',')).sort(),
   )
 });
