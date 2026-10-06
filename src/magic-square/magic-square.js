@@ -180,7 +180,7 @@ const magic4x4Solver2 = () => {
   // The four corners of a 4x4 magic square sum to MN, so s0+s15 must equal MN-s3-s12.
   // Group the first-diagonal orderings by s0+s15 to look the matching ones up directly.
   const byEndSum = (diagonals) => {
-    const groups = Array.from({ length: 2 * N * N }, () => [])
+    const groups = range(2 * N * N).map(() => [])
     for (const diagonal of diagonals) groups[diagonal[0] + diagonal[N - 1]].push(diagonal)
     return groups
   }
@@ -260,19 +260,15 @@ const magic4x4Solver2 = () => {
 }
 
 const magic4x4Solver3 = () => {
-  const bits = Array.from({ length: 17 }, (_, value) => value ? 1 << (value - 1) : 0)
-  const pairs = Array.from({ length: 35 }, () => [])
-  for (let a = 1; a <= 16; a++) {
-    for (let b = 1; b <= 16; b++) {
-      if (a !== b) pairs[a + b].push([a, b, bits[a] | bits[b]])
-    }
-  }
-  const diagonals = comb(range(16).map((i) => i + 1), 4, (values) => sum(values) === 34)
+  const numbers = range(16).map((i) => i + 1)
+  const bits = range(17).map((value) => value ? 1 << (value - 1) : 0)
+  const pairs = numbers.reduce((pairs, a) => numbers.reduce((pairs, b) => (a !== b && pairs[a + b].push([a, b, bits[a] | bits[b]]), pairs), pairs), range(35).map(() => []))
+  const diagonals = comb(numbers, 4, (values) => sum(values) === 34)
     .map((values) => {
       const permutations = perm(values)
       // Corners a+d+m+p sum to 34 in every 4x4 magic square, so second diagonals [d, g, j, m]
       // are grouped by d+m and only the group 34-a-p is visited.
-      const byEndSum = Array.from({ length: 35 }, () => [])
+      const byEndSum = range(35).map(() => [])
       for (const diagonal of permutations) byEndSum[diagonal[0] + diagonal[3]].push(diagonal)
       return { mask: values.reduce((mask, value) => mask | bits[value], 0), permutations, byEndSum }
     })
@@ -336,7 +332,7 @@ const magic4x4Solver3 = () => {
 }
 
 const magic4x4Solver4 = () => {
-  const bits = Array.from({ length: 17 }, (_, value) => value ? 1 << (value - 1) : 0)
+  const bits = range(17).map((value) => value ? 1 << (value - 1) : 0)
   const rows = comb(range(16).map((i) => i + 1), 4, (values) => sum(values) === 34)
     .map((values) => ({ mask: values.reduce((mask, value) => mask | bits[value], 0), permutations: perm(values) }))
   const results = []
