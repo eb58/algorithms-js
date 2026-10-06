@@ -37,3 +37,20 @@ test('dlx problem2', () => {
 })
 
 
+
+test('dlx.js returns all solutions, also below maxsolutions', () => {
+    const dlx_solve = require('../src/dlx')
+    const problem = [
+        [1, 0, 0, 0],
+        [0, 1, 1, 0],
+        [1, 0, 0, 1],
+        [0, 0, 1, 1],
+        [0, 1, 0, 0],
+        [0, 0, 1, 0]
+    ]
+    const sorted = (solutions) => solutions.map((x) => [...x].sort()).sort()
+    expect(sorted(dlx_solve(problem))).toEqual([[0, 3, 4], [1, 2], [2, 4, 5]])
+    expect(sorted(dlx_solve(problem, 10))).toEqual([[0, 3, 4], [1, 2], [2, 4, 5]])
+    expect(dlx_solve(problem, 2)).toHaveLength(2)
+    expect(dlx_solve([[1, 0], [1, 0]])).toEqual([])
+})

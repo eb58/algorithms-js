@@ -38,7 +38,7 @@ const colWithMinSize = (head) => {
 
 const dlx_search = (head, solution, k, solutions, maxsolutions) => {
   if (head.right === head) {
-    solutions.push([...solution])
+    solutions.push(solution.slice(0, k)) // entries beyond k are left over from deeper branches
     return solutions.length >= maxsolutions ? solutions : null
   }
   const c = colWithMinSize(head)
@@ -88,6 +88,11 @@ const genSparseMatrix = (matrix) => {
   return head
 }
 
-const dlx_solve = (matrix, maxsolutions) => dlx_search(genSparseMatrix(matrix), [], 0, [], maxsolutions)
+// Returns all solutions (row index lists), at most maxsolutions of them.
+const dlx_solve = (matrix, maxsolutions = Infinity) => {
+  const solutions = []
+  dlx_search(genSparseMatrix(matrix), [], 0, solutions, maxsolutions)
+  return solutions
+}
 
 if (typeof module !== 'undefined') module.exports = dlx_solve
