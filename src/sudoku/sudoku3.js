@@ -98,7 +98,4 @@ const solve3 = (grid) => { // ~180 ms for hard ones
   return solve(model)
 }
 
-// const conv2Arr = s => s.split('').map(x => x === '.' ? 0 : Number(x));
-// console.log(solve3(conv2Arr('...7..62.4...9..5...9..8.7..9..8.74.....6.....25.7..3..4.6..2...6..5...4.13..9...')))
-
 module.exports = solve3
