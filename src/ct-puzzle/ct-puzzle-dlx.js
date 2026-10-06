@@ -1,3 +1,5 @@
+const { createDlx } = require('../dlx')
+
 const SIZE = [3, 4, 5]
 const CELL_COUNT = SIZE.reduce((product, value) => product * value, 1)
 
@@ -204,110 +206,29 @@ const createStartPairs = () => {
     })
 }
 
+// One exact-cover row per placement: its cells plus one column for its piece. The start pair
+// (cross and T12) is selected in advance, the shared dlx.js counts the rest.
 const createSolver = () => {
   const { perPiece } = createPlacements({ canonicalT12: false })
   const starts = createStartPairs()
-  const columnCount = CELL_COUNT + PIECES.length
-  const left = Array.from({ length: columnCount + 1 }, (_, index) => index - 1)
-  const right = Array.from({ length: columnCount + 1 }, (_, index) => index + 1)
-  const up = Array.from({ length: columnCount + 1 }, (_, index) => index)
-  const down = [...up]
-  const column = [...up]
-  const size = Array(columnCount + 1).fill(0)
+  const rows = []
   const crossRows = new Map()
   const t12Rows = new Map()
-  left[0] = columnCount
-  right[columnCount] = 0
-
   perPiece.forEach((placements, piece) =>
     placements.forEach(({ cells }) => {
-      const row = [...cells, CELL_COUNT + piece].map((columnIndex) => {
-        const header = columnIndex + 1
-        const node = column.length
-        column.push(header)
-        up[node] = up[header]
-        down[node] = header
-        down[up[header]] = node
-        up[header] = node
-        size[header]++
-        return node
-      })
-      if (piece === 10) crossRows.set(placementKey(cells), row[0])
-      if (piece === 11) t12Rows.set(placementKey(cells), row[0])
-      row.forEach((node, index) => {
-        left[node] = row[(index + row.length - 1) % row.length]
-        right[node] = row[(index + 1) % row.length]
-      })
+      if (piece === 10) crossRows.set(placementKey(cells), rows.length)
+      if (piece === 11) t12Rows.set(placementKey(cells), rows.length)
+      rows.push([...cells, CELL_COUNT + piece])
     })
   )
-
-  const L = Int32Array.from(left)
-  const R = Int32Array.from(right)
-  const U = Int32Array.from(up)
-  const D = Int32Array.from(down)
-  const C = Int32Array.from(column)
-  const S = Int32Array.from(size)
-
-  const cover = (header) => {
-    R[L[header]] = R[header]
-    L[R[header]] = L[header]
-    for (let row = D[header]; row !== header; row = D[row])
-      for (let node = R[row]; node !== row; node = R[node]) {
-        D[U[node]] = D[node]
-        U[D[node]] = U[node]
-        S[C[node]]--
-      }
-  }
-
-  const uncover = (header) => {
-    for (let row = U[header]; row !== header; row = U[row])
-      for (let node = L[row]; node !== row; node = L[node]) {
-        S[C[node]]++
-        D[U[node]] = node
-        U[D[node]] = node
-      }
-    R[L[header]] = header
-    L[R[header]] = header
-  }
-
-  const select = (row) => {
-    cover(C[row])
-    for (let node = R[row]; node !== row; node = R[node]) cover(C[node])
-  }
-
-  const unselect = (row) => {
-    for (let node = L[row]; node !== row; node = L[node]) uncover(C[node])
-    uncover(C[row])
-  }
-
-  const search = () => {
-    if (R[0] === 0) return 1
-    let chosen = R[0]
-    for (let header = R[chosen]; header !== 0; header = R[header]) if (S[header] < S[chosen]) chosen = header
-    if (!S[chosen]) return 0
-
-    cover(chosen)
-    let count = 0
-    for (let row = D[chosen]; row !== chosen; row = D[row]) {
-      for (let node = R[row]; node !== row; node = R[node]) cover(C[node])
-      count += search()
-      for (let node = L[row]; node !== row; node = L[node]) uncover(C[node])
-    }
-    uncover(chosen)
-    return count
-  }
+  const dlx = createDlx(CELL_COUNT + PIECES.length, rows)
 
   return (index) => {
     const start = starts[index]
     if (!start) throw new RangeError(`Unknown start placement: ${index}`)
     const cross = crossRows.get(placementKey(start.cross.cells))
     const t12 = t12Rows.get(placementKey(start.t12.cells))
-    select(cross)
-    select(t12)
-    const count = search()
-    unselect(t12)
-    unselect(cross)
-    return count
+    return dlx.count({ fixedRows: [cross, t12] })
   }
 }
 

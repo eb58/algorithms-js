@@ -1,98 +1,177 @@
-const range = (n) => [...Array(n).keys()]
+// Dancing links: Knuth's Algorithm X for exact cover, on flat typed arrays.
+//
+// Node 0 is the root, nodes 1..columnCount are the column headers, then the row nodes follow.
+//   L, R  left/right links (header list, and the nodes of a row in a ring)
+//   U, D  up/down links (the nodes of a column in a ring with its header)
+//   C     column header of a node, ROW the row index of a node, S the size of a column
+//
+// The operations are methods rather than closures created per instance: V8 optimizes them
+// once and keeps that code for every instance (fresh closures would be deoptimized again).
+class Dlx {
+  /**
+   * @param {number} columnCount
+   * @param {number[][]} rows sparse rows: the column indices (0-based) of the 1s in each row
+   */
+  constructor(columnCount, rows) {
+    const nodeCount = columnCount + 1 + rows.reduce((total, row) => total + row.length, 0)
+    const L = (this.L = new Int32Array(nodeCount))
+    const R = (this.R = new Int32Array(nodeCount))
+    const U = (this.U = new Int32Array(nodeCount))
+    const D = (this.D = new Int32Array(nodeCount))
+    const C = (this.C = new Int32Array(nodeCount))
+    const ROW = (this.ROW = new Int32Array(nodeCount))
+    const S = (this.S = new Int32Array(columnCount + 1))
+    this.firstNode = new Int32Array(rows.length) // first node of every row, -1 for an empty row
 
-const dlx_cover = (c) => {
-  c.right.left = c.left
-  c.left.right = c.right
-  for (let i = c.down; i !== c; i = i.down)
-    for (let j = i.right; j !== i; j = j.right) {
-      j.down.up = j.up
-      j.up.down = j.down
-      j.column.size--
+    for (let c = 0; c <= columnCount; c++) {
+      L[c] = c === 0 ? columnCount : c - 1
+      R[c] = c === columnCount ? 0 : c + 1
+      U[c] = D[c] = C[c] = c
     }
-}
-
-const dlx_uncover = (c) => {
-  for (let i = c.up; i !== c; i = i.up)
-    for (let j = i.left; j !== i; j = j.left) {
-      j.column.size++
-      j.down.up = j
-      j.up.down = j
-    }
-  c.right.left = c
-  c.left.right = c
-}
-
-const colWithMinSize = (head) => {
-  let minSize = 99999
-  let c
-  for (let j = head.right; j !== head; j = j.right) {
-    if (j.size < minSize) {
-      if (j.size === 0) return null
-      if (j.size === 1) return j
-      minSize = j.size
-      c = j
-    }
-  }
-  return c
-}
-
-const dlx_search = (head, solution, k, solutions, maxsolutions) => {
-  if (head.right === head) {
-    solutions.push(solution.slice(0, k)) // entries beyond k are left over from deeper branches
-    return solutions.length >= maxsolutions ? solutions : null
-  }
-  const c = colWithMinSize(head)
-  if (!c) return
-  dlx_cover(c)
-  for (let r = c.down; r !== c; r = r.down) {
-    solution[k] = r.row
-    for (let j = r.right; j !== r; j = j.right) dlx_cover(j.column)
-    const s = dlx_search(head, solution, k + 1, solutions, maxsolutions)
-    if (s != null) return s
-    for (let j = r.left; j !== r; j = j.left) dlx_uncover(j.column)
-  }
-  dlx_uncover(c)
-}
-
-const genSparseMatrix = (matrix) => {
-  const RNGCOLS = range(matrix[0].length)
-  const columns = RNGCOLS.map(() => ({ size: 0 }))
-  columns.forEach((n, i) => (((n.up = n.down = n), (n.left = columns[i - 1])), (n.right = columns[i + 1])))
-
-  for (let row = 0; row < matrix.length; row++) {
-    let last = null
-    for (let col = 0; col < matrix[row].length; col++) {
-      if (matrix[row][col]) {
-        const node = { row, column: columns[col], up: columns[col].up, down: columns[col] }
-        if (last) {
-          node.left = last
-          node.right = last.right
-          last.right.left = node
-          last.right = node
+    let node = columnCount
+    rows.forEach((columns, row) => {
+      let first = -1
+      for (const column of columns) {
+        const header = column + 1
+        node++
+        C[node] = header
+        ROW[node] = row
+        U[node] = U[header]
+        D[node] = header
+        D[U[header]] = node
+        U[header] = node
+        S[header]++
+        if (first < 0) {
+          L[node] = R[node] = first = node
         } else {
-          node.left = node
-          node.right = node
+          L[node] = L[first]
+          R[node] = first
+          R[L[first]] = node
+          L[first] = node
         }
-        columns[col].up.down = node
-        columns[col].up = node
-        columns[col].size++
-        last = node
       }
+      this.firstNode[row] = first
+    })
+  }
+
+  cover(header) {
+    const { L, R, U, D, C, S } = this
+    R[L[header]] = R[header]
+    L[R[header]] = L[header]
+    for (let row = D[header]; row !== header; row = D[row])
+      for (let node = R[row]; node !== row; node = R[node]) {
+        D[U[node]] = D[node]
+        U[D[node]] = U[node]
+        S[C[node]]--
+      }
+  }
+
+  uncover(header) {
+    const { L, R, U, D, C, S } = this
+    for (let row = U[header]; row !== header; row = U[row])
+      for (let node = L[row]; node !== row; node = L[node]) {
+        S[C[node]]++
+        D[U[node]] = node
+        U[D[node]] = node
+      }
+    R[L[header]] = header
+    L[R[header]] = header
+  }
+
+  // Column with the fewest rows, 0 if all columns are covered, -1 if one of them has no row left.
+  chooseColumn() {
+    const { R, S } = this
+    if (R[0] === 0) return 0
+    let chosen = R[0]
+    for (let header = R[chosen]; header !== 0; header = R[header]) if (S[header] < S[chosen]) chosen = header
+    return S[chosen] ? chosen : -1
+  }
+
+  // Selects / deselects the rows given in advance; they must not overlap.
+  select(rows) {
+    for (const row of rows) {
+      const first = this.firstNode[row]
+      this.cover(this.C[first])
+      for (let node = this.R[first]; node !== first; node = this.R[node]) this.cover(this.C[node])
     }
   }
-  const head = {
-    right: columns[0],
-    left: columns[columns.length - 1]
+
+  unselect(rows) {
+    for (let index = rows.length - 1; index >= 0; index--) {
+      const first = this.firstNode[rows[index]]
+      for (let node = this.L[first]; node !== first; node = this.L[node]) this.uncover(this.C[node])
+      this.uncover(this.C[first])
+    }
   }
-  columns[0].left = columns[columns.length - 1].right = head
-  return head
+
+  countFrom() {
+    const chosen = this.chooseColumn()
+    if (chosen <= 0) return chosen === 0 ? 1 : 0
+    const { L, R, D, C } = this
+    this.cover(chosen)
+    let count = 0
+    for (let row = D[chosen]; row !== chosen; row = D[row]) {
+      for (let node = R[row]; node !== row; node = R[node]) this.cover(C[node])
+      count += this.countFrom()
+      for (let node = L[row]; node !== row; node = L[node]) this.uncover(C[node])
+    }
+    this.uncover(chosen)
+    return count
+  }
+
+  // Returns true once maxsolutions solutions are collected.
+  solveFrom(partial, solutions, maxsolutions) {
+    const chosen = this.chooseColumn()
+    if (chosen === 0) {
+      solutions.push([...partial])
+      return solutions.length >= maxsolutions
+    }
+    if (chosen < 0) return false
+    const { L, R, D, C, ROW } = this
+    this.cover(chosen)
+    let stop = false
+    for (let row = D[chosen]; row !== chosen && !stop; row = D[row]) {
+      partial.push(ROW[row])
+      for (let node = R[row]; node !== row; node = R[node]) this.cover(C[node])
+      stop = this.solveFrom(partial, solutions, maxsolutions)
+      for (let node = L[row]; node !== row; node = L[node]) this.uncover(C[node])
+      partial.pop()
+    }
+    this.uncover(chosen)
+    return stop
+  }
+
+  /**
+   * All solutions as lists of row indices (fixed rows first), at most maxsolutions of them.
+   * Rows in fixedRows are selected in advance; the structure is restored afterwards.
+   */
+  solve({ maxsolutions = Infinity, fixedRows = [] } = {}) {
+    const solutions = []
+    this.select(fixedRows)
+    this.solveFrom([...fixedRows], solutions, maxsolutions)
+    this.unselect(fixedRows)
+    return solutions
+  }
+
+  /** Number of solutions, without storing them. */
+  count({ fixedRows = [] } = {}) {
+    this.select(fixedRows)
+    const count = this.countFrom()
+    this.unselect(fixedRows)
+    return count
+  }
 }
 
-// Returns all solutions (row index lists), at most maxsolutions of them.
+const createDlx = (columnCount, rows) => new Dlx(columnCount, rows)
+
+// Dense 0/1 matrix version: returns all solutions (row index lists), at most maxsolutions of them.
 const dlx_solve = (matrix, maxsolutions = Infinity) => {
-  const solutions = []
-  dlx_search(genSparseMatrix(matrix), [], 0, solutions, maxsolutions)
-  return solutions
+  const columnCount = matrix.length > 0 ? matrix[0].length : 0
+  const rows = matrix.map((values) => values.flatMap((value, column) => (value ? [column] : [])))
+  return createDlx(columnCount, rows).solve({ maxsolutions })
 }
 
-if (typeof module !== 'undefined') module.exports = dlx_solve
+if (typeof module !== 'undefined') {
+  module.exports = dlx_solve
+  module.exports.createDlx = createDlx
+}
