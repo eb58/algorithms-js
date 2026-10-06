@@ -1,6 +1,7 @@
 const solve1 = require('../src/sudoku/sudoku1');
 const solve2 = require('../src/sudoku/sudoku2');
 const solve3 = require('../src/sudoku/sudoku3');
+const solve4 = require('../src/sudoku/sudoku4');
 const solveDlx1 = require('../src/sudoku/sudokuDlx1');
 const { EASY, HARD, toGrid } = require('../src/sudoku/sudokuPuzzles');
 
@@ -10,6 +11,7 @@ const SOLVERS = [
     { name: 'sudoku1', solve: solve1, puzzles: EASY },
     { name: 'sudoku2', solve: solve2, puzzles: [...EASY, ...HARD] },
     { name: 'sudoku3', solve: solve3, puzzles: [...EASY, ...HARD] },
+    { name: 'sudoku4', solve: solve4, puzzles: [...EASY, ...HARD] },
     { name: 'sudokuDlx1', solve: solveDlx1, puzzles: [...EASY, ...HARD] },
 ];
 

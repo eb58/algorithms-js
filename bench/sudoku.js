@@ -2,7 +2,7 @@ const { performance } = require('node:perf_hooks')
 const { EASY, HARD, toGrid } = require('../src/sudoku/sudokuPuzzles')
 
 // Usage: node bench/sudoku.js [--solver <name>] [--slow]
-//   --solver  run only one solver (sudoku1, sudoku2, sudoku3, sudokuDlx1)
+//   --solver  run only one solver (sudoku1, sudoku2, sudoku3, sudoku4, sudokuDlx1)
 //   --slow    let sudoku1 also solve the hard puzzles (can take minutes)
 const args = process.argv.slice(2)
 const only = args.includes('--solver') ? args[args.indexOf('--solver') + 1] : null
@@ -12,6 +12,7 @@ const solvers = [
   { name: 'sudoku1', slow: true },
   { name: 'sudoku2' },
   { name: 'sudoku3' },
+  { name: 'sudoku4' },
   { name: 'sudokuDlx1' },
 ].filter(({ name }) => !only || name === only)
 if (solvers.length === 0) throw new Error(`unknown solver ${only}`)
