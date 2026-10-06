@@ -2,7 +2,6 @@ const solve1 = require('../src/sudoku/sudoku1');             // ~55000 ms for ha
 const solve2 = require('../src/sudoku/sudoku2');             // ~900 ms for hard ones
 
 const solve3 = require('../src/sudoku/sudoku3');             // ~1400 ms for 10x hard ones
-const solveKudoku = require('../src/sudoku/sudokuKudoku');   // ~450 ms 10x for hard ones
 const solveDlx1 = require('../src/sudoku/sudokuDlx1');       // ~120 ms for 10x all 30 test puzzles -> fastest
 
 const solve = (grid) => solveDlx1(grid)
