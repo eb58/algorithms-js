@@ -160,3 +160,14 @@ test('magic-square-5x5 parallel count matches serial', async () => {
   expect(total).toBe(byCenter[12] + byCenter[13])
   expect(byCenter[13]).toBeGreaterThan(35542) // includes the top left 14 subspace
 });
+
+// Exact covering with colors: an independent cross-check, slower than the other solvers.
+test('magic-square-4x4 xcc', () => {
+  const squares = ms.magic4x4SolverXcc()
+  expect(squares).toHaveLength(880)
+  expectUniqueSquares(squares)
+  squares.forEach((square) => expectMagicSquare(square, 4))
+  expect(squares.map((square) => square.join(',')).sort()).toEqual(
+    ms.magic4x4Solver5().map((square) => square.join(',')).sort(),
+  )
+}, 60000);
