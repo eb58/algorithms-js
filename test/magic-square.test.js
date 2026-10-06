@@ -1,5 +1,7 @@
 const ms = require('../src/magic-square/magic-square')
 const msSimple = require('../src/magic-square/magic-square-simple')
+const { magic5x5Solver } = require('../src/magic-square/magic-square-5x5')
+const { magic5x5CountParallel } = require('../src/magic-square/magic-square-5x5-parallel')
 
 const expectMagicSquare = (square, size) => {
   const expectedNumbers = Array.from({ length: size * size }, (_, index) => index + 1)
@@ -95,4 +97,35 @@ test('magic-square-4x4 5', () => {
   expect(squares.map((square) => square.join(',')).sort()).toEqual(
     ms.magic4x4Solver4().map((square) => square.join(',')).sort(),
   )
+});
+
+// The full 5x5 run (275,305,224 squares) takes minutes, so the tests use subspaces.
+test('magic-square-5x5 subspace', () => {
+  const squares = []
+  const count = magic5x5Solver({ center: 13, topLeft: 14, visit: (square) => squares.push(square) })
+
+  expect(count).toBe(35542)
+  expect(squares).toHaveLength(count)
+  expectUniqueSquares(squares)
+  squares.forEach((square) => {
+    expectMagicSquare(square, 5)
+    // normal form: top left is the smallest corner, top right < bottom left
+    expect(square[0]).toBe(14)
+    expect(square[12]).toBe(13)
+    expect(square[0]).toBeLessThan(Math.min(square[4], square[20], square[24]))
+    expect(square[4]).toBeLessThan(square[20])
+  })
+});
+
+test('magic-square-5x5 parallel count matches serial', async () => {
+  const centers = [12, 13]
+  const topLefts = [14, 15, 16]
+  const { total, byCenter } = await magic5x5CountParallel({ centers, topLefts, threads: 4 })
+
+  for (const center of centers) {
+    const serial = topLefts.reduce((sum, topLeft) => sum + magic5x5Solver({ center, topLeft }), 0)
+    expect(byCenter[center]).toBe(serial)
+  }
+  expect(total).toBe(byCenter[12] + byCenter[13])
+  expect(byCenter[13]).toBeGreaterThan(35542) // includes the top left 14 subspace
 });
