@@ -88,7 +88,7 @@ const magic4x4Solver2 = () => {
     { row: [4, 5, 6, 7] }, // second row
     { row: [8, 9, 10, 11] }, // third row
     { row: [12], restriction: (xs, sq) => sq[0] + sq[4] + sq[8] + xs[0] === MN && sq[3] + sq[6] + sq[9] + xs[0] === MN },
-    { row: [16], restriction: (xs, sq) => sq[3] + sq[7] + sq[11] + xs[0] === MN && sq[3] + sq[6] + sq[9] + xs[0] === MN },
+    { row: [15], restriction: (xs, sq) => sq[3] + sq[7] + sq[11] + xs[0] === MN && sq[0] + sq[5] + sq[10] + xs[0] === MN },
     { row: [13], restriction: (xs, sq) => xs[0] + sq[1] + sq[5] + sq[9] === MN },
     { row: [14], restriction: (xs, sq) => xs[0] + sq[2] + sq[6] + sq[10] === MN },
   ])

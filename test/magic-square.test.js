@@ -1,4 +1,4 @@
-const ms       = require('../src/magic-square/magic-square')
+const ms = require('../src/magic-square/magic-square')
 const msSimple = require('../src/magic-square/magic-square-simple')
 
 const expectMagicSquare = (square, size) => {
@@ -27,7 +27,7 @@ const expectUniqueSquares = (squares) => {
 
 test('magic-square-3x3-simple', () => {
   const solver = msSimple.magicSquare3x3;
-  const squares = solver([1,2,3,4,5,6,7,8,9])
+  const squares = solver([1, 2, 3, 4, 5, 6, 7, 8, 9])
 
   expect(squares).toHaveLength(8)
   expectUniqueSquares(squares)
@@ -57,7 +57,11 @@ test('magic-square-4x4 1', () => {
   squares.forEach((square) => expectMagicSquare(square, 4))
 });
 
-// xtest('magic-square-4x4 2', () => { // not working yet
-//   const solver = ms.magic4x4Solver2;
-//   expect(solver().length).toBe(880);
-// });
+test('magic-square-4x4 2', () => {
+  const solver = ms.magic4x4Solver2
+  const squares = solver()
+
+  expect(squares).toHaveLength(880)
+  expectUniqueSquares(squares)
+  squares.forEach((square) => expectMagicSquare(square, 4))
+});
