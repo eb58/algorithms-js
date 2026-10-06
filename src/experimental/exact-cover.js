@@ -1,40 +1,55 @@
-const { range, rangeFilled, zip, add } = require('../ol').ol;
-const bitset = require('../ol').bitset;
+const { rangeFilled } = require('../ol').ol;
 
-const noConflict = (cover, cond) => zip(cover, cond, add).every((x) => x <= 1);
+// Does the row put a 1 into a column that is already covered?
+const conflicts = (cover, values) => values.some((v, i) => v === 1 && cover[i] === 1);
 
+// Lexicographic order of two solutions (arrays of row numbers).
+const compareSolutions = (a, b) => {
+  for (let i = 0; i < Math.min(a.length, b.length); i++) if (a[i] !== b[i]) return a[i] - b[i];
+  return a.length - b.length;
+};
+
+// Algorithm X on a 0/1 matrix. Returns the solutions as sorted lists of row numbers, in
+// lexicographic order (the first maxsolutions found, if there are more).
 const solve = (constraints, maxsolutions = 1000000) => {
+  // an empty matrix has nothing to cover: the empty selection is the only solution
+  const width = constraints.length > 0 ? constraints[0].length : 0;
   constraints = constraints.map((row, idx) => ({ rowNr: idx, values: row }));
   const solutions = [];
-  // console.log('CONSTRAINTS',constraints.map((c) => ({ ...c, values: c.values.join('') })) );
 
+  // constraints: exactly the rows that still fit next to cover
   const solv = (cover, constraints, res) => {
     if (solutions.length >= maxsolutions) return;
     if (cover.every((x) => x === 1)) {
-      // console.log('AAAA', cover);
       solutions.push(res);
       return;
     }
 
-    if (constraints.length === 0) {
-      return;
-    }
-
-    const firstIndexZero = cover.findIndex((v) => v === 0);
-    const newConstraints = constraints
-      .filter((c) => c.values[firstIndexZero] === 1) // conditions, that fill first zero item in cover
-      .filter((constraint) => noConflict(cover, constraint.values)); // conditions, that do not conflict with cover
-
-    newConstraints.forEach((constraint) => {
-      const newCover = zip(cover, constraint.values, add);
-      const x = constraints.filter((c) => c.values.join('') !== constraint.values.join('') && noConflict(newCover, c.values));
-      return solv(newCover, x, [...res, constraint.rowNr]);
+    // the uncovered column with the fewest fitting rows; none at all means a dead end
+    let column = -1;
+    let fewest = Infinity;
+    cover.forEach((covered, i) => {
+      if (covered) return;
+      const candidates = constraints.filter((c) => c.values[i] === 1).length;
+      if (candidates < fewest) {
+        fewest = candidates;
+        column = i;
+      }
     });
+    if (fewest === 0) return;
+
+    constraints
+      .filter((c) => c.values[column] === 1)
+      .forEach((constraint) => {
+        const newCover = cover.map((x, i) => x | constraint.values[i]);
+        // the chosen row conflicts with newCover itself, so it drops out here as well
+        const stillFitting = constraints.filter((c) => !conflicts(newCover, c.values));
+        solv(newCover, stillFitting, [...res, constraint.rowNr]);
+      });
   };
 
-  solv(rangeFilled(constraints[0].values.length), constraints, []);
-  // console.log('BBB', solutions);
-  return solutions;
+  solv(rangeFilled(width), constraints, []);
+  return solutions.map((solution) => [...solution].sort((a, b) => a - b)).sort(compareSolutions);
 };
 
 if (typeof module !== 'undefined') module.exports = solve;

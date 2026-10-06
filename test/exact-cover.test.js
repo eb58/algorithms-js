@@ -62,7 +62,7 @@ test('exactCover 3', () => {
     return ret;
   };
 
-  // expect(solve(createConstraintsForPermutations(2))).toEqual([[0, 3],[1, 2]]);
+  expect(solve(createConstraintsForPermutations(2))).toEqual([[0, 3], [1, 2]]);
   expect(solve(createConstraintsForPermutations(3))).toEqual([
     [0, 4, 8],
     [0, 5, 7],
@@ -78,4 +78,8 @@ test('exactCover 3', () => {
   // expect(solve(createConstraintsForPermutations(8)).length).toBe(40320);
   // expect(solve(createConstraintsForPermutations(15,20)).length).toBe(20);
   // expect(solve(createConstraintsForPermutations(50), 20).length).toBe(20);
+});
+
+test('exactCover empty matrix', () => {
+  expect(solve([])).toEqual([[]]);
 });
