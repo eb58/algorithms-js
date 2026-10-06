@@ -24,7 +24,7 @@ const magicSquare = (N, idxNotForNumberOne) => {
     const rowDef = rowsDef[i]
     const predicate = rowDef.restriction ? (xs) => rowDef.restriction(xs, square, availableNumbers) : undefined
     const combsBS =
-      rowDef.row.length === 4
+      rowDef.row.length === N
         ? goodCombinations
         : comb(availableNumbers, rowDef.row.length, predicate)
 
@@ -51,14 +51,14 @@ const magicSquare = (N, idxNotForNumberOne) => {
 }
 
 const magic3x3Solver = () => {
-  const magic3x3 = magicSquare(3, [1, 2, 3, 4, 5, 6, 7, 8])
+  const magic3x3 = magicSquare(3, [])
   const MN = magic3x3.MN
   return magic3x3.solve([
     { row: [0, 4, 8] }, // diag
     { row: [1, 2], restriction: (xs, sq) => sum(xs) === MN - sq[0] },
     { row: [5], restriction: (xs, sq) => sum(xs) === MN - sq[2] - sq[8] },
     { row: [7], restriction: (xs, sq) => sum(xs) === MN - sq[1] - sq[4] },
-    { row: [6], restriction: (xs, sq) => sum(xs) === MN - sq[7] - sq[8] },
+    { row: [6], restriction: (xs, sq) => sum(xs) === MN - sq[7] - sq[8] && sum(xs) === MN - sq[2] - sq[4] },
     { row: [3], restriction: (xs, sq) => sum(xs) === MN - sq[0] - sq[6] },
   ])
 }
