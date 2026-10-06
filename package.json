@@ -13,16 +13,18 @@
    },
    "author": "eb",
    "scripts": {
-      "test": "jest --runInBand --watchAll=false",
+      "test": "jest",
       "test:watch": "jest --watchAll",
       "test:coverage": "jest --coverage --runInBand --watchAll=false",
       "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
       "barcode": "node src/barcodes/barcode.js",
       "sudoku": "node src/sudoku/sudoku3.js",
       "magic-hexagon": "node src/magic-hexagon/magic-hexagon.js",
+      "benchmark:magic-square": "node bench/magic-square.js",
       "ct-puzzle:dlx": "node src/ct-puzzle/ct-puzzle-dlx.js",
       "ct-puzzle": "node src/ct-puzzle/ct-puzzle.js",
-      "pentomino": "node --inspect src/pentomino/pentomino.js"
+      "pentomino": "node --inspect src/pentomino/pentomino.js",
+      "prepare": "git config core.hooksPath .githooks"
    },
    "dependencies": {
       "@algorithm.ts/dlx": "^4.0.4",
