@@ -7,8 +7,13 @@ const col = (x) => x % 9;
 const row = (x) => Math.floor(x / 9);
 // blocks are numbered column-wise: 0 1 2 down the left third, 3 4 5 in the middle, 6 7 8 on the right
 const block = (x) => Math.floor(col(x) / 3) * 3 + Math.floor(row(x) / 3);
-const isCandidate = (grid, idx, val) => CONNECTIONSETS[idx].every((n) => grid[n] !== val);
-const candidates = (grid, idx) => (grid[idx] == 0 ? RANGE1_9.filter((val) => isCandidate(grid, idx, val)) : undefined);
+// one pass over the neighbours collects the used digits as bits, instead of one pass per digit
+const candidates = (grid, idx) => {
+  if (grid[idx] !== 0) return undefined;
+  let used = 0;
+  for (const n of CONNECTIONSETS[idx]) used |= 1 << grid[n];
+  return RANGE1_9.filter((val) => !(used & (1 << val)));
+};
 
 const CONNECTIONSETS = (() => {
   const inSameConnectionSet = (x, y) => row(x) === row(y) || col(x) === col(y) || block(x) === block(y);
