@@ -2,17 +2,19 @@ const solve1 = require('../src/sudoku/sudoku1')
 const solve2 = require('../src/sudoku/sudoku2')
 const solve3 = require('../src/sudoku/sudoku3')
 const solve4 = require('../src/sudoku/sudoku4')
+const solve5 = require('../src/sudoku/sudoku5')
 const solveDlx1 = require('../src/sudoku/sudokuDlx1')
-const { EASY, HARD, toGrid } = require('../src/sudoku/sudokuPuzzles')
+const { EASY, HARD, ALL, toGrid } = require('../src/sudoku/sudokuPuzzles')
 
 // Timings of all solvers: npm run benchmark:sudoku
 // sudoku1 takes far too long for the hard puzzles, it only gets the easy ones.
 const SOLVERS = [
   { name: 'sudoku1', solve: solve1, puzzles: EASY },
-  { name: 'sudoku2', solve: solve2, puzzles: [...EASY, ...HARD] },
-  { name: 'sudoku3', solve: solve3, puzzles: [...EASY, ...HARD] },
-  { name: 'sudoku4', solve: solve4, puzzles: [...EASY, ...HARD] },
-  { name: 'sudokuDlx1', solve: solveDlx1, puzzles: [...EASY, ...HARD] }
+  { name: 'sudoku2', solve: solve2, puzzles: ALL },
+  { name: 'sudoku3', solve: solve3, puzzles: ALL },
+  { name: 'sudoku4', solve: solve4, puzzles: ALL },
+  { name: 'sudoku5', solve: solve5, puzzles: ALL },
+  { name: 'sudokuDlx1', solve: solveDlx1, puzzles: ALL }
 ]
 
 const range = (n) => [...Array(n).keys()]
@@ -45,7 +47,7 @@ const noCandidateGrid = () => {
 
 describe('sudokuPuzzles', () => {
   test('every solution is a valid sudoku with the givens of its puzzle', () => {
-    ;[...EASY, ...HARD].forEach(([puzzle, solution]) => expect(isValidSolution(toGrid(puzzle), toGrid(solution))).toBe(true))
+    ALL.forEach(([puzzle, solution]) => expect(isValidSolution(toGrid(puzzle), toGrid(solution))).toBe(true))
   })
 })
 
@@ -80,5 +82,71 @@ describe.each(SOLVERS)('$name', ({ solve, puzzles }) => {
 
   test('returns null for the same given number twice in a row', () => {
     expect(solve([1, 1, ...Array(79).fill(0)])).toBeNull()
+  })
+
+  test.each([27, 10])('returns null for conflicting givens at cells 0 and %i', (other) => {
+    const grid = Array(81).fill(0)
+    grid[0] = grid[other] = 1 // column only / block only
+    expect(solve(grid)).toBeNull()
+  })
+})
+
+describe('sudokuDlx1 shared matrix', () => {
+  test('can alternate solved, contradictory, unsatisfiable and empty puzzles', () => {
+    const [puzzle, solution] = HARD[0]
+    const impossible = toGrid('300000012000000003002300400001800005060070800000009000008500000900040500470006000')
+    for (let round = 0; round < 3; round++) {
+      expect(solveDlx1(toGrid(puzzle)).join('')).toBe(solution)
+      expect(solveDlx1(toGrid(solution)).join('')).toBe(solution)
+      expect(solveDlx1([1, 1, ...Array(79).fill(0)])).toBeNull()
+      const before = [...impossible]
+      expect(solveDlx1(impossible)).toBeNull()
+      expect(impossible).toEqual(before)
+      const empty = Array(81).fill(0)
+      expect(isValidSolution(empty, solveDlx1(empty))).toBe(true)
+    }
+  })
+
+  test('rejects malformed givens before touching the shared matrix', () => {
+    const [puzzle, solution] = EASY[0]
+    const invalid = [
+      null,
+      [],
+      Array(80).fill(0),
+      Array(82).fill(0),
+      ...[-1, 10, 1.5, NaN, undefined, '1'].map((digit) => [digit, ...Array(80).fill(0)])
+    ]
+    for (const grid of invalid) {
+      expect(solveDlx1(grid)).toBeNull()
+      expect(solveDlx1(toGrid(puzzle)).join('')).toBe(solution)
+    }
+  })
+})
+
+describe('sudoku5 incremental state', () => {
+  test('rejects an unsatisfiable grid without duplicate givens or initially empty candidate sets', () => {
+    const grid = toGrid('300000012000000003002300400001800005060070800000009000008500000900040500470006000')
+    const before = [...grid]
+    expect(solveDlx1(grid)).toBeNull()
+    expect(solve5(grid)).toBeNull()
+    expect(grid).toEqual(before)
+    const [puzzle, solution] = HARD[0]
+    expect(solve5(toGrid(puzzle)).join('')).toBe(solution)
+  })
+
+  test('agrees with exact cover on seeded partial grids and perturbed givens', () => {
+    let seed = 123456789
+    const random = () => (seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0) / 2 ** 32
+    for (let trial = 0; trial < 32; trial++) {
+      const grid = toGrid(EASY[trial % EASY.length][1]).map((digit) => (random() < 0.6 ? 0 : digit))
+      if (trial % 2) grid[Math.floor(random() * 81)] = 1 + Math.floor(random() * 9)
+      const before = [...grid]
+      const reference = solveDlx1(grid)
+      const result = solve5(grid)
+      // Partial grids may have multiple solutions; compare validity, not solution order.
+      if (reference === null) expect(result).toBeNull()
+      else expect(isValidSolution(grid, result)).toBe(true)
+      expect(grid).toEqual(before)
+    }
   })
 })

@@ -78,13 +78,23 @@ class Dlx {
     L[R[header]] = header
   }
 
-  // Column with the fewest rows, 0 if all columns are covered, -1 if one of them has no row left.
+  // Column with the fewest rows, 0 if all are covered, -1 when an empty column is encountered.
+  // Stop at a singleton: a later empty column will be detected after this forced move.
   chooseColumn() {
     const { R, S } = this
-    if (R[0] === 0) return 0
     let chosen = R[0]
-    for (let header = R[chosen]; header !== 0; header = R[header]) if (S[header] < S[chosen]) chosen = header
-    return S[chosen] ? chosen : -1
+    if (chosen === 0) return 0
+    let size = S[chosen]
+    if (size <= 1) return size ? chosen : -1
+    for (let header = R[chosen]; header !== 0; header = R[header]) {
+      const n = S[header]
+      if (n < size) {
+        if (n <= 1) return n ? header : -1
+        size = n
+        chosen = header
+      }
+    }
+    return chosen
   }
 
   // Selects / deselects the rows given in advance; they must not overlap.
@@ -146,6 +156,7 @@ class Dlx {
    * Rows in fixedRows are selected in advance; the structure is restored afterwards.
    */
   solve({ maxsolutions = Infinity, fixedRows = [] } = {}) {
+    if (maxsolutions <= 0) return []
     const solutions = []
     this.select(fixedRows)
     this.solveFrom([...fixedRows], solutions, maxsolutions)

@@ -2,9 +2,16 @@ const { performance } = require('node:perf_hooks')
 const { EASY, HARD, toGrid } = require('../src/sudoku/sudokuPuzzles')
 
 // Usage: node bench/sudoku.js [--solver <name>] [--slow]
-//   --solver  run only one solver (sudoku1, sudoku2, sudoku3, sudoku4, sudokuDlx1)
+//   --solver  run only one solver (sudoku1, sudoku2, sudoku3, sudoku4, sudoku5, sudokuDlx1)
 //   --slow    let sudoku1 also solve the hard puzzles (can take minutes)
-const ALL_SOLVERS = [{ name: 'sudoku1', slow: true }, { name: 'sudoku2' }, { name: 'sudoku3' }, { name: 'sudoku4' }, { name: 'sudokuDlx1' }]
+const ALL_SOLVERS = [
+  { name: 'sudoku1', slow: true },
+  { name: 'sudoku2' },
+  { name: 'sudoku3' },
+  { name: 'sudoku4' },
+  { name: 'sudoku5' },
+  { name: 'sudokuDlx1' }
+]
 const names = ALL_SOLVERS.map(({ name }) => name)
 
 const args = process.argv.slice(2)

@@ -172,6 +172,7 @@ const HARD = [
   ]
 ]
 
+const ALL = [...EASY, ...HARD]
 const toGrid = (s) => s.split('').map((x) => (x === '.' ? 0 : Number(x)))
 
-module.exports = { EASY, HARD, toGrid }
+module.exports = { EASY, HARD, ALL, toGrid }
