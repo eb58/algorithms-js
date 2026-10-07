@@ -8,17 +8,16 @@ const solve = (grid, emptyCells = RANGE81.filter((x) => grid[x] === 0)) => {
   let bestCands = null
   for (const idx of emptyCells) {
     const cands = candidates(grid, idx)
+    if (cands.length === 0) return null
+    if (cands.length === 1) return solve(grid.with(idx, cands[0]), emptyCells.filter((x) => x !== idx))
     if (!bestCands || cands.length < bestCands.length) {
       bestIdx = idx
       bestCands = cands
     }
-    if (cands.length <= 1) break // one candidate: fill it now; none: dead end
   }
 
   const newEmptyCells = emptyCells.filter((x) => x !== bestIdx)
-  return bestCands.length === 1
-    ? solve(grid.with(bestIdx, bestCands[0]), newEmptyCells)
-    : bestCands.reduce((res, val) => res || solve(grid.with(bestIdx, val), newEmptyCells), null)
+  return bestCands.reduce((res, val) => res || solve(grid.with(bestIdx, val), newEmptyCells), null)
 }
 
 // grid: 81 numbers 0..9, 0 = empty cell. Returns a new, solved grid, or null if there is no solution.
