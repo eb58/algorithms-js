@@ -1,4 +1,4 @@
-const { RANGE81, row, col, block } = require('./sudokuUtils')
+const { RANGE81, row, col, block, isValidGrid } = require('./sudokuUtils')
 
 // sudoku3's bitmask idea, extended:
 // - every forced move is made before branching: naked singles (a cell with one candidate) and
@@ -140,6 +140,7 @@ const search = () => {
 
 // grid: 81 numbers 0..9, 0 = empty cell. Returns a new, solved grid, or null if there is no solution.
 const solve4 = (input) => {
+  if (!isValidGrid(input)) return null
   const outer = [grid, rowUsed, colUsed, boxUsed, trail, trailLength, pairUnit, pairBit]
   try {
     grid = new Int8Array(81)
@@ -151,7 +152,6 @@ const solve4 = (input) => {
     for (let idx = 0; idx < 81; idx++) {
       const digit = input[idx]
       if (!digit) continue
-      if (!(candidates(idx) & (1 << (digit - 1)))) return null // the same given twice in a unit
       place(idx, digit)
     }
     return search() ? Array.from(grid) : null

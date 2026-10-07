@@ -89,6 +89,11 @@ describe.each(SOLVERS)('$name', ({ solve, puzzles }) => {
     grid[0] = grid[other] = 1 // column only / block only
     expect(solve(grid)).toBeNull()
   })
+
+  test.each([null, [], Array(80).fill(0), [10, ...Array(80).fill(0)], ['1', ...Array(80).fill(0)]])(
+    'returns null for malformed input',
+    (grid) => expect(solve(grid)).toBeNull()
+  )
 })
 
 describe('sudokuDlx shared matrix', () => {

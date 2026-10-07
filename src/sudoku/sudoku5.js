@@ -1,4 +1,4 @@
-const { RANGE81, row, col, block } = require('./sudokuUtils')
+const { RANGE81, row, col, block, isValidGrid } = require('./sudokuUtils')
 const { range } = require('../ol').ol
 
 // 324 constraints, each represented by a 9-bit mask:
@@ -31,6 +31,7 @@ for (const idx of RANGE81) {
 
 // grid: 81 numbers 0..9, 0 = empty. Returns a new solution, or null.
 const solve5 = (input) => {
+  if (!isValidGrid(input)) return null
   // The final 81 entries hold assigned digits as bits; all other entries are masks.
   const state = new Uint16Array(405)
   // Each of 324 masks can lose at most 8 bits before contradiction; 81 assignments.
@@ -117,7 +118,6 @@ const solve5 = (input) => {
     if (!input[idx]) continue
     const bit = 1 << (input[idx] - 1)
     for (const unit of UNITS[idx]) {
-      if (used[unit] & bit) return null
       used[unit] |= bit
     }
     state[324 + idx] = bit

@@ -1,4 +1,4 @@
-const { RANGE81, row, col, block } = require('./sudokuUtils')
+const { RANGE81, row, col, block, isValidGrid } = require('./sudokuUtils')
 
 const COORDROW = RANGE81.map(row)
 const COORDCOL = RANGE81.map(col)
@@ -74,6 +74,7 @@ const findHS = (m) => {
 
 // grid: 81 numbers 0..9, 0 = empty cell. Returns a new, solved grid, or null if there is no solution.
 const solve3 = (grid) => {
+  if (!isValidGrid(grid)) return null
   // true once every cell is filled, false at a dead end (the model is restored then)
   const solve = (m) => {
     const bestCell = getBestCell(m)
@@ -99,8 +100,6 @@ const solve3 = (grid) => {
   for (let idx = 0; idx < 81; idx++) {
     const val = grid[idx]
     if (val === 0) continue
-    // the same number twice in a row, column or block: no search needed
-    if ((model.usedInRow[COORDROW[idx]] | model.usedInCol[COORDCOL[idx]] | model.usedInBlk[COORDBLK[idx]]) & (1 << val)) return null
     setVal(model, idx, val)
   }
   return solve(model) ? model.grid : null

@@ -22,8 +22,20 @@ const PEERS = (() => {
   return RANGE81.map(connectionSet)
 })()
 
-// A valid grid has no given number repeated in a row, column or block.
-const isValidGrid = (grid) => !grid.some((val, idx) => val !== 0 && PEERS[idx].some((n) => grid[n] === val))
+const isValidGrid = (grid) => {
+  if (!Array.isArray(grid) || grid.length !== 81) return false
+  const used = new Uint16Array(27)
+  for (let idx = 0; idx < 81; idx++) {
+    const val = grid[idx]
+    if (!Number.isInteger(val) || val < 0 || val > 9) return false
+    if (val === 0) continue
+    const units = [row(idx), 9 + col(idx), 18 + block(idx)]
+    const bit = 1 << val
+    if (units.some((unit) => used[unit] & bit)) return false
+    for (const unit of units) used[unit] |= bit
+  }
+  return true
+}
 
 module.exports = {
   isValidGrid,
