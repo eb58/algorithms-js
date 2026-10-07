@@ -2,6 +2,7 @@ const range = (n) => [...Array(n).keys()]
 
 const RANGE81 = range(9 * 9)
 const RANGE1_9 = range(9).map((x) => x + 1)
+const CANDIDATES_BY_USED = range(1 << 10).map((used) => RANGE1_9.filter((val) => !(used & (1 << val))))
 
 const col = (x) => x % 9
 const row = (x) => Math.floor(x / 9)
@@ -11,21 +12,21 @@ const block = (x) => Math.floor(col(x) / 3) * 3 + Math.floor(row(x) / 3)
 const candidates = (grid, idx) => {
   if (grid[idx] !== 0) return undefined
   let used = 0
-  for (const n of CONNECTIONSETS[idx]) used |= 1 << grid[n]
-  return RANGE1_9.filter((val) => !(used & (1 << val)))
+  for (const n of PEERS[idx]) used |= 1 << grid[n]
+  return CANDIDATES_BY_USED[used].slice()
 }
 
-const CONNECTIONSETS = (() => {
+const PEERS = (() => {
   const inSameConnectionSet = (x, y) => row(x) === row(y) || col(x) === col(y) || block(x) === block(y)
-  const connectionSet = (x) => RANGE81.reduce((acc, y) => (inSameConnectionSet(x, y) ? [...acc, y] : acc), [])
+  const connectionSet = (x) => RANGE81.filter((y) => y !== x && inSameConnectionSet(x, y))
   return RANGE81.map(connectionSet)
 })()
 
-// The same given number twice in a row, column or block: the grid has no solution.
-const hasConflictingGivens = (grid) => grid.some((val, idx) => val !== 0 && CONNECTIONSETS[idx].some((n) => n !== idx && grid[n] === val))
+// A valid grid has no given number repeated in a row, column or block.
+const isValidGrid = (grid) => !grid.some((val, idx) => val !== 0 && PEERS[idx].some((n) => grid[n] === val))
 
 module.exports = {
-  hasConflictingGivens,
+  isValidGrid,
   RANGE81,
   row,
   col,

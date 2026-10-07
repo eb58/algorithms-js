@@ -1,4 +1,4 @@
-const { RANGE81, candidates, hasConflictingGivens } = require('./sudokuUtils')
+const { RANGE81, candidates, isValidGrid } = require('./sudokuUtils')
 
 // Fills the cell with the fewest candidates next (a cell with a single candidate at once).
 const solve = (grid, emptyCells = RANGE81.filter((x) => grid[x] === 0)) => {
@@ -24,6 +24,5 @@ const solve = (grid, emptyCells = RANGE81.filter((x) => grid[x] === 0)) => {
 // grid: 81 numbers 0..9, 0 = empty cell. Returns a new, solved grid, or null if there is no solution.
 // A tie-break among cells with equally few candidates (most filled neighbours first) was tried
 // and measured: no gain, the extra work per step eats up the better branching.
-const solve2 = (grid) => (hasConflictingGivens(grid) ? null : solve([...grid]))
 
-module.exports = solve2
+module.exports = (grid) => isValidGrid(grid) ? solve([...grid]) : null

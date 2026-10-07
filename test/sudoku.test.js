@@ -3,7 +3,7 @@ const solve2 = require('../src/sudoku/sudoku2')
 const solve3 = require('../src/sudoku/sudoku3')
 const solve4 = require('../src/sudoku/sudoku4')
 const solve5 = require('../src/sudoku/sudoku5')
-const solveDlx1 = require('../src/sudoku/sudokuDlx1')
+const solveDlx = require('../src/sudoku/sudokuDlx')
 const { EASY, HARD, ALL, toGrid } = require('../src/sudoku/sudokuPuzzles')
 
 // Timings of all solvers: npm run benchmark:sudoku
@@ -14,7 +14,7 @@ const SOLVERS = [
   { name: 'sudoku3', solve: solve3, puzzles: ALL },
   { name: 'sudoku4', solve: solve4, puzzles: ALL },
   { name: 'sudoku5', solve: solve5, puzzles: ALL },
-  { name: 'sudokuDlx1', solve: solveDlx1, puzzles: ALL }
+  { name: 'sudokuDlx', solve: solveDlx, puzzles: ALL }
 ]
 
 const range = (n) => [...Array(n).keys()]
@@ -91,19 +91,19 @@ describe.each(SOLVERS)('$name', ({ solve, puzzles }) => {
   })
 })
 
-describe('sudokuDlx1 shared matrix', () => {
+describe('sudokuDlx shared matrix', () => {
   test('can alternate solved, contradictory, unsatisfiable and empty puzzles', () => {
     const [puzzle, solution] = HARD[0]
     const impossible = toGrid('300000012000000003002300400001800005060070800000009000008500000900040500470006000')
     for (let round = 0; round < 3; round++) {
-      expect(solveDlx1(toGrid(puzzle)).join('')).toBe(solution)
-      expect(solveDlx1(toGrid(solution)).join('')).toBe(solution)
-      expect(solveDlx1([1, 1, ...Array(79).fill(0)])).toBeNull()
+      expect(solveDlx(toGrid(puzzle)).join('')).toBe(solution)
+      expect(solveDlx(toGrid(solution)).join('')).toBe(solution)
+      expect(solveDlx([1, 1, ...Array(79).fill(0)])).toBeNull()
       const before = [...impossible]
-      expect(solveDlx1(impossible)).toBeNull()
+      expect(solveDlx(impossible)).toBeNull()
       expect(impossible).toEqual(before)
       const empty = Array(81).fill(0)
-      expect(isValidSolution(empty, solveDlx1(empty))).toBe(true)
+      expect(isValidSolution(empty, solveDlx(empty))).toBe(true)
     }
   })
 
@@ -117,8 +117,8 @@ describe('sudokuDlx1 shared matrix', () => {
       ...[-1, 10, 1.5, NaN, undefined, '1'].map((digit) => [digit, ...Array(80).fill(0)])
     ]
     for (const grid of invalid) {
-      expect(solveDlx1(grid)).toBeNull()
-      expect(solveDlx1(toGrid(puzzle)).join('')).toBe(solution)
+      expect(solveDlx(grid)).toBeNull()
+      expect(solveDlx(toGrid(puzzle)).join('')).toBe(solution)
     }
   })
 })
@@ -127,7 +127,7 @@ describe('sudoku5 incremental state', () => {
   test('rejects an unsatisfiable grid without duplicate givens or initially empty candidate sets', () => {
     const grid = toGrid('300000012000000003002300400001800005060070800000009000008500000900040500470006000')
     const before = [...grid]
-    expect(solveDlx1(grid)).toBeNull()
+    expect(solveDlx(grid)).toBeNull()
     expect(solve5(grid)).toBeNull()
     expect(grid).toEqual(before)
     const [puzzle, solution] = HARD[0]
@@ -141,7 +141,7 @@ describe('sudoku5 incremental state', () => {
       const grid = toGrid(EASY[trial % EASY.length][1]).map((digit) => (random() < 0.6 ? 0 : digit))
       if (trial % 2) grid[Math.floor(random() * 81)] = 1 + Math.floor(random() * 9)
       const before = [...grid]
-      const reference = solveDlx1(grid)
+      const reference = solveDlx(grid)
       const result = solve5(grid)
       // Partial grids may have multiple solutions; compare validity, not solution order.
       if (reference === null) expect(result).toBeNull()
