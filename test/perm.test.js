@@ -100,7 +100,7 @@ test('permWithFilter: pruning gives the same result as filtering all permutation
   const rowFilter = x => x.length % 3 !== 0 || x[x.length - 3] + x[x.length - 2] + x[x.length - 1] === 15;
   const numbers = range(9).map(i => i + 1);
   const byKey = ps => ps.map(p => p.join('')).sort();
-  const expected = perm.perm4(numbers).filter(rowsSum15);
+  const expected = perm.permFast(numbers).filter(rowsSum15);
   const res = permWithFilter(rowFilter)(numbers);
   expect(expected.length).toBeGreaterThan(0);
   expect(byKey(res)).toEqual(byKey(expected));
@@ -112,4 +112,30 @@ test('permWithFilter: a rejected prefix is never extended', () => {
   expect(res).toEqual([[1, 2, 3, 4, 5]]);
   expect(Math.min(...calls)).toBe(2); // single elements are not filtered
   expect(calls.length).toBeLessThan(320); // 20 + 60 + 120 + 120 prefixes without pruning
+});
+
+test('permCached maps the cached index permutations onto any elements', () => {
+  const byKey = ps => ps.map(p => p.join('')).sort();
+  expect(byKey(perm.permCached(['a', 'b', 'c']))).toEqual(['abc', 'acb', 'bac', 'bca', 'cab', 'cba']);
+  expect(byKey(perm.permCached([1, 2, 3]))).toEqual(['123', '132', '213', '231', '312', '321']);
+  expect(byKey(perm.permCached(['x', 'x', 'y']))).toEqual(['xxy', 'xxy', 'xyx', 'xyx', 'yxx', 'yxx']);
+});
+
+test('permCached: changing a result does not leak into later calls', () => {
+  const first = perm.permCached([1, 2, 3]);
+  first.forEach(p => p.fill(0));
+  first.length = 0;
+  const second = perm.permCached([1, 2, 3]);
+  expect(second.length).toBe(6);
+  expect(second.every(p => [...p].sort().join('') === '123')).toBe(true);
+});
+
+test('permCached works above and below the cached length limit', () => {
+  for (const n of [8, 9]) {
+    const xs = range(n).map(i => i + 100);
+    const res = perm.permCached(xs);
+    expect(res.length).toBe(fac(n));
+    expect(res.every(p => p.every(v => xs.includes(v)))).toBe(true);
+    expect(xs).toEqual(range(n).map(i => i + 100));
+  }
 });

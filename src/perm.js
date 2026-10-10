@@ -82,9 +82,9 @@ const perm3a = (xs) =>
     : perm3a(xs.slice(1)).reduce((a, ys) => xs.reduce((acc, _, i) => (acc.push([...ys.slice(0, i), xs[0], ...ys.slice(i)]), acc), a), []);
 const perm3b = (xs) =>
   xs.length < 2 ? [xs.slice()] : perm3b(xs.slice(1)).flatMap((ys) => xs.map((x, i) => [...ys.slice(0, i), xs[0], ...ys.slice(i)]));
-// perm3c = xs => (xs.length < 2 ? [xs] : perm3c(xs.slice(1)).reduce((a, ys) => a.concat(xs.map((x, i) => [...ys.slice(0, i), xs[0], ...ys.slice(i)])), [])); sehr langsam!!
 
-const perm4 = (xs) => {
+// Lookup tables up to 4 elements, Heaps algorithm beyond: the fastest variant.
+const permFast = (xs) => {
   if (xs.length === 4) return perms4(xs);
   if (xs.length === 3) return perms3(xs);
   if (xs.length === 2) return perms2(xs);
@@ -120,16 +120,17 @@ const permWithFilter = (f) => (xs) => {
   return result;
 };
 
-const perm6 = (() => {
+// The permutations of the indices are computed once per length and then mapped onto the elements.
+// They stay in memory, so only up to MAX_CACHED_LENGTH elements are cached (8! = 40320 permutations).
+const permCached = (() => {
+  const MAX_CACHED_LENGTH = 8;
   const range = (n) => [...Array(n).keys()];
   const cache = [];
   return (xs) => {
     const len = xs.length;
-    if (!cache[len]) {
-      cache[len] = perm4(range(len));
-    }
-    const mapping = xs.reduce((acc, x, i) => ((acc[i] = x), acc), {});
-    return cache[len].map((ys) => ys.map((y) => mapping[y]));
+    if (len > MAX_CACHED_LENGTH) return permFast(xs);
+    if (!cache[len]) cache[len] = permFast(range(len));
+    return cache[len].map((ys) => ys.map((y) => xs[y]));
   };
 })();
 
@@ -139,7 +140,7 @@ module.exports = {
   perm2b,
   perm3a,
   perm3b,
-  perm4,
-  perm6,
+  permFast,
+  permCached,
   permWithFilter,
 };

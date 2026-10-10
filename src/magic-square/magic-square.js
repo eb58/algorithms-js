@@ -1,5 +1,5 @@
 const comb = require('../combinations').comb1
-const perm = require('../perm').perm4
+const perm = require('../perm').permFast
 const { range, sum } = require('../ol').ol
 
 // Bitmask of a list of numbers 1..31: number x sets bit x-1.
