@@ -1,4 +1,4 @@
-const { solution1, solution2 } = require('../src/planeseatreservations');
+const { solution1, solution2, solution3 } = require('../src/planeseatreservations');
 
 const cases = [
   [1, '', 3],
@@ -13,11 +13,7 @@ const cases = [
 ];
 
 cases.forEach(([n, reservations, expected]) => {
-  test(`solution1 ${n} ${reservations}`, () => {
-    expect(solution1(n, reservations)).toBe(expected);
-  });
-
-  test(`solution2 ${n} ${reservations}`, () => {
-    expect(solution2(n, reservations)).toBe(expected);
-  });
+  test(`solution1 ${n} ${reservations}`, () => expect(solution1(n, reservations)).toBe(expected));
+  test(`solution2 ${n} ${reservations}`, () => expect(solution2(n, reservations)).toBe(expected));
+  test(`solution3 ${n} ${reservations}`, () => expect(solution3(n, reservations)).toBe(expected));
 });

@@ -24,17 +24,14 @@ const solution2 = (N, reservationsAsString) => feedX(reservationsAsString.split(
   return range(N).reduce((sum, r) => sum + countTriplesInRow(r + 1), 0)
 })
 
-const adjustSol = (f) => (N, reservationsAsString) => f(N, reservationsAsString.split(' '))
+// Seat groups of a row: a row has at most one triple per group (DEF and EFG overlap, so only one of them fits).
+const tripleGroups = [['ABC'], ['DEF', 'EFG'], ['HIK']]
 
-const test = (sol) =>
-  sol(1, '') === 3 &&
-  sol(1, '1A 1B 1D') === 2 &&
-  sol(1, '1A 1B 1E') === 1 &&
-  sol(2, '1A 1B 1D') === 5 &&
-  sol(2, '1A 1B 2D') === 5 &&
-  sol(12, '1A 1B 2D') === 35 &&
-  sol(12, '1A 1B 2D 2E') === 34 &&
-  sol(12, '1A 1B 2D 2E 2F') === 34 &&
-  sol(12, '11A 11B 2D 2E 2F') === 34
+const solution3 = (N, reservationsAsString) => {
+  const taken = new Set(reservationsAsString.split(' '))
+  const isFree = (row, triple) => [...triple].every((seat) => !taken.has(row + seat))
+  const countInRow = (row) => tripleGroups.filter((triples) => triples.some((triple) => isFree(row, triple))).length
+  return range(N).reduce((sum, i) => sum + countInRow(i + 1), 0)
+}
 
-if (typeof module !== 'undefined' && module.exports) module.exports = { solution1, solution2, adjustSol, test }
+if (typeof module !== 'undefined' && module.exports) module.exports = { solution1, solution2, solution3 }
