@@ -17,7 +17,6 @@
     "test": "jest",
     "test:watch": "jest --watchAll",
     "test:coverage": "jest --coverage",
-    "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
     "barcode": "node src/barcodes/barcode.js",
     "magic-hexagon": "node src/magic-hexagon/magic-hexagon.js",
     "ct-puzzle": "node src/ct-puzzle/ct-puzzle.js",
