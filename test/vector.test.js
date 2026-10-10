@@ -4,7 +4,7 @@ const vals = { v1: [1, 2], v2: [2, 1], v3: [1, -1] }
 
 test('exceptions', () => {
     expect(() => V$('')).toThrow('Operand expected. Pos:0');
-    expect(() => V$('?5')).toThrow('Char ? not allowed. Pos:0');
+    expect(() => V$('?5')).toThrow('Unexpected character "?" at position 0');
     expect(V$('5')).toBe(5);
     expect(() => V$('(v1+v2', vals)).toThrow('Closing bracket not found!');
     expect(() => V$('v1-*v2', vals)).toThrow('Operand expected. Pos:4');

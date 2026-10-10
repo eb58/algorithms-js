@@ -12,16 +12,33 @@ describe('parser precedence and validation', () => {
   test('supports zero-argument functions and validates parameters', () => {
     const answer = () => C$(42)
     expect(C$('answer()', { answer })).toEqual(C$(42))
+    const compiledAnswer = C$('() => 6 * 7')
+    expect(compiledAnswer).toEqual(expect.any(Function))
+    expect(compiledAnswer()).toEqual(C$(42))
     expect(() => C$('(x,x) => x')).toThrow('Duplicate parameter name')
     expect(() => C$('(x-y) => x')).toThrow('Invalid parameter name')
     expect(() => C$('x =>')).toThrow('Function expression must not be empty')
   })
 
+  test('keeps binary operator associativity explicit', () => {
+    expect(C$('10-3-2')).toEqual(C$(5))
+    expect(C$('16/4/2')).toEqual(C$(2))
+    expect(C$('2^3^2')).toEqual(C$(512))
+  })
+
+  test('parses nested function arguments and rejects incomplete lists', () => {
+    const sum = (left, right) => cops.add(left, right)
+    expect(C$('sum(1, sum(2, 3))', { sum })).toEqual(C$(6))
+    expect(() => C$('sum(,1)', { sum })).toThrow('Expected an operand')
+    expect(() => C$('sum(1,)', { sum })).toThrow('Expected an operand')
+    expect(() => C$('sum(1 2)', { sum })).toThrow('Expected ")" to close function call')
+  })
+
   test('exposes structured syntax and tokenizer errors', () => {
     expect(() => C$('2+')).toThrow(C$.ComplexSyntaxError)
-    expect(() => C$('2+')).toThrow('Operand expected')
+    expect(() => C$('2+')).toThrow('Expected an operand')
     expect(() => tokenizer('2#')).toThrow(tokenizer.TokenizerError)
-    expect(() => tokenizer('2#')).toThrow('Char # not allowed')
+    expect(() => tokenizer('2#')).toThrow('Unexpected character "#" at position 1')
   })
 
   test('rejects non-finite complex values', () => {
@@ -31,7 +48,46 @@ describe('parser precedence and validation', () => {
   })
 })
 
+describe('tokenizer', () => {
+  test('exposes stable token types and tokenizes operators', () => {
+    const stream = tokenizer('value ** 2, i')
+    expect(tokenizer.TOKENS).toBe(stream.getTOKENS())
+    expect(stream.consume()).toMatchObject({ symbol: tokenizer.TOKENS.ident, name: 'value' })
+    expect(stream.consume()).toMatchObject({ symbol: tokenizer.TOKENS.pow })
+    expect(stream.consume()).toMatchObject({ symbol: tokenizer.TOKENS.number, value: 2 })
+    expect(stream.consume()).toMatchObject({ symbol: tokenizer.TOKENS.comma })
+    expect(stream.consume()).toMatchObject({ symbol: tokenizer.TOKENS.ident, name: 'i' })
+    expect(stream.consume()).toMatchObject({ symbol: tokenizer.TOKENS.end })
+  })
+
+  test('validates input and reports structured error positions', () => {
+    expect(() => tokenizer()).toThrow('Tokenizer input must be a string')
+
+    try {
+      tokenizer('12 # 3')
+    } catch (error) {
+      expect(error).toBeInstanceOf(tokenizer.TokenizerError)
+      expect(error.input).toBe('12 # 3')
+      expect(error.position).toBe(3)
+      expect(error.message).toBe('Unexpected character "#" at position 3')
+    }
+  })
+})
+
 describe('complex arithmetic edge cases', () => {
+  test('accepts real scalars and rejects malformed operands', () => {
+    expect(cops.add(2, C$(3, 4))).toEqual(C$(5, 4))
+    expect(cops.mul(C$(1, 2), 3)).toEqual(C$(3, 6))
+    expect(() => cops.add({ re: 1 }, C$(2))).toThrow('left operand must be a finite number or complex value')
+    expect(() => cops.equals(C$(1), C$(1), -1)).toThrow('Tolerance must be a non-negative finite number')
+  })
+
+  test('keeps built-in constants immutable', () => {
+    expect(Object.isFrozen(cops.i)).toBeTruthy()
+    expect(Object.isFrozen(cops.pi)).toBeTruthy()
+    expect(Object.isFrozen(cops.e)).toBeTruthy()
+  })
+
   test('preserves basic algebraic identities', () => {
     const samples = [C$(1, 2), C$(-3, 0.5), C$(0, -4)]
     samples.forEach((a, index) => {

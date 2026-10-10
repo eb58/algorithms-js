@@ -1,4 +1,7 @@
 const EPSILON = 1e-14
+const I = Object.freeze({ re: 0, im: 1 })
+const PI = Object.freeze({ re: Math.PI, im: 0 })
+const E = Object.freeze({ re: Math.E, im: 0 })
 
 const isComplex = (value) => value && typeof value === 'object' && Number.isFinite(value.re) && Number.isFinite(value.im)
 const asComplex = (value, name = 'value') => {
@@ -9,6 +12,7 @@ const asComplex = (value, name = 'value') => {
 const adj = (c) => ({ re: c.re === -0 ? 0 : c.re, im: c.im === -0 ? 0 : c.im })
 const zero = () => ({ re: 0, im: 0 })
 const one = () => ({ re: 1, im: 0 })
+const isZero = (c) => c.re === 0 && c.im === 0
 const conj = (c) => {
   const z = asComplex(c)
   return adj({ re: z.re, im: -z.im })
@@ -60,7 +64,7 @@ const sqrt = (c) => {
 }
 const ln = (c) => {
   const z = asComplex(c)
-  if (z.re === 0 && z.im === 0) throw new RangeError('Logarithm of zero is undefined')
+  if (isZero(z)) throw new RangeError('Logarithm of zero is undefined')
   return adj({ re: Math.log(len(z)), im: Math.atan2(z.im, z.re) })
 }
 const exp = (c) => {
@@ -92,28 +96,35 @@ const div = (c1, c2) => {
   return adj({ re: (z1.re * z2.re + z1.im * z2.im) / den, im: (z1.im * z2.re - z1.re * z2.im) / den })
 }
 
-const positivePow = (c, n) => {
-  if (n === 0) return one()
-  const squared = sqr(c)
-  return n % 2 === 0 ? positivePow(squared, n / 2) : mul(c, positivePow(squared, Math.floor(n / 2)))
+const positiveIntegerPow = (c, n) => {
+  let result = one()
+  let factor = c
+  let exponent = n
+
+  while (exponent > 0) {
+    if (exponent % 2 === 1) result = mul(result, factor)
+    exponent = Math.floor(exponent / 2)
+    if (exponent > 0) factor = sqr(factor)
+  }
+  return result
 }
 
 const powN = (c, n) => {
   if (!Number.isFinite(n)) throw new RangeError('Exponent must be finite')
-  if (c.re === 0 && c.im === 0) {
+  if (isZero(c)) {
     if (n < 0) throw new RangeError('Zero cannot be raised to a negative power')
-    if (n === 0 || n > 0) return n === 0 ? one() : zero()
+    return n === 0 ? one() : zero()
   }
   if (n === 0) return one()
   if (!Number.isSafeInteger(n)) return exp(mul({ re: n, im: 0 }, ln(c)))
-  return n < 0 ? div(one(), positivePow(c, -n)) : positivePow(c, n)
+  return n < 0 ? div(one(), positiveIntegerPow(c, -n)) : positiveIntegerPow(c, n)
 }
 
 const pow = (c, n) => {
   const base = asComplex(c, 'base')
   const exponent = asComplex(n, 'exponent')
   if (exponent.im === 0) return powN(base, exponent.re)
-  if (base.re === 0 && base.im === 0) throw new RangeError('Zero cannot be raised to a complex power')
+  if (isZero(base)) throw new RangeError('Zero cannot be raised to a complex power')
   return exp(mul(exponent, ln(base)))
 }
 
@@ -125,8 +136,7 @@ const asin = (c) => {
 const acos = (c) => sub({ re: Math.PI / 2, im: 0 }, asin(c))
 const atan = (c) => {
   const z = asComplex(c)
-  const i = { re: 0, im: 1 }
-  return mul({ re: 0, im: -0.5 }, sub(ln(add(one(), mul(i, z))), ln(sub(one(), mul(i, z)))))
+  return mul({ re: 0, im: -0.5 }, sub(ln(add(one(), mul(I, z))), ln(sub(one(), mul(I, z)))))
 }
 const tanh = (c) => div(sinh(c), cosh(c))
 const asinh = (c) => {
@@ -162,9 +172,9 @@ const toString = (c) => {
 }
 
 const cops = {
-  i: { re: 0, im: 1 },
-  pi: { re: Math.PI, im: 0 },
-  e: { re: Math.E, im: 0 },
+  i: I,
+  pi: PI,
+  e: E,
   neg,
   conj,
   add,

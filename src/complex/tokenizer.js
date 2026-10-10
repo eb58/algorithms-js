@@ -1,65 +1,68 @@
 class TokenizerError extends SyntaxError {
   constructor(message, input, position) {
-    super(message)
+    super(`${message} at position ${position}`)
     this.name = 'TokenizerError'
     this.input = input
     this.position = position
   }
 }
 
-const tokenizer = (input) => {
-  const TOKENS = Object.freeze({
-    ident: 'ident',
-    number: 'number',
-    minus: 'minus',
-    plus: 'plus',
-    times: 'times',
-    divide: 'divide',
-    pow: 'pow',
-    lparen: 'lparen',
-    rparen: 'rparen',
-    lbracket: 'lbracket',
-    rbracket: 'rbracket',
-    comma: 'comma',
-    end: 'end'
-  })
+const TOKENS = Object.freeze({
+  ident: 'ident',
+  number: 'number',
+  minus: 'minus',
+  plus: 'plus',
+  times: 'times',
+  divide: 'divide',
+  pow: 'pow',
+  lparen: 'lparen',
+  rparen: 'rparen',
+  lbracket: 'lbracket',
+  rbracket: 'rbracket',
+  comma: 'comma',
+  end: 'end'
+})
 
-  const mapCharToToken = Object.freeze({
-    '+': TOKENS.plus,
-    '-': TOKENS.minus,
-    '*': TOKENS.times,
-    '/': TOKENS.divide,
-    '(': TOKENS.lparen,
-    ')': TOKENS.rparen,
-    '[': TOKENS.lbracket,
-    ']': TOKENS.rbracket,
-    '^': TOKENS.pow,
-    ',': TOKENS.comma
-  })
+const CHAR_TOKENS = Object.freeze({
+  '+': TOKENS.plus,
+  '-': TOKENS.minus,
+  '*': TOKENS.times,
+  '/': TOKENS.divide,
+  '(': TOKENS.lparen,
+  ')': TOKENS.rparen,
+  '[': TOKENS.lbracket,
+  ']': TOKENS.rbracket,
+  '^': TOKENS.pow,
+  ',': TOKENS.comma
+})
+
+const NUMBER_PATTERN = /^(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?/
+const IDENTIFIER_PATTERN = /^\w+/
+
+const tokenizer = (input) => {
+  if (typeof input !== 'string') throw new TypeError('Tokenizer input must be a string')
 
   const cursor = { index: 0 }
   const state = { pos: 0 }
-  const numberPattern = /^(?:\d+(?:\.\d+)?|\.\d+)(?:[eE][+-]?\d+)?/
-  const identifierPattern = /^\w+/
   const fail = (message, position) => {
     throw new TokenizerError(message, input, position)
   }
 
   const getIdentifier = () => {
     const start = cursor.index
-    const match = input.slice(start).match(identifierPattern)
+    const match = input.slice(start).match(IDENTIFIER_PATTERN)
     cursor.index += match[0].length
     return { symbol: TOKENS.ident, name: match[0], strpos: cursor.index }
   }
 
   const getNumber = () => {
     const start = cursor.index
-    const match = input.slice(start).match(numberPattern)
-    if (!match || input[start + match[0].length] === '.') fail(`Invalid number. Pos:${start}`, start)
+    const match = input.slice(start).match(NUMBER_PATTERN)
+    if (!match || input[start + match[0].length] === '.') fail('Invalid number', start)
 
     cursor.index += match[0].length
     const value = Number(match[0])
-    if (!Number.isFinite(value)) fail(`Invalid number. Pos:${start}`, start)
+    if (!Number.isFinite(value)) fail('Invalid number', start)
     return { symbol: TOKENS.number, value, strpos: cursor.index }
   }
 
@@ -75,9 +78,9 @@ const tokenizer = (input) => {
       cursor.index += 2
       return { symbol: TOKENS.pow, strpos: cursor.index }
     }
-    if (!mapCharToToken[c]) fail(`Char ${c} not allowed. Pos:${start}`, start)
+    if (!CHAR_TOKENS[c]) fail(`Unexpected character "${c}"`, start)
     cursor.index++
-    return { symbol: mapCharToToken[c], strpos: cursor.index }
+    return { symbol: CHAR_TOKENS[c], strpos: cursor.index }
   }
 
   const allTokens = []
@@ -96,6 +99,7 @@ const tokenizer = (input) => {
 }
 
 tokenizer.TokenizerError = TokenizerError
+tokenizer.TOKENS = TOKENS
 
 if (typeof globalThis !== 'undefined') globalThis.tokenizer = tokenizer
 if (typeof module !== 'undefined' && module.exports) module.exports = tokenizer

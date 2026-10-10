@@ -7,11 +7,11 @@ describe('strict complex expression syntax', () => {
     expect(C$('3i')).toEqual(C$(0, 3))
     expect(C$('2e')).toEqual(C$(2 * Math.E))
     expect(C$('2sin(0)')).toEqual(C$(0))
-    expect(() => C$('2(3)')).toThrow('Unexpected symbol')
+    expect(() => C$('2(3)')).toThrow('Unexpected token')
   })
 
   test('rejects trailing input and unknown identifiers', () => {
-    expect(() => C$('2+')).toThrow('Operand expected')
+    expect(() => C$('2+')).toThrow('Expected an operand')
     expect(() => C$('unknown')).toThrow('Unknown identifier unknown')
     expect(() => C$('invalid', { invalid: null })).toThrow('Invalid value for identifier invalid')
   })
@@ -25,7 +25,7 @@ describe('strict complex expression syntax', () => {
     ;['.', '1.', '1.2.3'].forEach((expression) => {
       expect(() => C$(expression)).toThrow('Invalid number')
     })
-    expect(() => C$('1e+')).toThrow('Operand expected')
+    expect(() => C$('1e+')).toThrow('Expected an operand')
   })
 })
 

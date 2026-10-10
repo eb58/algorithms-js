@@ -9,16 +9,16 @@ test('simple for debug', () => {
 })
 
 test('exceptions', () => {
-  expect(() => C$('')).toThrow('Operand expected. Pos:0')
-  expect(() => C$('?5')).toThrow('Char ? not allowed. Pos:0')
-  expect(() => C$('5#4')).toThrow('Char # not allowed. Pos:1')
-  expect(() => C$('(1+5')).toThrow('Closing bracket not found!')
-  expect(() => C$('1-*5')).toThrow('Operand expected. Pos:3')
-  expect(() => C$('pow(3,2')).toThrow('Closing bracket not found! Pos:7')
+  expect(() => C$('')).toThrow('Expected an operand at position 0')
+  expect(() => C$('?5')).toThrow('Unexpected character "?" at position 0')
+  expect(() => C$('5#4')).toThrow('Unexpected character "#" at position 1')
+  expect(() => C$('(1+5')).toThrow('Expected ")" to close expression')
+  expect(() => C$('1-*5')).toThrow('Expected an operand at position 3')
+  expect(() => C$('pow(3,2')).toThrow('Expected ")" to close function call at position 7')
 
-  expect(() => C$()).toThrow('False initialisation of C$')
-  expect(() => C$({ s: 7 })).toThrow('False initialisation of C$')
-  expect(() => C$('sin 5')).toThrow('Opening paren expected')
+  expect(() => C$()).toThrow('C$ expects a finite number or an expression string')
+  expect(() => C$({ s: 7 })).toThrow('C$ expects a finite number or an expression string')
+  expect(() => C$('sin 5')).toThrow('Expected "(" after function "sin"')
 })
 
 test('init complex with numbers', () => {
@@ -145,8 +145,8 @@ test('external variables and functions ', () => {
   const f2 = (z) => C$('f1(z)+1', { z, f1 })
   const f3 = (z) => C$('-i*(z+1)*(z+1)*(z*z*z*z)', { z })
 
-  expect(C$('sqr(2*i)', )).toEqual(C$(-4))
-  expect(C$('cub(2*i)', )).toEqual(C$(0, -8))
+  expect(C$('sqr(2*i)')).toEqual(C$(-4))
+  expect(C$('cub(2*i)')).toEqual(C$(0, -8))
 
   expect(f1(C$('2*i'))).toEqual(C$(-4))
   expect(f2(C$('2*i'))).toEqual(C$(-3))
