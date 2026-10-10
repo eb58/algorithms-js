@@ -69,20 +69,16 @@ const comb3a = (xs, k) =>
       []
     )
 
-comb4 = (() => {
-  const range = (n) => [...Array(n).keys()]
-  const cache = {}
-  return (comb4 = (xs, k) => {
-    const len = xs.length
-    if (!cache[len]) {
-      cache[len] = {}
-    }
-    if (!cache[len][k]) {
-      cache[len][k] = comb1(range(len), k)
-    }
-    const mapping = xs.reduce((acc, x, i) => ((acc[i] = x), acc), {})
-    return cache[len][k].map((ys) => ys.map((y) => mapping[y]))
-  })
+// comb4 - caches index combinations per (n, k) and maps them onto xs
+const comb4 = (() => {
+  const cache = new Map()
+  const comb4 = (xs, k) => {
+    if (k < 0 || k > xs.length) return []
+    const key = `${xs.length},${k}`
+    if (!cache.has(key)) cache.set(key, comb1(range(xs.length), k))
+    return cache.get(key).map((ys) => ys.map((y) => xs[y]))
+  }
+  return comb4
 })()
 
 module.exports = {
