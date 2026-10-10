@@ -59,7 +59,8 @@ const sqrt = (c) => {
   const z = asComplex(c)
   const radius = len(z)
   const re = Math.sqrt(Math.max(0, (radius + z.re) / 2))
-  const im = (z.im < 0 ? -1 : 1) * Math.sqrt(Math.max(0, (radius - z.re) / 2))
+  const belowRealAxis = z.im < 0 || Object.is(z.im, -0)
+  const im = (belowRealAxis ? -1 : 1) * Math.sqrt(Math.max(0, (radius - z.re) / 2))
   return adj({ re, im })
 }
 const ln = (c) => {
