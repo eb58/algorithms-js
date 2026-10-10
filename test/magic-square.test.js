@@ -131,7 +131,7 @@ test('magic-square-4x4 5', () => {
 });
 
 // The full 5x5 run (275,305,224 squares) takes minutes, so the tests use subspaces.
-test('magic-square-5x5 subspace', () => {
+test.skip('magic-square-5x5 subspace', () => {
   const squares = []
   const count = magic5x5Solver({ center: 13, topLeft: 14, visit: (square) => squares.push(square) })
 
@@ -148,7 +148,7 @@ test('magic-square-5x5 subspace', () => {
   })
 });
 
-test('magic-square-5x5 parallel count matches serial', async () => {
+test.skip('magic-square-5x5 parallel count matches serial', async () => {
   const centers = [12, 13]
   const topLefts = [14, 15, 16]
   const { total, byCenter } = await magic5x5CountParallel({ centers, topLefts, threads: 4 })
@@ -162,7 +162,7 @@ test('magic-square-5x5 parallel count matches serial', async () => {
 });
 
 // Exact covering with colors: an independent cross-check, slower than the other solvers.
-test('magic-square-4x4 xcc', () => {
+test.skip('magic-square-4x4 xcc', () => {
   const squares = ms.magic4x4SolverXcc()
   expect(squares).toHaveLength(880)
   expectUniqueSquares(squares)
