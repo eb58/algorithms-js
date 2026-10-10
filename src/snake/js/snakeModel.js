@@ -1,41 +1,50 @@
-const snakeModel = (w, h, len) => {
-  const feedX = (x, f) => f(x);
-  const range = n => [...Array(n).keys()];
-
-  const initial = () => snake.slice(0,length-1);
-  const head = () => snake[0];
-  const last = () => snake[snake.length - 1];
-  const rest = () => snake.slice(1);
-  const hasBorderCollision = () => !smath.pointInRect(snake[0], smath.rect(0, 0, w, h));
-  const hasCollisionPoint = (p) => rest().some(q => smath.sqrdist(p, q) === 0);
-  const hasSelfCollision = () => hasCollisionPoint(head())
-  const hasCollision = () => hasBorderCollision() || hasSelfCollision();
-  const hasEatenFruit = () => smath.sqrdist(snake[0], fruit) === 0;
-  const rndPoint = () => smath.randomPointInRect(smath.rect(1, 1, w - 1, h - 1));
-  const generateFruit = () => feedX(rndPoint(), (p) => hasCollisionPoint(p) ? generateFruit() : p);
-  const doFeed = (n) => { feed += n; fruit = generateFruit() };
-
-  const p = smath.randomPointInRect(smath.rect(w / 4, 2, w - len, h - 2));
-  let snake = range(len).map(v => smath.point(v + p.x, p.y));
-  let fruit = generateFruit();
-  let feed = 0;
-
-  const updateSnake = (vec) => {
-    const oldLast = last();
-    const newhead = smath.point(head().x + vec.dx, head().y + vec.dy);
-    snake = [newhead, ...(feed === 0 ? initial() :snake)];
-    feed = Math.max(0, feed - 1);
-    return oldLast;
+const snakeModel = (width, height, length = 5) => {
+  let snake
+  let fruit
+  let pendingGrowth
+  const samePoint = (a, b) => a.x === b.x && a.y === b.y
+  const isOnSnake = (point, includeHead = true) => snake.slice(includeHead ? 0 : 1).some((part) => samePoint(part, point))
+  const generateFruit = () => {
+    const freeCells = []
+    for (let y = 0; y < height; y += 1)
+      for (let x = 0; x < width; x += 1) {
+        if (!isOnSnake({ x, y })) freeCells.push({ x, y })
+      }
+    return freeCells.length ? freeCells[Math.floor(Math.random() * freeCells.length)] : null
   }
-
+  const reset = () => {
+    const startX = Math.floor(width / 2)
+    const startY = Math.floor(height / 2)
+    snake = Array.from({ length }, (_, index) => ({ x: startX + index, y: startY }))
+    pendingGrowth = 0
+    fruit = generateFruit()
+  }
+  const updateSnake = (vector) => {
+    const oldTail = snake[snake.length - 1]
+    snake.unshift({ x: snake[0].x + vector.dx, y: snake[0].y + vector.dy })
+    if (pendingGrowth > 0) pendingGrowth -= 1
+    else snake.pop()
+    return oldTail
+  }
+  const hasCollision = () => {
+    const head = snake[0]
+    return head.x < 0 || head.x >= width || head.y < 0 || head.y >= height || isOnSnake(head, false)
+  }
+  const hasEatenFruit = () => fruit && samePoint(snake[0], fruit)
+  const doFeed = (amount = 1) => {
+    pendingGrowth += amount
+    fruit = generateFruit()
+  }
+  reset()
   return {
+    reset,
     doFeed,
     updateSnake,
     hasCollision,
     hasEatenFruit,
-    head,
-    last,
+    head: () => snake[0],
+    last: () => snake[snake.length - 1],
     arr: () => snake,
-    fruit: () => fruit,
-  };
-};
+    fruit: () => fruit
+  }
+}

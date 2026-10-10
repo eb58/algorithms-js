@@ -1,22 +1,78 @@
-<!DOCTYPE html>
-
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-  <title>S N A K E</title>
-  <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Ctext%20y%3D'.9em'%20font-size%3D'90'%3E%F0%9F%90%8D%3C%2Ftext%3E%3C%2Fsvg%3E">
-  <meta name="description" content="Snake">
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/raphael/2.3.0/raphael.min.js"></script>
-  <script src="js/smath.js"></script>
-  <script src="js/snakeModel.js"></script>
-  <script src="js/snakeView.js"></script>
-  <script src="js/snakeGame.js"></script>
-</head>
-
-<body>
-</body>
-<script>
-  snakeGame(30, 20).play();
-</script>
-
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#07110f" />
+    <meta name="description" content="Neon Snake – der Arcade-Klassiker im modernen Gewand" />
+    <title>Neon Snake</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Ctext%20y%3D'.9em'%20font-size%3D'90'%3E%F0%9F%90%8D%3C%2Ftext%3E%3C%2Fsvg%3E"
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="snake.css" />
+    <script defer src="js/smath.js"></script>
+    <script defer src="js/snakeModel.js"></script>
+    <script defer src="js/snakeView.js"></script>
+    <script defer src="js/snakeGame.js"></script>
+  </head>
+  <body>
+    <main class="game-shell">
+      <header class="masthead">
+        <div>
+          <p class="eyebrow"><span></span> ARCADE // 01</p>
+          <h1>NEON<br /><em>SNAKE</em></h1>
+        </div>
+        <p class="tagline">Friss. Wachse.<br />Bleib am Leben.</p>
+      </header>
+      <section class="game-panel" aria-label="Snake-Spiel">
+        <div class="stats" aria-live="polite">
+          <div><span>Punkte</span><strong id="score">000</strong></div>
+          <div><span>Rekord</span><strong id="high-score">000</strong></div>
+          <div><span>Tempo</span><strong id="level">01</strong></div>
+        </div>
+        <div class="canvas-wrap" id="canvas-wrap">
+          <canvas id="game" width="720" height="480" aria-label="Spielfeld" role="img"></canvas>
+          <div class="screen active" id="start-screen">
+            <div class="screen-card">
+              <span class="kicker">Bereit?</span>
+              <h2>Drück Start.<br />Jage den <i>Pulse.</i></h2>
+              <button class="primary" id="start-button">Spiel starten <span>↗</span></button>
+              <p>Pfeiltasten / WASD · Leertaste pausiert</p>
+            </div>
+          </div>
+          <div class="screen" id="pause-screen">
+            <div class="screen-card compact">
+              <span class="kicker">Pause</span>
+              <h2>Kurz Luft holen.</h2>
+              <button class="primary" id="resume-button">Weiter <span>→</span></button>
+            </div>
+          </div>
+          <div class="screen" id="game-over-screen">
+            <div class="screen-card">
+              <span class="kicker">Game over</span>
+              <h2><span id="final-score">0</span> Punkte.<br /><i>Noch eine Runde?</i></h2>
+              <button class="primary" id="restart-button">Nochmal <span>↻</span></button>
+              <p id="record-message">Dein Rekord wartet.</p>
+            </div>
+          </div>
+        </div>
+        <div class="mobile-controls" aria-label="Richtungssteuerung">
+          <button data-direction="up" aria-label="Nach oben">↑</button><button data-direction="left" aria-label="Nach links">←</button>
+          <button data-direction="down" aria-label="Nach unten">↓</button><button data-direction="right" aria-label="Nach rechts">→</button>
+        </div>
+        <footer class="game-footer">
+          <button class="text-button" id="sound-button" aria-pressed="true"><span>◉</span> Sound an</button>
+          <p><kbd>WASD</kbd> oder <kbd>← ↑ → ↓</kbd></p>
+          <button class="text-button" id="pause-button"><span>Ⅱ</span> Pause</button>
+        </footer>
+      </section>
+    </main>
+    <script>
+      window.addEventListener('DOMContentLoaded', () => snakeGame(30, 20).play())
+    </script>
+  </body>
 </html>
