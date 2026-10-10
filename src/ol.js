@@ -472,3 +472,4 @@ if (typeof module !== 'undefined')
     cache: ol.cache,
     memoize: ol.memoize
   }
+if (typeof globalThis !== 'undefined') Object.assign(globalThis, { ol, num, interval, array, bitset, vector, matrix })

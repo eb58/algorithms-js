@@ -1,8 +1,8 @@
 //  PENTOMINO
 const isCommonJs = typeof module !== 'undefined' && module.exports
-const { matrix, ol } = isCommonJs ? require('../ol') : globalThis
-const { range, zip, uniqBy } = ol
-const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = matrix
+const { matrix: matrixLib, ol: olLib } = isCommonJs ? require('../ol') : globalThis
+const { range, zip, uniqBy } = olLib
+const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = matrixLib
 
 const filledBoard = [
   ['l', 'l', 'x', 'n', 'n', 'n', 'i', 'i', 'i', 'i', 'i', 'f', 'v', 'v', 'v'],

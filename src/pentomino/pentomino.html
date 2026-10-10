@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <meta name="theme-color" content="#10131c">
+   <title>Pentomino — Algorithm Observatory</title>
+   <link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg'%20viewBox%3D'0%200%20100%20100'%3E%3Ctext%20y%3D'.9em'%20font-size%3D'90'%3E%F0%9F%A7%A9%3C%2Ftext%3E%3C%2Fsvg%3E">
+   <link rel="stylesheet" href="./pentomino.css">
+   <script src="../ol.js"></script>
+   <script src="../dlx.js"></script>
+   <script src="./pentomino.js"></script>
+</head>
+
+<body>
+   <div class="noise" aria-hidden="true"></div>
+   <div class="app-shell">
+      <header class="topbar">
+         <a class="wordmark" href="#top" aria-label="Pentomino Startseite">
+            <span class="wordmark__mark"><i></i><i></i><i></i><i></i></span>
+            <span>PENTOMINO<span class="wordmark__dot">.</span></span>
+         </a>
+         <div class="topbar__context">
+            <span class="signal-dot"></span>
+            <span>EXAKTE ÜBERDECKUNG</span>
+            <span class="topbar__number">01 / 01</span>
+         </div>
+      </header>
+
+      <main id="top">
+         <section class="intro">
+            <div class="intro__copy">
+               <p class="eyebrow"><span class="eyebrow__line"></span>Zwölf Formen, ein Rechteck</p>
+               <h1>Sieh zu, wie alles<br><em>lückenlos</em> zusammenpasst.</h1>
+               <p class="intro__lead">Jede der zwölf Pentomino-Formen besteht aus fünf Kästchen. Zusammen füllen sie ein Rechteck randvoll, ohne Überlappung und ohne Lücke — ein klassisches Exact-Cover-Problem, gelöst mit Dancing Links.</p>
+            </div>
+            <div class="intro__aside">
+               <span class="intro__aside-label">Lösungen für 6 × 10</span>
+               <strong>2339</strong>
+               <span class="intro__aside-note">erstmals gezählt mit Donald&nbsp;Knuths<br>Dancing-Links-Algorithmus (2000) —<br>dem Vorbild dieses Lösers.</span>
+            </div>
+         </section>
+
+         <section class="workspace" aria-label="Pentomino Simulation">
+            <div class="workspace__header">
+               <div>
+                  <p class="section-kicker">LIVE-LÖSER <span></span></p>
+                  <h2>Das Spielfeld</h2>
+               </div>
+               <div class="status" aria-live="polite">
+                  <span class="status__pulse"></span>
+                  <span id="status-label">Bereit</span>
+               </div>
+            </div>
+
+            <div class="simulation">
+               <div class="simulation__topline">
+                  <span class="simulation__hint" id="solve-hint">Wähle ein Format und würfle eine Lösung.</span>
+                  <span class="simulation__counter"><b id="solve-time">—</b> MS</span>
+               </div>
+
+               <div class="board-wrap">
+                  <div class="board" id="board" role="group" aria-label="Pentomino-Spielfeld" style="--cols:10;--rows:6"></div>
+               </div>
+
+               <div class="board__legend" id="legend" aria-hidden="true"></div>
+            </div>
+
+            <div class="controls">
+               <div class="controls__primary">
+                  <button class="button button--primary" id="shuffle-button" type="button">
+                     <span class="button__icon button__icon--dice" aria-hidden="true">⚄</span>
+                     <span>Neue Lösung würfeln</span>
+                  </button>
+               </div>
+               <div class="controls__secondary board-sizes" id="board-sizes" role="group" aria-label="Spielfeldgröße">
+                  <button class="button button--size button--size-active" data-dimr="6" data-dimc="10" type="button">6×10</button>
+                  <button class="button button--size" data-dimr="5" data-dimc="12" type="button">5×12</button>
+                  <button class="button button--size" data-dimr="4" data-dimc="15" type="button">4×15</button>
+                  <button class="button button--size" data-dimr="3" data-dimc="20" type="button">3×20</button>
+               </div>
+            </div>
+         </section>
+
+         <section class="details">
+            <div class="settings-card">
+               <div class="card-heading">
+                  <span class="card-heading__number">01</span>
+                  <div><span class="card-heading__kicker">ALGORITHMUS</span><h3>Wie der Löser denkt</h3></div>
+               </div>
+               <p class="card-note card-note--lead">Jede Platzierung einer Form wird zu einer Zeile in einer 0/1-Matrix. Gesucht ist eine Teilmenge von Zeilen, die jede Spalte — jedes Feld, jede Form — genau einmal abdeckt.</p>
+               <p class="card-note">Dancing Links hält diese Matrix als verkettete Ringe und entfernt bzw. restauriert Zeilen in O(1), was die Rückverfolgung beim Backtracking sehr günstig macht.</p>
+            </div>
+
+            <div class="history-card">
+               <div class="card-heading">
+                  <span class="card-heading__number">02</span>
+                  <div><span class="card-heading__kicker">LIVE-ZAHLEN</span><h3>Diese Lösung</h3></div>
+               </div>
+               <div class="history-list" id="stats-list" aria-live="polite"></div>
+            </div>
+
+            <div class="quote-card">
+               <span class="quote-mark">“</span>
+               <p>Die zwölf Formen tragen die Großbuchstaben, denen sie am ähnlichsten sehen — nur das X spielt eine Extrarolle: Es sieht eher nach einem Plus aus.</p>
+               <span class="quote-author">— Benennung nach Solomon&nbsp;W.&nbsp;Golomb</span>
+            </div>
+         </section>
+      </main>
+
+      <footer class="footer">
+         <span>PENTOMINO / 01</span>
+         <span>Exact Cover, choreografiert mit Dancing Links</span>
+         <span>Scroll to explore <b>↓</b></span>
+      </footer>
+   </div>
+
+   <script src="./pentomino-ui.js"></script>
+</body>
+
+</html>

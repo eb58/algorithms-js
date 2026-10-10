@@ -186,3 +186,4 @@ if (typeof module !== 'undefined') {
   module.exports = dlx_solve
   module.exports.createDlx = createDlx
 }
+if (typeof globalThis !== 'undefined') Object.assign(globalThis, { dlx_solve, createDlx })
