@@ -51,3 +51,10 @@ test('matrix translate', () => {
     expect(translate(mat, 1, 1)).toEqual([[0, 0, 0, 0], [0, 1, 1, 1], [0, 0, 1, 0]]);
     expect(translate(mat, 1, 2)).toEqual([[0, 0, 0, 0], [0, 0, 1, 1], [0, 0, 0, 1]]);
 })
+
+test('redim and translate keep zeros when the default is not zero', () => {
+    expect(redim([[0, 1]], 1, 3, 7)).toEqual([[0, 1, 7]]);
+    expect(translate([[0, 1], [2, 3]], 0, 0, 7)).toEqual([[0, 1], [2, 3]]);
+    expect(translate([[0, 1], [2, 3]], 1, 0, 7)).toEqual([[7, 7], [0, 1]]);
+    expect(translate([[0, 1], [2, 3]], 0, 1, 7)).toEqual([[7, 0], [7, 2]]);
+});

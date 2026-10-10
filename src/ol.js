@@ -10,7 +10,7 @@ const ol = (() => {
   const sqr = (x) => x ** 2
   const cub = (x) => x ** 3
 
-  const gcd = (a, b) => (a % b === 0 ? b : gcd(b, a % b))
+  const gcd = (a, b) => (b === 0 ? abs(a) : gcd(b, a % b))
   const fac = (x) => prod(range(x).map(inc))
   const fib = (x) => (x <= 2 ? 1 : fib(x - 1) + fib(x - 2))
 
@@ -20,14 +20,6 @@ const ol = (() => {
 
   const blanks = (n) => ' '.repeat(n)
   const indent = (s, lev, opts) => feedX({ fillChars: '   ', prompt: '', ...opts }, (opts) => opts.fillChars.repeat(lev) + opts.prompt + s)
-  // padding pad,
-  // const randomColor = () =>      '#A2F0D9'
-  // https://www.kaggle.com/code/parulpandey/10-useful-string-methods-in-python
-  // https://www.pythonmorsels.com/string-methods/#the-most-useful-string-methods
-  // const center  = (s, length, fillchar = ' ') =>
-  // const count = (s, searchVal ) =>
-  // ljust( ) and rjust( )¶
-  // string.zfill(width)
 
   ///////////////////////////////////////////////////////////////////////////////////////////////////
   // technical functions
@@ -50,7 +42,7 @@ const ol = (() => {
   const even = (x) => x % 2 === 0
   const isInInterval = (x, a, b) => a <= x && x <= b
   const isLeapYear = (x) => (x % 4 === 0 && x % 100 !== 0) || x % 400 === 0
-  const isPrime = (n) => n === 2 || rangeClosed(2, Math.ceil(Math.sqrt(n))).every((m) => n % m !== 0)
+  const isPrime = (n) => n > 1 && rangeClosed(2, Math.floor(Math.sqrt(n))).every((m) => n % m !== 0)
 
   // generate predicates
   // usage: [1,2,3,4,5].filter(gtPred(3)) // -> [4,5]
@@ -134,16 +126,33 @@ const ol = (() => {
 
   const randomElem = (xs) => xs[Math.floor(Math.random() * xs.length)]
 
-  const average = (xs) => xs.reduce(add) / xs.length
-  const median = (xs) => ((xs = xs.toSorted()), feedX(xs.length / 2, (mid) => (mid % 2 === 0 ? (xs[mid - 1] + xs[mid]) / 2 : xs[mid - 0.5])))
+  const average = (xs) => sum(xs) / xs.length // NaN for an empty array
+  const median = (xs) => ((xs = xs.toSorted(cmpNumbers)), feedX(xs.length / 2, (mid) => (Number.isInteger(mid) ? (xs[mid - 1] + xs[mid]) / 2 : xs[mid - 0.5])))
   const patch = (xs, idx, val) => xs.with(idx, val)
   const without = (xs, x) => xs.filter((y) => x !== y)
   const withoutIndex = (xs, idx) => xs.filter((_, i) => i !== idx)
-  const sort = (xs, cmp) => xs.toSorted(cmp)
-  const shuffle = (xs) => xs.reduce((xs, x, i) => (feedX(randomIntInRange(0, xs.length - 1), (j) => ([xs[i], xs[j]] = [xs[j], x])), xs), xs)
+  const sort = (xs, compare = cmp) => xs.toSorted(compare) // numeric order for numbers, not alphabetic like Array.sort
+  // Fisher-Yates: returns a shuffled copy, xs stays untouched
+  const shuffle = (xs) => {
+    const ys = [...xs]
+    for (let i = ys.length - 1; i > 0; i--) {
+      const j = randomIntInRange(0, i)
+      ;[ys[i], ys[j]] = [ys[j], ys[i]]
+    }
+    return ys
+  }
   const flatten = (xs) => xs.reduce((acc, o) => acc.concat(Array.isArray(o) ? flatten(o) : o), [])
   const uniq = (xs) => Array.from(new Set(xs))
-  const uniqBy = (xs, proj) => Object.values(xs.reduce((a, v) => ({ ...a, [proj(v)]: v }), {}))
+  // keeps the first element of each kind, in order
+  const uniqBy = (xs, proj) => {
+    const seen = new Set()
+    return xs.filter((x) => {
+      const key = proj(x)
+      if (seen.has(key)) return false
+      seen.add(key)
+      return true
+    })
+  }
 
   const groupBy = (xs, proj) => xs.reduce((a, v) => feedX(proj(v), (k) => ((a[k] = [...(a[k] || []), v]), a)), {})
 
@@ -179,7 +188,7 @@ const ol = (() => {
   // example: log(() => sin(2))
   const log = (f) => {
     const t = timer()
-    const res = f(args)
+    const res = f()
     console.log('res:', res, 'time:', t.elapsedTime())
     return res
   }
@@ -213,14 +222,15 @@ const ol = (() => {
         .reduce((acc, k) => ({ ...acc, [k]: c[k] }), {}))
   })
 
+  // default cache: entries live (almost) forever (ttl 0)
   const memoize =
-    (f, c = cache()) =>
+    (f, c = cache(0)) =>
     (x) =>
       c.get(x) === undefined ? c.add(x, f(x)).val : c.get(x)
 
-  const simpleCache = (c = {}) => ({ add: (key, val) => (c[key] = val), get: (key) => c[key] })
+  const simpleCache = (c = new Map()) => ({ add: (key, val) => (c.set(key, val), val), get: (key) => c.get(key) })
   const memoizeX =
-    (f, insertCondition = () => true, hash = (x) => x, c = simpleCache()) =>
+    (f, insertCondition = () => true, hash = (...args) => JSON.stringify(args), c = simpleCache()) =>
     (...args) => {
       const h = hash(...args)
       if (c.get(h) !== undefined) return c.get(h)
@@ -332,7 +342,6 @@ const num = (x) => ({
   abs: () => ol.abs(x),
   sqr: () => ol.sqr(x),
   cube: () => ol.cub(x),
-  cub: () => ol.cub(x),
   isInInterval: (a, b) => ol.isInInterval(x, a, b)
 })
 
@@ -356,18 +365,16 @@ const array = (xs) => ({
   zip: (ys, f) => ol.zip(xs, ys, f),
 
   initial: () => xs.slice(0, -1),
-  head: () => [xs[0]],
   tail: () => xs.slice(1),
-  rest: () => xs.slice(1),
   first: () => xs[0],
   last: () => xs[xs.length - 1],
   unite: (ys) => ol.uniq([...xs, ...ys]),
   xor: (ys) => [...xs, ...ys].filter((x) => !(xs.includes(x) && ys.includes(x))),
   intersect: (ys) => xs.filter((x) => ys.includes(x)),
   subtract: (ys) => xs.filter((x) => !ys.includes(x)),
-  greaterThen: (a) => xs.filter(gtPred(a)),
-  lesserThen: (a) => xs.filter(ltPred(a)),
-  isSubsetOf: (ys) => ys.every((x) => xs.includes(x)),
+  greaterThan: (a) => xs.filter(ol.gtPred(a)),
+  lesserThan: (a) => xs.filter(ol.ltPred(a)),
+  isSubsetOf: (ys) => xs.every((x) => ys.includes(x)),
   tap: (f) => (f(xs), xs)
 })
 
@@ -377,7 +384,7 @@ const array = (xs) => ({
 
 const vector = {
   vadd: (v1, v2) => ol.zip(v1, v2, ol.add),
-  vsqrdist: (v1, v2) => ol.zip(v1, v2, (x, y) => (x - y) ** 2),
+  vsqrdist: (v1, v2) => ol.sum(ol.zip(v1, v2, (x, y) => (x - y) ** 2)),
   vdist: (v1, v2) => Math.sqrt(vector.vsqrdist(v1, v2)),
   vscalar: (v1, v2) => ol.sum(ol.zip(v1, v2, ol.mul)),
   vnorm: (v) => Math.sqrt(vector.vscalar(v, v))
@@ -389,10 +396,10 @@ const vector = {
 const matrix = {
   clone: (m) => m.map((r) => [...r]),
   reshape: (m, dim) => m.reduce((acc, x, i) => (i % dim ? acc[acc.length - 1].push(x) : acc.push([x])) && acc, []),
-  redim: (m, nrows, ncols, defVal = 0) => ol.range(nrows).map((r) => ol.range(ncols).map((c) => m[r]?.[c] || defVal)),
+  redim: (m, nrows, ncols, defVal = 0) => ol.range(nrows).map((r) => ol.range(ncols).map((c) => m[r]?.[c] ?? defVal)),
   makeQuadratic: (m, defVal = 0) => ol.feedX(Math.max(m.length, m[0].length), (dim) => matrix.redim(m, dim, dim, defVal)),
   transpose: (m) => m[0].map((_, i) => m.map((r) => r[i])),
-  translate: (m, dr, dc, defVal = 0) => ol.range(m.length).map((r) => ol.range(m[0].length).map((c) => m[r - dr]?.[c - dc] || defVal)),
+  translate: (m, dr, dc, defVal = 0) => ol.range(m.length).map((r) => ol.range(m[0].length).map((c) => m[r - dr]?.[c - dc] ?? defVal)),
   rotate90: (m) => m[0].map((_, idx) => m.map((r) => r[r.length - idx - 1])),
   rotateN90: (m, n) => ol.range(n).reduce(matrix.rotate90, m)
 }
@@ -409,19 +416,19 @@ const bitset = {
     while (bs) {
       if (bs & 1) res.push(i)
       i++
-      bs >>= 1
+      bs >>>= 1
     }
     return res
   },
   size: (bs) => {
     let count = 0
-    while (bs) (bs & 1 ? count++ : 0, (bs >>= 1))
+    while (bs) (bs & 1 ? count++ : 0, (bs >>>= 1))
     return count
   },
 
   add: (bs, v) => bs | (1 << v),
   rm: (bs, v) => bs & ~(1 << v),
-  set: (bs, n, v) => bs | ((v ? 1 : 0) << n),
+  set: (bs, n, v) => (v ? bs | (1 << n) : bs & ~(1 << n)),
   isEmpty: (bs) => bs === 0,
   sum: (bs) => bitset.toArray(bs).reduce(ol.add, 0),
   union: (bs1, bs2) => bs1 | bs2,
@@ -430,8 +437,6 @@ const bitset = {
   xor: (bs1, bs2) => bs1 ^ bs2,
   isSubset: (bs1, bs2) => (bs1 & ~bs2) === 0,
   has: (bs, v) => !!(bs & (1 << v)),
-  includes: (bs, v) => !!(bs & (1 << v)),
-  contains: (bs, n) => !!(bs & (1 << n)),
   slice: (bs, n) => {
     let res = 0
     let i = 0

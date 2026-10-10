@@ -26,8 +26,8 @@ test('bitset', () => {
     expect(bitset.diff(bs1, bs2)).toBe(bitset.fromArray([1, 2, 9]));
     expect(bitset.xor(bs1, bs2)).toBe(bitset.fromArray([1, 2, 9, 12]));
 
-    expect(bitset.contains(bs1, 2)).toBe(true);
-    expect(bitset.contains(bs1, 12)).toBe(false);
+    expect(bitset.has(bs1, 2)).toBe(true);
+    expect(bitset.has(bs1, 12)).toBe(false);
 
     expect(bitset.sum(bs)).toBe(23);
     expect(bitset.toArray(bitset.slice(bs1, 0))).toEqual([1, 2, 9, 11]);
@@ -36,4 +36,21 @@ test('bitset', () => {
     expect(bitset.at(bs1, 0)).toBe(1);
     expect(bitset.at(bs1, 3)).toBe(11);
     expect(() => bitset.at(bs1, 4)).toThrow('Wrong index 4');
+});
+
+test('bitset with bit 31 (negative number)', () => {
+    const bs = bitset.fromArray([0, 31]);
+    expect(bitset.toArray(bs)).toEqual([0, 31]);
+    expect(bitset.size(bs)).toBe(2);
+    expect(bitset.toArray(bitset.fromArray([31]))).toEqual([31]);
+    expect(bitset.size(bitset.fromArray([30, 31]))).toBe(2);
+});
+
+test('bitset set sets and clears a bit', () => {
+    const bs = bitset.fromArray([0, 2]);
+    expect(bitset.set(bs, 1, true)).toBe(bitset.fromArray([0, 1, 2]));
+    expect(bitset.set(bs, 2, false)).toBe(bitset.fromArray([0]));
+    expect(bitset.set(bs, 0, 0)).toBe(bitset.fromArray([2]));
+    expect(bitset.set(bs, 3, 0)).toBe(bs);
+    expect(bitset.set(bs, 2, 1)).toBe(bs);
 });

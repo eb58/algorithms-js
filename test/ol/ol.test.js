@@ -338,11 +338,8 @@ test('num', () => {
   expect(num(1).sqr()).toBe(1)
   expect(num(2).sqr()).toBe(4)
 
-  expect(num(0).cub()).toBe(0)
   expect(num(0).cube()).toBe(0)
-  expect(num(1).cub()).toBe(1)
   expect(num(1).cube()).toBe(1)
-  expect(num(2).cub()).toBe(8)
   expect(num(2).cube()).toBe(8)
 
   expect(num(0).abs()).toBe(0)
@@ -430,4 +427,132 @@ test('counter foreach', () => {
 test('counter reduce', () => {
   const res = counter(5).reduce((acc, i) => acc + i, 0)
   expect(res).toBe(15)
+})
+
+test('median of arrays with even length and numbers', () => {
+  expect(median([1, 2])).toBe(1.5)
+  expect(median([1, 2, 3, 4, 5, 6])).toBe(3.5)
+  expect(median([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])).toBe(5.5)
+  expect(median([10, 1, 2])).toBe(2) // numeric order, not alphabetic
+  expect(median([1, 2, 10])).toBe(2)
+})
+
+test('log calls the function, prints and returns the result', () => {
+  const spy = jest.spyOn(console, 'log').mockImplementation(() => {})
+  try {
+    expect(ol.log(() => 6 * 7)).toBe(42)
+    expect(spy).toHaveBeenCalledWith('res:', 42, 'time:', expect.any(String))
+  } finally {
+    spy.mockRestore()
+  }
+})
+
+test('array filters greaterThan / lesserThan', () => {
+  expect(array([1, 5, 9]).greaterThan(3)).toEqual([5, 9])
+  expect(array([1, 5, 9]).greaterThan(9)).toEqual([])
+  expect(array([1, 5, 9]).lesserThan(6)).toEqual([1, 5])
+  expect(array([1, 5, 9]).lesserThan(1)).toEqual([])
+})
+
+test('array isSubsetOf', () => {
+  expect(array([]).isSubsetOf([1])).toBe(true)
+  expect(array([1]).isSubsetOf([1, 2])).toBe(true)
+  expect(array([1, 2]).isSubsetOf([1, 2])).toBe(true)
+  expect(array([1, 2]).isSubsetOf([1])).toBe(false)
+  expect(array([3]).isSubsetOf([1, 2])).toBe(false)
+})
+
+test('isPrime for numbers below 2', () => {
+  expect(ol.isPrime(1)).toBe(false)
+  expect(ol.isPrime(0)).toBe(false)
+  expect(ol.isPrime(-7)).toBe(false)
+  expect(ol.isPrime(2)).toBe(true)
+  expect(ol.isPrime(9)).toBe(false) // square of a prime
+  expect(ol.isPrime(49)).toBe(false)
+  expect(ol.isPrime(97)).toBe(true)
+})
+
+test('gcd with zero and negative numbers', () => {
+  expect(ol.gcd(5, 0)).toBe(5)
+  expect(ol.gcd(0, 5)).toBe(5)
+  expect(ol.gcd(0, 0)).toBe(0)
+  expect(ol.gcd(-12, 18)).toBe(6)
+  expect(ol.gcd(12, -18)).toBe(6)
+})
+
+test('average of an empty array is NaN', () => {
+  expect(ol.average([])).toBeNaN()
+  expect(ol.average([2, 4])).toBe(3)
+})
+
+test('sort sorts numbers numerically by default', () => {
+  expect(ol.sort([10, 9, 1])).toEqual([1, 9, 10])
+  expect(ol.sort(['b', 'c', 'a'])).toEqual(['a', 'b', 'c'])
+  expect(ol.sort([1, 2, 3], (a, b) => b - a)).toEqual([3, 2, 1])
+  const xs = [3, 1, 2]
+  ol.sort(xs)
+  expect(xs).toEqual([3, 1, 2]) // input stays untouched
+})
+
+test('shuffle returns a permutation and keeps its input', () => {
+  const xs = ol.range(50)
+  const ys = ol.shuffle(xs)
+  expect(xs).toEqual(ol.range(50))
+  expect(ys).not.toBe(xs)
+  expect([...ys].sort((a, b) => a - b)).toEqual(xs)
+  expect(ol.shuffle([])).toEqual([])
+  expect(ol.shuffle([1])).toEqual([1])
+})
+
+test('shuffle reaches every permutation', () => {
+  const seen = new Set()
+  for (let i = 0; i < 500; i++) seen.add(ol.shuffle([1, 2, 3]).join())
+  expect(seen.size).toBe(6)
+})
+
+test('uniqBy keeps the first of each kind in input order', () => {
+  const xs = [{ k: 3, v: 'a' }, { k: 1, v: 'b' }, { k: 3, v: 'c' }, { k: 2, v: 'd' }]
+  expect(ol.uniqBy(xs, (o) => o.k)).toEqual([{ k: 3, v: 'a' }, { k: 1, v: 'b' }, { k: 2, v: 'd' }])
+  expect(ol.uniqBy([], id)).toEqual([])
+})
+
+test('memoize keeps its entries', () => {
+  const clock = { now: 1_000 }
+  const spy = jest.spyOn(Date, 'now').mockImplementation(() => clock.now)
+  try {
+    let calls = 0
+    const fn = ol.memoize((x) => (calls++, x * 2))
+    expect(fn(3)).toBe(6)
+    clock.now += 60_000 // a minute later
+    expect(fn(3)).toBe(6)
+    expect(calls).toBe(1)
+  } finally {
+    spy.mockRestore()
+  }
+})
+
+test('memoizeX with several arguments', () => {
+  let calls = 0
+  const add2 = ol.memoizeX((a, b) => (calls++, a + b))
+  expect(add2(1, 2)).toBe(3)
+  expect(add2(1, 5)).toBe(6) // same first argument, other result
+  expect(add2(1, 2)).toBe(3)
+  expect(calls).toBe(2)
+})
+
+test('memoizeX distinguishes 1 and "1", and works with keys like "constructor"', () => {
+  const f = ol.memoizeX((x) => typeof x)
+  expect(f(1)).toBe('number')
+  expect(f('1')).toBe('string')
+  expect(f('constructor')).toBe('string')
+  expect(f('constructor')).toBe('string')
+})
+
+test('memoizeX insertCondition and own hash', () => {
+  let calls = 0
+  const f = ol.memoizeX((x) => (calls++, x), (x) => x > 0, (x) => Math.abs(x))
+  f(-1); f(-1)
+  expect(calls).toBe(2) // not stored
+  f(2); f(2)
+  expect(calls).toBe(3)
 })
