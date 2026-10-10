@@ -13,7 +13,7 @@ test('exceptions', () => {
   expect(() => C$('?5')).toThrow('Unexpected character "?" at position 0')
   expect(() => C$('5#4')).toThrow('Unexpected character "#" at position 1')
   expect(() => C$('(1+5')).toThrow('Expected ")" to close expression')
-  expect(() => C$('1-*5')).toThrow('Expected an operand at position 3')
+  expect(() => C$('1-*5')).toThrow('Expected an operand at position 2')
   expect(() => C$('pow(3,2')).toThrow('Expected ")" to close function call at position 7')
 
   expect(() => C$()).toThrow('C$ expects a finite number or an expression string')

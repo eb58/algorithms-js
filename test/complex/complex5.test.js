@@ -2,6 +2,22 @@ const C$ = require('../../src/complex/complex')
 const cops = require('../../src/complex/cops')
 const tokenizer = require('../../src/complex/tokenizer')
 
+describe('explicit C$ API', () => {
+  test('constructs, evaluates and compiles without overload ambiguity', () => {
+    expect(C$.fromParts(3, -4)).toEqual(C$(3, -4))
+    expect(C$.evaluate('offset + i', { offset: 2 })).toEqual(C$(2, 1))
+
+    const square = C$.compile('z => z^2')
+    expect(square(C$(1, 2))).toEqual(C$(-3, 4))
+  })
+
+  test('rejects the wrong source kind for explicit entry points', () => {
+    expect(() => C$.evaluate('z => z')).toThrow('C$.evaluate expects an expression')
+    expect(() => C$.compile('1 + 2')).toThrow('C$.compile expects a function definition')
+    expect(() => C$.fromParts(Number.NaN, 0)).toThrow('Complex parts must be finite numbers')
+  })
+})
+
 describe('parser precedence and validation', () => {
   test('applies exponentiation before unary signs', () => {
     expect(C$('-2^2')).toEqual(C$(-4))
@@ -32,6 +48,16 @@ describe('parser precedence and validation', () => {
     expect(() => C$('sum(,1)', { sum })).toThrow('Expected an operand')
     expect(() => C$('sum(1,)', { sum })).toThrow('Expected an operand')
     expect(() => C$('sum(1 2)', { sum })).toThrow('Expected ")" to close function call')
+  })
+
+  test('validates known function arities while allowing flexible scope functions', () => {
+    expect(() => C$('pow(2)')).toThrow('Function "pow" expects 2 arguments, received 1')
+    expect(() => C$('sin(1, 2)')).toThrow('Function "sin" expects 1 arguments, received 2')
+    const pair = C$.compile('(left, right) => left + right')
+    expect(() => C$('pair(1)', { pair })).toThrow('Function "pair" expects 2 arguments, received 1')
+
+    const optional = (value, increment = 1) => cops.add(value, increment)
+    expect(C$('optional(2)', { optional })).toEqual(C$(3))
   })
 
   test('exposes structured syntax and tokenizer errors', () => {
@@ -71,6 +97,14 @@ describe('tokenizer', () => {
       expect(error.position).toBe(3)
       expect(error.message).toBe('Unexpected character "#" at position 3')
     }
+  })
+
+  test('records start and end offsets for every token', () => {
+    const stream = tokenizer('  alpha + 12')
+    expect(stream.consume()).toMatchObject({ name: 'alpha', start: 2, end: 7 })
+    expect(stream.consume()).toMatchObject({ symbol: tokenizer.TOKENS.plus, start: 8, end: 9 })
+    expect(stream.consume()).toMatchObject({ value: 12, start: 10, end: 12 })
+    expect(stream.consume()).toMatchObject({ symbol: tokenizer.TOKENS.end, start: 12, end: 12 })
   })
 })
 

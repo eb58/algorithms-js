@@ -12,7 +12,7 @@ describe('strict complex expression syntax', () => {
 
   test('rejects trailing input and unknown identifiers', () => {
     expect(() => C$('2+')).toThrow('Expected an operand')
-    expect(() => C$('unknown')).toThrow('Unknown identifier unknown')
+    expect(() => C$('unknown')).toThrow('Unknown identifier "unknown" at position 0')
     expect(() => C$('invalid', { invalid: null })).toThrow('Invalid value for identifier invalid')
   })
 

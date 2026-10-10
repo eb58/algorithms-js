@@ -1,5 +1,6 @@
-const copsRef = typeof cops === 'undefined' ? require('./cops.js') : cops
-const tokenizerRef = typeof tokenizer === 'undefined' ? require('./tokenizer.js') : tokenizer
+const isCommonJs = typeof module !== 'undefined' && module.exports
+const copsRef = isCommonJs ? require('./cops.js') : globalThis.cops
+const tokenizerRef = isCommonJs ? require('./tokenizer.js') : globalThis.tokenizer
 
 const TOKENS = tokenizerRef.TOKENS ?? tokenizerRef('').getTOKENS()
 
@@ -8,7 +9,7 @@ class ComplexSyntaxError extends SyntaxError {
     super(message)
     this.name = 'ComplexSyntaxError'
     this.expression = expression
-    this.position = token.strpos ?? 0
+    this.position = token.start ?? token.strpos ?? 0
     this.token = token
   }
 }
@@ -43,6 +44,54 @@ const ops = {
   [TOKENS.pow]: copsRef.pow
 }
 
+const BUILTIN_ARITIES = Object.freeze({
+  neg: [1, 1],
+  conj: [1, 1],
+  add: [2, 2],
+  sub: [2, 2],
+  mul: [2, 2],
+  div: [2, 2],
+  sqr: [1, 1],
+  cub: [1, 1],
+  len: [1, 1],
+  abs: [1, 1],
+  arg: [1, 1],
+  real: [1, 1],
+  imag: [1, 1],
+  sqrt: [1, 1],
+  ln: [1, 1],
+  exp: [1, 1],
+  sin: [1, 1],
+  cos: [1, 1],
+  tan: [1, 1],
+  sinh: [1, 1],
+  cosh: [1, 1],
+  tanh: [1, 1],
+  asin: [1, 1],
+  acos: [1, 1],
+  atan: [1, 1],
+  asinh: [1, 1],
+  acosh: [1, 1],
+  atanh: [1, 1],
+  polar: [2, 2],
+  pow: [2, 2],
+  equals: [2, 2],
+  toString: [1, 1]
+})
+
+const functionArity = (name, fn) => fn.complexArity ?? (fn === copsRef[name] ? BUILTIN_ARITIES[name] : undefined)
+
+const validateFunctionArity = (name, fn, received, expression, token) => {
+  const arity = functionArity(name, fn)
+  if (!arity) return
+
+  const [minimum, maximum] = arity
+  if (received >= minimum && received <= maximum) return
+
+  const expected = minimum === maximum ? `${minimum}` : `${minimum} to ${maximum}`
+  throw syntaxError(`Function "${name}" expects ${expected} arguments, received ${received}`, expression, token)
+}
+
 const isComplexValue = (value) =>
   value && typeof value.re === 'number' && typeof value.im === 'number' && Number.isFinite(value.re) && Number.isFinite(value.im)
 const toComplexValue = (value, name = 'value') => {
@@ -63,7 +112,7 @@ const binaryOpNode = (op, left, right) => ({ eval: (args, pos) => ops[op](left.e
 const parser = (s, scope, paramNames = new Set()) => {
   const { peek, consume } = tokenizerRef(s)
   const is = (kind) => peek().symbol === kind
-  const position = () => peek().strpos
+  const position = () => peek().start
 
   const parseExpression = () => {
     let node = parseTerm()
@@ -105,21 +154,22 @@ const parser = (s, scope, paramNames = new Set()) => {
     return expressions
   }
 
-  const parseFunctionCall = (name) => {
+  const parseFunctionCall = (name, identifierToken) => {
     if (!is(TOKENS.lparen)) throw syntaxError(`Expected "(" after function "${name}" at position ${position()}`, s, peek())
     consume()
     const expressions = parseCallArguments()
     if (!is(TOKENS.rparen)) throw syntaxError(`Expected ")" to close function call at position ${position()}`, s, peek())
     consume()
+    validateFunctionArity(name, scope[name], expressions.length, s, identifierToken)
     return functionNode(name, expressions, scope)
   }
 
   const parseIdentifier = () => {
     const token = peek()
     if (paramNames.has(token.name)) return variableNode(consume().name)
-    if (!Object.hasOwn(scope, token.name)) throw syntaxError(`Unknown identifier ${token.name}. Pos:${token.strpos}`, s, token)
+    if (!Object.hasOwn(scope, token.name)) throw syntaxError(`Unknown identifier "${token.name}" at position ${token.start}`, s, token)
     const name = consume().name
-    return typeof scope[name] === 'function' ? parseFunctionCall(name) : parseScopeValue(name)
+    return typeof scope[name] === 'function' ? parseFunctionCall(name, token) : parseScopeValue(name)
   }
 
   const parseParenthesized = () => {
@@ -135,7 +185,7 @@ const parser = (s, scope, paramNames = new Set()) => {
     if (is(TOKENS.number)) return numberNode(consume().value)
     if (is(TOKENS.ident)) return parseIdentifier()
     if (is(TOKENS.lparen)) return parseParenthesized()
-    throw syntaxError(`Expected an operand at position ${token.strpos}`, s, token)
+    throw syntaxError(`Expected an operand at position ${token.start}`, s, token)
   }
 
   const node = parseExpression()
@@ -160,16 +210,34 @@ const compileExpression = (expression, params, scope) => {
   const positions = Object.fromEntries(params.map((name, index) => [name, index]))
   const ast = parser(expression, scope, new Set(params))
 
-  return (...args) => {
+  const compiled = (...args) => {
     if (args.length !== params.length) throw new RangeError(`Expected ${params.length} arguments, received ${args.length}`)
     return ast.eval(args, positions)
   }
+  Object.defineProperty(compiled, 'complexArity', { value: [params.length, params.length] })
+  return compiled
 }
 
 const parseExpressionInput = (source, customScope) => {
   const scope = createScope(customScope)
   const { expression, params, isFunction } = splitParam(source)
   return isFunction ? compileExpression(expression, params, scope) : evaluateExpression(expression, scope)
+}
+
+const evaluate = (source, customScope) => {
+  if (typeof source !== 'string') throw new TypeError('C$.evaluate expects an expression string')
+  const scope = createScope(customScope)
+  const { expression, isFunction } = splitParam(source)
+  if (isFunction) throw syntaxError('C$.evaluate expects an expression, not a function definition', source, { start: 0 })
+  return evaluateExpression(expression, scope)
+}
+
+const compile = (source, customScope) => {
+  if (typeof source !== 'string') throw new TypeError('C$.compile expects a function definition string')
+  const scope = createScope(customScope)
+  const { expression, params, isFunction } = splitParam(source)
+  if (!isFunction) throw syntaxError('C$.compile expects a function definition', source, { start: 0 })
+  return compileExpression(expression, params, scope)
 }
 
 const C$ = (value, secondArgument) => {
@@ -179,5 +247,8 @@ const C$ = (value, secondArgument) => {
 }
 
 C$.ComplexSyntaxError = ComplexSyntaxError
+C$.fromParts = createComplex
+C$.evaluate = evaluate
+C$.compile = compile
 
 if (typeof module !== 'undefined' && module.exports) module.exports = C$

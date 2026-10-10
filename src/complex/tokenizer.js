@@ -52,7 +52,7 @@ const tokenizer = (input) => {
     const start = cursor.index
     const match = input.slice(start).match(IDENTIFIER_PATTERN)
     cursor.index += match[0].length
-    return { symbol: TOKENS.ident, name: match[0], strpos: cursor.index }
+    return { symbol: TOKENS.ident, name: match[0], start, end: cursor.index, strpos: cursor.index }
   }
 
   const getNumber = () => {
@@ -63,12 +63,14 @@ const tokenizer = (input) => {
     cursor.index += match[0].length
     const value = Number(match[0])
     if (!Number.isFinite(value)) fail('Invalid number', start)
-    return { symbol: TOKENS.number, value, strpos: cursor.index }
+    return { symbol: TOKENS.number, value, start, end: cursor.index, strpos: cursor.index }
   }
 
   const getToken = () => {
     while (cursor.index < input.length && /\s/.test(input[cursor.index])) cursor.index++
-    if (cursor.index >= input.length) return { symbol: TOKENS.end, strpos: cursor.index }
+    if (cursor.index >= input.length) {
+      return { symbol: TOKENS.end, start: cursor.index, end: cursor.index, strpos: cursor.index }
+    }
 
     const start = cursor.index
     const c = input[start]
@@ -76,11 +78,11 @@ const tokenizer = (input) => {
     if (/\w/.test(c)) return getIdentifier()
     if (c === '*' && input[start + 1] === '*') {
       cursor.index += 2
-      return { symbol: TOKENS.pow, strpos: cursor.index }
+      return { symbol: TOKENS.pow, start, end: cursor.index, strpos: cursor.index }
     }
     if (!CHAR_TOKENS[c]) fail(`Unexpected character "${c}"`, start)
     cursor.index++
-    return { symbol: CHAR_TOKENS[c], strpos: cursor.index }
+    return { symbol: CHAR_TOKENS[c], start, end: cursor.index, strpos: cursor.index }
   }
 
   const allTokens = []
