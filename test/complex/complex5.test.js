@@ -16,6 +16,12 @@ describe('explicit C$ API', () => {
     expect(() => C$.compile('1 + 2')).toThrow('C$.compile expects a function definition')
     expect(() => C$.fromParts(Number.NaN, 0)).toThrow('Complex parts must be finite numbers')
   })
+
+  test('does not expose cached constant values for mutation', () => {
+    const value = C$.evaluate('1 + i')
+    value.re = 99
+    expect(C$.evaluate('1 + i')).toEqual(C$(1, 1))
+  })
 })
 
 describe('parser precedence and validation', () => {

@@ -36,12 +36,42 @@ const splitParam = (s) => {
   return { params, expression, isFunction: true }
 }
 
-const ops = {
-  [TOKENS.plus]: copsRef.add,
-  [TOKENS.minus]: copsRef.sub,
-  [TOKENS.times]: copsRef.mul,
-  [TOKENS.divide]: copsRef.div,
-  [TOKENS.pow]: copsRef.pow
+const normalizeZero = (value) => (value === 0 ? 0 : value)
+const rawMultiply = (a, b) => ({
+  re: normalizeZero(a.re * b.re - a.im * b.im),
+  im: normalizeZero(a.re * b.im + a.im * b.re)
+})
+const rawIntegerPow = (base, exponent) => {
+  let result = { re: 1, im: 0 }
+  let factor = base
+  let remaining = Math.abs(exponent)
+  while (remaining > 0) {
+    if (remaining % 2 === 1) result = rawMultiply(result, factor)
+    remaining = Math.floor(remaining / 2)
+    if (remaining > 0) factor = rawMultiply(factor, factor)
+  }
+  if (exponent >= 0) return result
+  const denominator = result.re ** 2 + result.im ** 2
+  if (denominator === 0) throw new RangeError('Zero cannot be raised to a negative power')
+  return { re: normalizeZero(result.re / denominator), im: normalizeZero(-result.im / denominator) }
+}
+const rawPower = (base, exponent) => {
+  if (exponent.im === 0 && Number.isSafeInteger(exponent.re)) return rawIntegerPow(base, exponent.re)
+  return copsRef.pow(base, exponent)
+}
+const rawOps = {
+  [TOKENS.plus]: (a, b) => ({ re: normalizeZero(a.re + b.re), im: normalizeZero(a.im + b.im) }),
+  [TOKENS.minus]: (a, b) => ({ re: normalizeZero(a.re - b.re), im: normalizeZero(a.im - b.im) }),
+  [TOKENS.times]: rawMultiply,
+  [TOKENS.divide]: (a, b) => {
+    const denominator = b.re ** 2 + b.im ** 2
+    if (denominator === 0) throw new RangeError('Division by zero')
+    return {
+      re: normalizeZero((a.re * b.re + a.im * b.im) / denominator),
+      im: normalizeZero((a.im * b.re - a.re * b.im) / denominator)
+    }
+  },
+  [TOKENS.pow]: rawPower
 }
 
 const BUILTIN_ARITIES = Object.freeze({
@@ -99,17 +129,44 @@ const toComplexValue = (value, name = 'value') => {
   if (isComplexValue(value)) return value
   throw new TypeError(`${name} must be a finite number or complex value`)
 }
-const numberNode = (val) => ({ eval: () => toComplexValue(val) })
-const unaryNode = (sign, op) => ({
-  eval: (args, pos) => (sign === TOKENS.minus ? copsRef.neg(op.eval(args, pos)) : op.eval(args, pos))
-})
-const variableNode = (name) => ({ eval: (args, pos) => toComplexValue(args[pos[name]], `Argument ${name}`) })
-const functionNode = (name, params, scope) => ({
-  eval: (args, pos) => toComplexValue(scope[name](...params.map((param) => param.eval(args, pos))), `Result of ${name}`)
-})
-const binaryOpNode = (op, left, right) => ({ eval: (args, pos) => ops[op](left.eval(args, pos), right.eval(args, pos)) })
+const constantNode = (value) => {
+  const normalized = Object.freeze({ ...toComplexValue(value) })
+  return { constant: true, value: normalized, eval: () => ({ ...normalized }) }
+}
+const numberNode = constantNode
+const unaryNode = (sign, op) => {
+  if (sign === TOKENS.plus) return op
+  if (op.constant) return constantNode({ re: normalizeZero(-op.value.re), im: normalizeZero(-op.value.im) })
+  return {
+    constant: false,
+    eval: (args) => {
+      const value = op.eval(args)
+      return { re: normalizeZero(-value.re), im: normalizeZero(-value.im) }
+    }
+  }
+}
+const variableNode = (name, index) => ({ constant: false, eval: (args) => toComplexValue(args[index], `Argument ${name}`) })
+const evaluateFunction = (name, fn, params, args) => {
+  if (params.length === 0) return toComplexValue(fn(), `Result of ${name}`)
+  if (params.length === 1) return toComplexValue(fn(params[0].eval(args)), `Result of ${name}`)
+  if (params.length === 2) return toComplexValue(fn(params[0].eval(args), params[1].eval(args)), `Result of ${name}`)
+  const values = new Array(params.length)
+  for (let index = 0; index < params.length; index++) values[index] = params[index].eval(args)
+  return toComplexValue(fn(...values), `Result of ${name}`)
+}
+const functionNode = (name, params, scope) => {
+  const fn = scope[name]
+  if (fn === copsRef[name] && params.every((param) => param.constant)) {
+    return constantNode(evaluateFunction(name, fn, params, []))
+  }
+  return { constant: false, eval: (args) => evaluateFunction(name, fn, params, args) }
+}
+const binaryOpNode = (op, left, right) => {
+  if (left.constant && right.constant) return constantNode(rawOps[op](left.value, right.value))
+  return { constant: false, eval: (args) => rawOps[op](left.eval(args), right.eval(args)) }
+}
 
-const parser = (s, scope, paramNames = new Set()) => {
+const parser = (s, scope, paramPositions = new Map()) => {
   const { peek, consume } = tokenizerRef(s)
   const is = (kind) => peek().symbol === kind
   const position = () => peek().start
@@ -166,7 +223,7 @@ const parser = (s, scope, paramNames = new Set()) => {
 
   const parseIdentifier = () => {
     const token = peek()
-    if (paramNames.has(token.name)) return variableNode(consume().name)
+    if (paramPositions.has(token.name)) return variableNode(consume().name, paramPositions.get(token.name))
     if (!Object.hasOwn(scope, token.name)) throw syntaxError(`Unknown identifier "${token.name}" at position ${token.start}`, s, token)
     const name = consume().name
     return typeof scope[name] === 'function' ? parseFunctionCall(name, token) : parseScopeValue(name)
@@ -204,15 +261,32 @@ const createComplex = (re, im = 0) => {
   return { re: re || 0, im: im || 0 }
 }
 
-const evaluateExpression = (expression, scope) => parser(expression, scope).eval([], {})
+const AST_CACHE_LIMIT = 256
+const astCache = new Map()
+const cachedParser = (expression, scope, paramPositions) => {
+  if (scope !== copsRef) return parser(expression, scope, paramPositions)
+  const key = `${[...paramPositions.keys()].join(',')}=>${expression}`
+  if (astCache.has(key)) {
+    const ast = astCache.get(key)
+    astCache.delete(key)
+    astCache.set(key, ast)
+    return ast
+  }
+  const ast = parser(expression, scope, paramPositions)
+  astCache.set(key, ast)
+  if (astCache.size > AST_CACHE_LIMIT) astCache.delete(astCache.keys().next().value)
+  return ast
+}
+
+const evaluateExpression = (expression, scope) => cachedParser(expression, scope, new Map()).eval([])
 
 const compileExpression = (expression, params, scope) => {
-  const positions = Object.fromEntries(params.map((name, index) => [name, index]))
-  const ast = parser(expression, scope, new Set(params))
+  const positions = new Map(params.map((name, index) => [name, index]))
+  const ast = cachedParser(expression, scope, positions)
 
   const compiled = (...args) => {
     if (args.length !== params.length) throw new RangeError(`Expected ${params.length} arguments, received ${args.length}`)
-    return ast.eval(args, positions)
+    return ast.eval(args)
   }
   Object.defineProperty(compiled, 'complexArity', { value: [params.length, params.length] })
   return compiled

@@ -1,5 +1,6 @@
 //  PENTOMINO
-const { matrix, ol } = require('../ol')
+const isCommonJs = typeof module !== 'undefined' && module.exports
+const { matrix, ol } = isCommonJs ? require('../ol') : globalThis
 const { range, zip, uniqBy } = ol
 const { reshape, redim, transpose, translate, rotateN90, makeQuadratic } = matrix
 
@@ -90,3 +91,4 @@ const pentomino = () => {
 }
 
 if (typeof module !== 'undefined') module.exports = pentomino
+if (typeof globalThis !== 'undefined') globalThis.pentomino = pentomino
