@@ -1,38 +1,38 @@
 {
-   "name": "algorithms-js-eb",
-   "version": "1.0.0",
-   "keywords": [
-      "permutations",
-      "combinations",
-      "magic squares",
-      "sorting",
-      "sudoku"
-   ],
-   "jest": {
-      "verbose": true
-   },
-   "author": "eb",
-   "scripts": {
-      "test": "jest",
-      "test:watch": "jest --watchAll",
-      "test:coverage": "jest --coverage --runInBand --watchAll=false",
-      "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
-      "barcode": "node src/barcodes/barcode.js",
-      "sudoku": "node src/sudoku/sudoku3.js",
-      "magic-hexagon": "node src/magic-hexagon/magic-hexagon.js",
-      "benchmark:magic-square": "node bench/magic-square.js",
-      "benchmark:magic-square-5x5": "node bench/magic-square-5x5.js",
-      "benchmark:sudoku": "node bench/sudoku.js",
-      "ct-puzzle:dlx": "node src/ct-puzzle/ct-puzzle-dlx.js",
-      "ct-puzzle": "node src/ct-puzzle/ct-puzzle.js",
-      "pentomino": "node --inspect src/pentomino/pentomino.js",
-      "prepare": "git config core.hooksPath .githooks"
-   },
-   "dependencies": {
-      "mathjs": "^15.2.0"
-   },
-   "devDependencies": {
-      "jest": "30.5.2",
-      "prettier": "3.9.9"
-   }
+  "name": "algorithms-js-eb",
+  "version": "1.0.0",
+  "private": true,
+  "author": "eb",
+  "keywords": [
+    "permutations",
+    "combinations",
+    "magic squares",
+    "sorting",
+    "sudoku"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watchAll",
+    "test:coverage": "jest --coverage",
+    "debug": "node --inspect-brk ./node_modules/jest/bin/jest.js --runInBand",
+    "barcode": "node src/barcodes/barcode.js",
+    "magic-hexagon": "node src/magic-hexagon/magic-hexagon.js",
+    "ct-puzzle": "node src/ct-puzzle/ct-puzzle.js",
+    "ct-puzzle:dlx": "node src/ct-puzzle/ct-puzzle-dlx.js",
+    "benchmark:magic-square": "node bench/magic-square.js",
+    "benchmark:magic-square-5x5": "node bench/magic-square-5x5.js",
+    "benchmark:sudoku": "node bench/sudoku.js",
+    "prepare": "git config core.hooksPath .githooks"
+  },
+  "jest": {
+    "verbose": true
+  },
+  "devDependencies": {
+    "jest": "30.5.2",
+    "mathjs": "^15.2.0",
+    "prettier": "3.9.9"
+  }
 }
