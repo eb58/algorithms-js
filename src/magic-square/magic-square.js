@@ -1,7 +1,6 @@
 const comb = require('../combinations').comb1
 const perm = require('../perm').perm4
 const { range, sum } = require('../ol').ol
-const { xcc } = require('../xcc')
 
 // Bitmask of a list of numbers 1..31: number x sets bit x-1.
 const toBitMask = (xs) => {
@@ -489,59 +488,6 @@ const magic4x4Solver5 = () => {
   return results
 }
 
-// Exact covering with colors (Knuth's Algorithm C), a completely different approach:
-//   primary items:   R0..R3, C0..C3, D0, D1 (every line gets one ordered 4-tuple with sum 34)
-//                    N1..N16 (every number lies in exactly one row)
-//   secondary items: P0..P15, colored with the number in that cell
-// Lines that cross share a cell; the colors force them to put the same number there.
-// The normal form restricts where row options may put the 1 (index 0, 1 or 5); the two
-// tie-breaks are checked on the solutions.
-const magic4x4SolverXcc = () => {
-  const tuples = []
-  for (let a = 1; a <= 16; a++)
-    for (let b = 1; b <= 16; b++)
-      for (let c = 1; c <= 16; c++) {
-        const d = 34 - a - b - c
-        if (d >= 1 && d <= 16 && new Set([a, b, c, d]).size === 4) tuples.push([a, b, c, d])
-      }
-
-  const lines = [
-    ...[0, 1, 2, 3].map((r) => ({ name: `R${r}`, cells: [4 * r, 4 * r + 1, 4 * r + 2, 4 * r + 3], row: r })),
-    ...[0, 1, 2, 3].map((c) => ({ name: `C${c}`, cells: [c, c + 4, c + 8, c + 12] })),
-    { name: 'D0', cells: [0, 5, 10, 15] },
-    { name: 'D1', cells: [3, 6, 9, 12] },
-  ]
-  const oneAllowedAt = new Set([0, 1, 5])
-  const options = []
-  const optionCells = [] // per option: [cells, tuple] of row options, null otherwise
-  for (const line of lines)
-    for (const tuple of tuples) {
-      const isRow = line.row !== undefined
-      if (isRow && tuple.includes(1) && !oneAllowedAt.has(line.cells[tuple.indexOf(1)])) continue
-      const cells = line.cells.map((cell, k) => `P${cell}:${tuple[k]}`)
-      options.push([line.name, ...(isRow ? tuple.map((v) => `N${v}`) : []), ...cells])
-      optionCells.push(isRow ? [line.cells, tuple] : null)
-    }
-
-  const results = []
-  xcc({
-    primary: [...lines.map((line) => line.name), ...range(16).map((i) => `N${i + 1}`)],
-    secondary: range(16).map((i) => `P${i}`),
-    options,
-    visit: (chosen) => {
-      const square = Array(16)
-      for (const index of chosen) {
-        if (!optionCells[index]) continue
-        const [cells, tuple] = optionCells[index]
-        cells.forEach((cell, k) => (square[cell] = tuple[k]))
-      }
-      if ((square[0] === 1 && square[1] > square[4]) || (square[5] === 1 && square[6] > square[9])) return
-      results.push(square)
-    },
-  })
-  return results
-}
-
 module.exports = {
   magic3x3Solver,
   magic4x4Solver1,
@@ -549,5 +495,4 @@ module.exports = {
   magic4x4Solver3,
   magic4x4Solver4,
   magic4x4Solver5,
-  magic4x4SolverXcc,
 }
