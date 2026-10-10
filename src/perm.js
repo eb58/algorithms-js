@@ -1,9 +1,4 @@
-Array.prototype.without = function (n) {
-  return this.filter((x) => x !== n);
-};
-Array.prototype.withoutIndex = function (n) {
-  return this.filter((_, idx) => idx !== n);
-};
+const withoutIndex = (xs, n) => xs.filter((_, idx) => idx !== n);
 
 const perms1 = (xs) => [[xs[0]]];
 
@@ -48,8 +43,9 @@ const perms4 = (xs) => [
   [xs[3], xs[2], xs[1], xs[0]],
 ];
 
-const permX = (xs) => {
+const permX = (input) => {
   // Heaps algorithm --- https://en.wikipedia.org/wiki/Heap%27s_algorithm
+  const xs = input.slice(); // the algorithm swaps in place
   const len = xs.length;
   const result = [xs.slice()];
   const c = Array(len).fill(0);
@@ -72,20 +68,20 @@ const permX = (xs) => {
 
 const perm1 = (x) => {
   const res = [];
-  const p = (head, tail) => (tail.length ? tail.map((n, i) => p([n, ...head], tail.withoutIndex(i))) : res.push(head));
+  const p = (head, tail) => (tail.length ? tail.map((n, i) => p([n, ...head], withoutIndex(tail, i))) : res.push(head));
   p([], x);
   return res;
 };
 
-const perm2a = (xs) => (xs.length < 2 ? [xs] : xs.reduce((a, x, i) => [...a, ...perm2a(xs.withoutIndex(i)).map((y) => [x, ...y])], []));
-const perm2b = (xs) => (xs.length < 2 ? [xs] : xs.flatMap((x, i) => perm2b(xs.withoutIndex(i)).map((ys) => [x, ...ys])));
+const perm2a = (xs) => (xs.length < 2 ? [xs.slice()] : xs.reduce((a, x, i) => [...a, ...perm2a(withoutIndex(xs, i)).map((y) => [x, ...y])], []));
+const perm2b = (xs) => (xs.length < 2 ? [xs.slice()] : xs.flatMap((x, i) => perm2b(withoutIndex(xs, i)).map((ys) => [x, ...ys])));
 
 const perm3a = (xs) =>
   xs.length < 2
-    ? [xs]
+    ? [xs.slice()]
     : perm3a(xs.slice(1)).reduce((a, ys) => xs.reduce((acc, _, i) => (acc.push([...ys.slice(0, i), xs[0], ...ys.slice(i)]), acc), a), []);
 const perm3b = (xs) =>
-  xs.length < 2 ? [xs] : perm3b(xs.slice(1)).flatMap((ys) => xs.map((x, i) => [...ys.slice(0, i), xs[0], ...ys.slice(i)]));
+  xs.length < 2 ? [xs.slice()] : perm3b(xs.slice(1)).flatMap((ys) => xs.map((x, i) => [...ys.slice(0, i), xs[0], ...ys.slice(i)]));
 // perm3c = xs => (xs.length < 2 ? [xs] : perm3c(xs.slice(1)).reduce((a, ys) => a.concat(xs.map((x, i) => [...ys.slice(0, i), xs[0], ...ys.slice(i)])), [])); sehr langsam!!
 
 const perm4 = (xs) => {
