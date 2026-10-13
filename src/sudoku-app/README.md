@@ -27,14 +27,16 @@ Akzeptiert werden Bilddateien bis 20 MB und ab einer Auflösung von 300 × 300 P
 
 ## Aufbau
 
-| Datei                            | Aufgabe                                                                     |
-| -------------------------------- | --------------------------------------------------------------------------- |
-| `index.html`, `styles.css`       | Oberfläche                                                                  |
-| `app.js`                         | Bedienung: Foto laden, Rahmen ziehen, Ergebnis anzeigen (einziger DOM-Code) |
-| `scanner.js`                     | Bilderkennung ohne DOM und ohne OCR-Bibliothek                              |
-| `digit-templates.js`             | Ziffernvorlagen für `scanner.js` (erzeugt)                                  |
-| `sudoku.js`                      | Prüfen, Lösen, Lösungen zählen, OCR-Konflikte bereinigen                    |
-| `tools/build-digit-templates.js` | erzeugt `digit-templates.js`                                                |
+| Datei                                 | Aufgabe                                                                     |
+| ------------------------------------- | --------------------------------------------------------------------------- |
+| `index.html`, `styles.css`            | Oberfläche                                                                  |
+| `app.js`                              | Bedienung: Foto laden, Rahmen ziehen, Ergebnis anzeigen (einziger DOM-Code) |
+| `scanner.js`                          | Bilderkennung ohne DOM und ohne OCR-Bibliothek                              |
+| `digit-templates.js`                  | Ziffernvorlagen für `scanner.js` (erzeugt)                                  |
+| `sudoku.js`                           | Prüfen, Lösen, Lösungen zählen, OCR-Konflikte bereinigen                    |
+| `tools/build-digit-templates.js`      | erzeugt `digit-templates.js`                                                |
+| `favicon.svg`, `apple-touch-icon.png` | Icon für Browser-Tab und Home-Bildschirm                                    |
+| `tools/build-icons.js`                | erzeugt `apple-touch-icon.png` aus `favicon.svg`                            |
 
 `scanner.js` arbeitet nur mit RGBA-Pixeldaten (`{ data, width, height }`) und läuft deshalb unverändert im Browser und in Node.js:
 
