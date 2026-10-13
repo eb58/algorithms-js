@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "author": "eb",
+  "license": "MIT",
   "keywords": [
     "permutations",
     "combinations",
