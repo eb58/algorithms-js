@@ -91,7 +91,7 @@ h1 em {
 }
 .steps {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 0;
   padding: 0;
   margin: 54px 0 18px;
@@ -206,8 +206,6 @@ h2 {
 }
 .crop-stage {
   position: relative;
-  overflow: hidden;
-  min-height: 400px;
   background: #252a27;
   user-select: none;
   touch-action: none;
@@ -280,6 +278,7 @@ h2 {
 .secondary-button {
   min-height: 45px;
   padding: 0 18px;
+  white-space: nowrap;
   border: 1px solid var(--ink);
   cursor: pointer;
   font-weight: 700;
@@ -446,37 +445,48 @@ footer {
 [hidden] {
   display: none !important;
 }
+/* Auf schmalen Bildschirmen nur das Nötige: Foto, Rahmen, erkanntes Raster und Aktionen. */
 @media (max-width: 850px) {
+  .topbar {
+    height: 48px;
+  }
+  .topbar p,
+  .intro,
+  .steps,
+  .kicker,
+  .empty-state,
+  footer {
+    display: none;
+  }
   main {
-    padding-top: 45px;
+    width: calc(100% - 16px);
+    padding: 8px 0 24px;
   }
   .workspace {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
   .panel {
     min-height: auto;
+    padding: 14px;
+    box-shadow: none;
   }
-  .steps li {
-    font-size: 0;
+  .panel-heading {
+    align-items: center;
+    margin-bottom: 12px;
   }
-  .steps span {
-    font-size: 11px;
+  h2 {
+    margin: 0;
+    font-size: 18px;
   }
-  .topbar p {
-    display: none;
+  .drop-zone {
+    min-height: 220px;
+  }
+  .actions {
+    margin-top: 12px;
   }
 }
 @media (max-width: 520px) {
-  main {
-    width: min(100% - 22px, 1240px);
-  }
-  .panel {
-    padding: 18px;
-  }
-  .drop-zone,
-  .empty-state {
-    min-height: 350px;
-  }
   .actions {
     align-items: stretch;
     flex-direction: column;
@@ -486,8 +496,5 @@ footer {
   }
   .grid-actions {
     flex-direction: row;
-  }
-  .intro h1 {
-    font-size: 42px;
   }
 }

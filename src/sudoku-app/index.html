@@ -28,9 +28,8 @@
 
       <ol class="steps" aria-label="Arbeitsschritte">
         <li class="active" data-step="1"><span>01</span> Foto</li>
-        <li data-step="2"><span>02</span> Ausschnitt</li>
-        <li data-step="3"><span>03</span> Prüfen</li>
-        <li data-step="4"><span>04</span> Lösung</li>
+        <li data-step="2"><span>02</span> Prüfen</li>
+        <li data-step="3"><span>03</span> Lösung</li>
       </ol>
 
       <section class="workspace">
@@ -38,7 +37,7 @@
           <div class="panel-heading">
             <div>
               <span class="kicker">EINGABE</span>
-              <h2>Zeitungsfoto</h2>
+              <h2>Foto</h2>
             </div>
             <button id="reset-button" class="text-button" type="button" hidden>Neu starten</button>
           </div>
@@ -66,12 +65,11 @@
           </div>
 
           <div id="photo-actions" class="actions" hidden>
-            <p id="crop-hint">Der Rahmen wurde automatisch gesetzt. Ziehe die vier Ecken bei Bedarf auf die Ecken des äußeren Gitters.</p>
-            <button id="recognize-button" class="primary-button" type="button">Zahlen erkennen <span>→</span></button>
+            <p id="crop-hint">Passt der Rahmen nicht, die Ecken auf das äußere Gitter ziehen.</p>
           </div>
         </article>
 
-        <article class="panel grid-panel">
+        <article id="grid-panel" class="panel grid-panel">
           <div class="panel-heading">
             <div>
               <span class="kicker">KONTROLLE</span>

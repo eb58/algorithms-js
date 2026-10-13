@@ -17,14 +17,14 @@
     selection: $('#selection'),
     handles: [...document.querySelectorAll('.handle')],
     photoActions: $('#photo-actions'),
-    recognize: $('#recognize-button'),
     reset: $('#reset-button'),
     empty: $('#empty-state'),
     sudokuWrap: $('#sudoku-wrap'),
     grid: $('#sudoku-grid'),
     status: $('#grid-status'),
     solve: $('#solve-button'),
-    clear: $('#clear-button')
+    clear: $('#clear-button'),
+    gridPanel: $('#grid-panel')
   }
 
   const state = {
@@ -62,11 +62,11 @@
       setStatus('Raster wird gesucht …', 'neutral')
       await nextFrame()
 
+      // Wird ein Raster gefunden, stehen die Zahlen sofort im erkannten Sudoku; sonst setzt der Nutzer die Ecken.
       const found = SudokuScanner.findGrid(state.pixels)
       state.corners = found ? found.corners : defaultCorners()
       renderSelection()
-      setStep(2)
-      if (found) setStatus('Ausschnitt prüfen', 'neutral')
+      if (found) await recognizeGrid({ reveal: true })
       else setStatus('Kein Raster gefunden – Ecken setzen', 'warn')
     } catch (error) {
       console.error(error)
@@ -165,21 +165,21 @@
     renderSelection()
   }
 
-  // Nach dem Loslassen rastet der Rahmen auf ein nahe gelegenes Gitter ein.
+  // Nach dem Loslassen rastet der Rahmen auf ein nahe gelegenes Gitter ein, und die Zahlen werden neu erkannt.
   const endDrag = () => {
     if (!state.drag) return
     state.drag = null
     try {
       state.corners = SudokuScanner.snapCorners(state.pixels, state.corners)
       renderSelection()
+      recognizeGrid()
     } catch (error) {
       console.error(error)
     }
   }
 
-  const recognizeGrid = async () => {
+  const recognizeGrid = async ({ reveal = false } = {}) => {
     if (!state.pixels || !state.corners) return
-    elements.recognize.disabled = true
     setStatus('Ziffern werden erkannt …', 'neutral')
     await nextFrame()
     try {
@@ -187,13 +187,12 @@
       const sanitized = Sudoku.sanitizeRecognition(grid, confidence)
       for (const index of sanitized.removed) confidence[index] = 0
       state.original = sanitized.grid.slice()
-      setStep(3)
+      setStep(2)
       showGrid(sanitized.grid, confidence)
+      if (reveal) revealResult()
     } catch (error) {
       console.error(error)
       setStatus('Erkennung fehlgeschlagen', 'bad')
-    } finally {
-      elements.recognize.disabled = false
     }
   }
 
@@ -256,7 +255,13 @@
     state.original = input.slice()
     showGrid(solution, Array(81).fill(1), true)
     setStatus('Gelöst', 'good')
-    setStep(4)
+    setStep(3)
+    revealResult()
+  }
+
+  // Bei einspaltigem Layout liegt das Ergebnis unter dem Foto und wäre sonst nicht zu sehen.
+  const revealResult = () => {
+    if (globalThis.matchMedia?.('(max-width: 850px)').matches) elements.gridPanel.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
   const navigateGrid = (event, index) => {
@@ -341,7 +346,6 @@
     elements.drop.classList.remove('dragging')
     loadFile(event.dataTransfer.files[0])
   })
-  elements.recognize.addEventListener('click', recognizeGrid)
   elements.solve.addEventListener('click', solveGrid)
   elements.clear.addEventListener('click', () => showGrid(Array(81).fill(0)))
   elements.reset.addEventListener('click', reset)

@@ -16,11 +16,10 @@ Rufe anschließend den angezeigten Pfad `/src/sudoku-app/` auf.
 
 ## Bedienung
 
-1. Foto aufnehmen oder auswählen. Das Sudokuraster wird automatisch gesucht und mit einem Rahmen markiert.
-2. Liegt der Rahmen daneben, die vier Ecken auf die Ecken des äußeren Gitters ziehen. In der Nähe eines erkannten Gitters rastet der Rahmen beim Loslassen ein.
-3. Zahlen erkennen lassen.
-4. Orange markierte beziehungsweise falsch erkannte Zahlen korrigieren.
-5. Das Sudoku lösen. Hat das Raster mehrere Lösungen, fehlen meist erkannte Zahlen; die App löst es dann nicht.
+1. Foto aufnehmen oder auswählen. Das Sudokuraster wird automatisch gesucht, mit einem Rahmen markiert, und die erkannten Zahlen erscheinen sofort im Sudoku.
+2. Liegt der Rahmen daneben, die vier Ecken auf die Ecken des äußeren Gitters ziehen. In der Nähe eines erkannten Gitters rastet der Rahmen beim Loslassen ein, und die Zahlen werden neu erkannt.
+3. Orange markierte beziehungsweise falsch erkannte Zahlen korrigieren.
+4. Das Sudoku lösen. Hat das Raster mehrere Lösungen, fehlen meist erkannte Zahlen; die App löst es dann nicht.
 
 Für gute Ergebnisse sollte das Rätsel scharf, gleichmäßig beleuchtet und ohne handschriftliche Einträge fotografiert werden. Perspektivische Verzerrung und Drehung werden ausgeglichen, auch wenn das Foto quer oder auf dem Kopf gespeichert wurde (typisch beim flachen Fotografieren eines liegenden Blatts).
 
