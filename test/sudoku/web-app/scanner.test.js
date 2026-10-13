@@ -1,7 +1,7 @@
 const { join } = require('node:path')
 const sharp = require('sharp')
-const { findGrid, gridToString, recognizeDigits, scanSudoku, snapCorners, warpCorners } = require('../../src/sudoku-app/scanner')
-const { solve } = require('../../src/sudoku-app/sudoku')
+const { findGrid, gridToString, recognizeDigits, scanSudoku, snapCorners, warpCorners } = require('../../../src/sudoku/web-app/scanner')
+const { solve } = require('../../../src/sudoku/web-app/sudoku')
 
 const rows = (...lines) => lines.join('')
 const toGrid = (value) => [...value].map((digit) => (digit === '.' ? 0 : Number(digit)))
@@ -225,7 +225,7 @@ const CORNER_TOLERANCE = 16
 
 // Schritt 1: Bild einlesen – in Node über sharp, im Browser über ein Canvas. angle dreht das Foto zusätzlich im Uhrzeigersinn.
 const loadImage = async (file, angle = 0) => {
-  const { data, info } = await sharp(join(__dirname, '..', '..', 'src', 'sudoku-app', 'fixtures', file))
+  const { data, info } = await sharp(join(__dirname, '..', '..', '..', 'src', 'sudoku', 'web-app', 'fixtures', file))
     .rotate(angle)
     .ensureAlpha()
     .raw()

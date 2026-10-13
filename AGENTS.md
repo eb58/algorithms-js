@@ -13,8 +13,8 @@
 - Node.js-Module liegen überwiegend unter `src/` und verwenden CommonJS (`require` und `module.exports`).
 - Interaktive, buildfreie Browser-Demos liegen unter `src/`.
 - Jest-Tests liegen unter `test/`, Benchmarks unter `bench/`.
-- `src/sudoku-app/` erkennt Sudokus aus Fotos, lässt die Erkennung korrigieren und löst das Raster lokal im Browser. Die Bilderkennung (`scanner.js`) kommt ohne OCR-Bibliothek und Netzwerkzugriff aus; ihre Tests liegen unter `test/sudoku-app/` und verwenden die Fotos aus `src/sudoku-app/fixtures/`.
-- Voraussetzungen, Bedienung und verfügbare Befehle stehen in `README.md`; Details zur Foto-App stehen in `src/sudoku-app/README.md`.
+- `src/sudoku/web-app/` erkennt Sudokus aus Fotos, lässt die Erkennung korrigieren und löst das Raster lokal im Browser. Die Bilderkennung (`scanner.js`) kommt ohne OCR-Bibliothek und Netzwerkzugriff aus; ihre Tests liegen unter `test/sudoku/web-app/` und verwenden die Fotos aus `src/sudoku/web-app/fixtures/`.
+- Voraussetzungen, Bedienung und verfügbare Befehle stehen in `README.md`; Details zur Foto-App stehen in `src/sudoku/web-app/README.md`.
 
 ## Implementierung
 

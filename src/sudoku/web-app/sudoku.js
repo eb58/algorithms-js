@@ -1,33 +1,14 @@
 ;((root, factory) => {
-  const api = factory()
+  const api = factory(
+    typeof module !== 'undefined' && module.exports ? require('../sudoku5') : root.SudokuSolver5,
+    typeof module !== 'undefined' && module.exports ? require('../sudokuUtils').isValidGrid : root.SudokuUtils?.isValidGrid
+  )
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.Sudoku = api
-})(typeof globalThis !== 'undefined' ? globalThis : this, () => {
+})(typeof globalThis !== 'undefined' ? globalThis : this, (solve, validate) => {
+  if (typeof solve !== 'function' || typeof validate !== 'function') throw new Error('Gemeinsamer Sudoku-Solver fehlt')
   const SIZE = 9
   const FULL = 0x1ff
-
-  const validate = (grid) => {
-    if (!Array.isArray(grid) || grid.length !== 81) return false
-    const rows = new Uint16Array(SIZE)
-    const columns = new Uint16Array(SIZE)
-    const boxes = new Uint16Array(SIZE)
-
-    for (let index = 0; index < grid.length; index += 1) {
-      const value = grid[index]
-      if (!Number.isInteger(value) || value < 0 || value > 9) return false
-      if (value === 0) continue
-
-      const row = Math.floor(index / SIZE)
-      const column = index % SIZE
-      const box = Math.floor(row / 3) * 3 + Math.floor(column / 3)
-      const bit = 1 << (value - 1)
-      if (rows[row] & bit || columns[column] & bit || boxes[box] & bit) return false
-      rows[row] |= bit
-      columns[column] |= bit
-      boxes[box] |= bit
-    }
-    return true
-  }
 
   // Backtracking mit der Zelle der wenigsten Kandidaten zuerst. Bricht nach limit Lösungen ab und liefert ihre Anzahl
   // sowie die erste gefundene Lösung.
@@ -100,8 +81,6 @@
     search()
     return { count, solution }
   }
-
-  const solve = (input) => searchSolutions(input, 1).solution
 
   // Anzahl der Lösungen, höchstens limit – mit dem Standardwert 2 genügt das für die Prüfung auf Eindeutigkeit.
   const countSolutions = (input, limit = 2) => searchSolutions(input, limit).count

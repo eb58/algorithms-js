@@ -1,5 +1,5 @@
-// Erzeugt src/sudoku-app/digit-templates.js aus gerenderten Ziffern gängiger Schriften.
-// Aufruf: node src/sudoku-app/tools/build-digit-templates.js (benötigt sharp und die genannten Systemschriften)
+// Erzeugt src/sudoku/web-app/digit-templates.js aus gerenderten Ziffern gängiger Schriften.
+// Aufruf: node src/sudoku/web-app/tools/build-digit-templates.js (benötigt sharp und die genannten Systemschriften)
 const { writeFileSync } = require('node:fs')
 const { join } = require('node:path')
 const prettier = require('prettier')

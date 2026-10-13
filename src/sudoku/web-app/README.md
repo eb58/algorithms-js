@@ -12,7 +12,7 @@ Für den Query-Parameter `fixture` (siehe unten) muss die App über einen lokale
 npx serve .
 ```
 
-Rufe anschließend den angezeigten Pfad `/src/sudoku-app/` auf.
+Rufe anschließend den angezeigten Pfad `/src/sudoku/web-app/` auf.
 
 ## Bedienung
 
@@ -33,7 +33,8 @@ Akzeptiert werden Bilddateien bis 20 MB und ab einer Auflösung von 300 × 300 P
 | `app.js`                              | Bedienung: Foto laden, Rahmen ziehen, Ergebnis anzeigen (einziger DOM-Code) |
 | `scanner.js`                          | Bilderkennung ohne DOM und ohne OCR-Bibliothek                              |
 | `digit-templates.js`                  | Ziffernvorlagen für `scanner.js` (erzeugt)                                  |
-| `sudoku.js`                           | Prüfen, Lösen, Lösungen zählen, OCR-Konflikte bereinigen                    |
+| `sudoku.js`                           | Lösungen zählen und OCR-Konflikte bereinigen                                |
+| `../sudoku5.js`, `../sudokuUtils.js`  | gemeinsamer Solver und Eingabevalidierung                                   |
 | `tools/build-digit-templates.js`      | erzeugt `digit-templates.js`                                                |
 | `favicon.svg`, `apple-touch-icon.png` | Icon für Browser-Tab und Home-Bildschirm                                    |
 | `tools/build-icons.js`                | erzeugt `apple-touch-icon.png` aus `favicon.svg`                            |
@@ -48,16 +49,16 @@ Akzeptiert werden Bilddateien bis 20 MB und ab einer Auflösung von 300 × 300 P
 
 `scanSudoku(image)` fasst Rastersuche und Ziffernerkennung zusammen. Im Browser muss `digit-templates.js` vor `scanner.js` geladen werden.
 
-Die Vorlagen werden mit `node src/sudoku-app/tools/build-digit-templates.js` aus 18 Systemschriften mit Normalziffern erzeugt (u. a. Arial, Verdana, Segoe UI, Franklin Gothic, Bahnschrift, Roboto, Cambria, Palatino, Impact, teils auch fett); dafür werden `sharp` und diese Schriften benötigt. Fehlt eine Schrift, bricht das Skript ab, statt stillschweigend eine Ersatzschrift zu verwenden.
+Die Vorlagen werden mit `node src/sudoku/web-app/tools/build-digit-templates.js` aus 18 Systemschriften mit Normalziffern erzeugt (u. a. Arial, Verdana, Segoe UI, Franklin Gothic, Bahnschrift, Roboto, Cambria, Palatino, Impact, teils auch fett); dafür werden `sharp` und diese Schriften benötigt. Fehlt eine Schrift, bricht das Skript ab, statt stillschweigend eine Ersatzschrift zu verwenden.
 
 ## Tests und Fixtures
 
-Die Tests unter `test/sudoku-app/` lesen jedes Foto aus `fixtures/` ein und prüfen die gesamte Kette: Bild einlesen, Raster erkennen, Ziffern erkennen, Sudoku als String ausgeben und lösen. Außerdem prüfen sie das Einrasten ungenau gesetzter Ecken. Die Fotos sind auf 1600 Pixel Kantenlänge verkleinert und ohne Metadaten gespeichert; auf den Zeitungsfotos sind Kontaktdaten von Privatpersonen unkenntlich gemacht, der übrige Bildinhalt bleibt als Störfaktor für die Rastersuche erhalten.
+Die Tests unter `test/sudoku/web-app/` lesen jedes Foto aus `fixtures/` ein und prüfen die gesamte Kette: Bild einlesen, Raster erkennen, Ziffern erkennen, Sudoku als String ausgeben und lösen. Außerdem prüfen sie das Einrasten ungenau gesetzter Ecken. Die Fotos sind auf 1600 Pixel Kantenlänge verkleinert und ohne Metadaten gespeichert; auf den Zeitungsfotos sind Kontaktdaten von Privatpersonen unkenntlich gemacht, der übrige Bildinhalt bleibt als Störfaktor für die Rastersuche erhalten.
 
 Ein Fixture kann ohne Dateidialog über den Query-Parameter `fixture` in die App geladen werden:
 
 ```text
-http://localhost:3000/src/sudoku-app/?fixture=PXL_20261013_131613617.jpg
+http://localhost:3000/src/sudoku/web-app/?fixture=PXL_20261013_131613617.jpg
 ```
 
 Der Dateiname darf nur Buchstaben, Ziffern, Punkt, Unterstrich und Bindestrich enthalten. Die Verarbeitung bleibt identisch zum normalen Foto-Upload.

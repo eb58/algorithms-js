@@ -74,7 +74,7 @@ Die folgenden HTML-Dateien können direkt im Browser geöffnet werden:
 | Mandelbrot Deep Zoom | `src/mandelbrot/mandelbrot.html`             |
 | Neon Snake           | `src/snake/snake.html`                       |
 | Kasten-Puzzle 3D     | `src/kasten-puzzle-3d/kasten-puzzle-3d.html` |
-| Sudoku Lens          | `src/sudoku-app/index.html`                  |
+| Sudoku Lens          | `src/sudoku/web-app/index.html`              |
 
 Alternativ können sie über einen beliebigen lokalen Webserver ausgeliefert werden. Das 3D-Puzzle lädt Three.js von einem CDN; einige Demos laden außerdem Webfonts und benötigen dafür eine Internetverbindung.
 

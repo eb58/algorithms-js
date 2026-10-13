@@ -1,10 +1,27 @@
-const { countSolutions, sanitizeRecognition, solve, validate } = require('../../src/sudoku-app/sudoku')
+const { readFileSync } = require('node:fs')
+const { join } = require('node:path')
+const vm = require('node:vm')
+const { countSolutions, sanitizeRecognition, solve, validate } = require('../../../src/sudoku/web-app/sudoku')
+const solve5 = require('../../../src/sudoku/sudoku5')
 
 const toGrid = (value) => [...value].map((digit) => (digit === '.' ? 0 : Number(digit)))
 
-describe('SudokuApp solver', () => {
+describe('Sudoku Web-App solver', () => {
   const puzzle = toGrid('53..7....6..195....98....6.8...6...34..8.3..17...2...6.6....28....419..5....8..79')
   const expected = toGrid('534678912672195348198342567859761423426853791713924856961537284287419635345286179')
+
+  test('verwendet den gemeinsamen sudoku5-Solver', () => {
+    expect(solve).toBe(solve5)
+  })
+
+  test('lädt den gemeinsamen Solver ohne CommonJS direkt im Browser', () => {
+    const context = vm.createContext({})
+    for (const file of ['sudokuUtils.js', 'sudoku5.js', 'web-app/sudoku.js']) {
+      vm.runInContext(readFileSync(join(__dirname, '..', '..', '..', 'src', 'sudoku', file), 'utf8'), context)
+    }
+
+    expect(Array.from(context.Sudoku.solve(puzzle))).toEqual(expected)
+  })
 
   test('solves a valid puzzle without mutating its input', () => {
     const original = puzzle.slice()
