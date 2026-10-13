@@ -392,19 +392,44 @@
       .sort((left, right) => right.score - left.score)
   }
 
-  // Schritt 3: Entzerrtes Raster -> { grid, confidence }. 0 steht für eine leere Zelle; confidence ist der
-  // Abstand zur zweitbesten Ziffer (0 = unentschieden, leere Zellen 1).
-  const recognizeDigits = (board, templates = defaultTemplates()) => {
-    const decoded = decodeTemplates(templates)
+  // Dreht das entzerrte Raster um 90° im Uhrzeigersinn.
+  const rotateBoard = (board) => {
+    const rotated = new Uint8Array(board.length)
+    for (let y = 0; y < BOARD; y += 1) for (let x = 0; x < BOARD; x += 1) rotated[y * BOARD + x] = board[(BOARD - 1 - x) * BOARD + y]
+    return rotated
+  }
+
+  const readGlyphs = (board, templates) => {
     const grid = Array(81).fill(0)
     const confidence = Array(81).fill(1)
+    let fit = 0
+    let count = 0
     extractGlyphs(board).forEach((glyph, index) => {
       if (!glyph) return
-      const [best, second] = classifyGlyph(glyph, decoded)
+      const [best, second] = classifyGlyph(glyph, templates)
       grid[index] = best.digit
       confidence[index] = max(0, min(1, best.score - (second?.score ?? 0)))
+      fit += best.score
+      count += 1
     })
-    return { grid, confidence }
+    return { grid, confidence, fit: count ? fit / count : 0 }
+  }
+
+  // Schritt 3: Entzerrtes Raster -> { grid, confidence, rotation }. 0 steht für eine leere Zelle; confidence ist der
+  // Abstand zur zweitbesten Ziffer (0 = unentschieden, leere Zellen 1). Liegt das Rätsel im Foto quer oder auf dem Kopf
+  // (z. B. flach fotografiert), gewinnt die Ausrichtung, deren Ziffern am besten zu den Vorlagen passen;
+  // rotation gibt an, um wie viele Vierteldrehungen im Uhrzeigersinn das Raster dafür gedreht wurde.
+  const recognizeDigits = (board, templates = defaultTemplates()) => {
+    const decoded = decodeTemplates(templates)
+    let best = null
+    let current = board
+    for (let rotation = 0; rotation < 4; rotation += 1) {
+      const result = { ...readGlyphs(current, decoded), rotation }
+      if (!best || result.fit > best.fit) best = result
+      current = rotateBoard(current)
+    }
+    const { grid, confidence, rotation } = best
+    return { grid, confidence, rotation }
   }
 
   // Gesamte Kette: RGBA-Bild -> { grid, confidence, corners } oder null, wenn kein Raster gefunden wurde.

@@ -76,10 +76,10 @@ const FIXTURES = [
 ]
 const CORNER_TOLERANCE = 16
 
-// Schritt 1: Bild einlesen – in Node über sharp, im Browser über ein Canvas.
-const loadImage = async (file) => {
+// Schritt 1: Bild einlesen – in Node über sharp, im Browser über ein Canvas. angle dreht das Foto zusätzlich im Uhrzeigersinn.
+const loadImage = async (file, angle = 0) => {
   const { data, info } = await sharp(join(__dirname, '..', '..', 'src', 'sudoku-app', 'fixtures', file))
-    .rotate()
+    .rotate(angle)
     .ensureAlpha()
     .raw()
     .toBuffer({ resolveWithObject: true })
@@ -114,6 +114,7 @@ describe.each(FIXTURES)('Sudoku-Foto $file ($scene)', ({ file, puzzle, solution,
     recognized = recognizeDigits(found.board)
 
     expect(recognized.grid).toEqual(toGrid(puzzle))
+    expect(recognized.rotation).toBe(0)
   })
 
   test('4. Sudoku im String-Format ausgeben und lösen', () => {
@@ -147,6 +148,16 @@ describe.each(FIXTURES)('Sudoku-Foto $file ($scene)', ({ file, puzzle, solution,
 
   test('scanSudoku liefert dasselbe Ergebnis in einem Aufruf', () => {
     expect(gridToString(scanSudoku(image).grid)).toBe(puzzle)
+  })
+})
+
+// Flach über dem Papier fotografiert, speichern Handys das Bild oft quer oder auf dem Kopf.
+describe.each(FIXTURES)('gedrehtes Sudoku-Foto $file', ({ file, puzzle }) => {
+  test.each([90, 180, 270])('wird auch um %i° gedreht erkannt', async (angle) => {
+    const result = scanSudoku(await loadImage(file, angle))
+
+    expect(gridToString(result.grid)).toBe(puzzle)
+    expect(result.rotation).toBe((4 - angle / 90) % 4)
   })
 })
 

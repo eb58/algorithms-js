@@ -22,7 +22,7 @@ Rufe anschließend den angezeigten Pfad `/src/sudoku-app/` auf.
 4. Orange markierte beziehungsweise falsch erkannte Zahlen korrigieren.
 5. Das Sudoku lösen. Hat das Raster mehrere Lösungen, fehlen meist erkannte Zahlen; die App löst es dann nicht.
 
-Für gute Ergebnisse sollte das Rätsel scharf, gleichmäßig beleuchtet und ohne handschriftliche Einträge fotografiert werden. Perspektivische Verzerrung und leichte Drehung werden ausgeglichen.
+Für gute Ergebnisse sollte das Rätsel scharf, gleichmäßig beleuchtet und ohne handschriftliche Einträge fotografiert werden. Perspektivische Verzerrung und Drehung werden ausgeglichen, auch wenn das Foto quer oder auf dem Kopf gespeichert wurde (typisch beim flachen Fotografieren eines liegenden Blatts).
 
 Akzeptiert werden Bilddateien bis 20 MB und ab einer Auflösung von 300 × 300 Pixeln. Fotos mit mehr als 24 Megapixeln werden vor der Erkennung verkleinert.
 
@@ -42,7 +42,7 @@ Akzeptiert werden Bilddateien bis 20 MB und ab einer Auflösung von 300 × 300 P
 1. `findGrid(image)` sucht das größte regelmäßige 9×9-Gitter und liefert seine vier Ecken sowie ein perspektivisch entzerrtes Graustufenraster.
 2. `snapCorners(image, corners)` lässt von Hand gesetzte Ecken auf ein erkanntes Gitter einrasten, das höchstens drei Viertel einer Zellbreite entfernt liegt.
 3. `warpCorners(image, corners)` entzerrt das Raster zu beliebigen Ecken.
-4. `recognizeDigits(board)` schneidet die 81 Zellen aus und vergleicht jede Ziffer mit den Vorlagen.
+4. `recognizeDigits(board)` schneidet die 81 Zellen aus und vergleicht jede Ziffer mit den Vorlagen. Dabei werden alle vier Ausrichtungen probiert; es gewinnt die, deren Ziffern am besten passen.
 5. `gridToString(grid)` gibt das Raster als 81-stelligen String aus (`.` für leere Felder).
 
 `scanSudoku(image)` fasst Rastersuche und Ziffernerkennung zusammen. Im Browser muss `digit-templates.js` vor `scanner.js` geladen werden.
