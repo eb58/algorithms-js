@@ -12,6 +12,7 @@
   const BOARD = CELL * 9
   const GLYPH_WIDTH = 12
   const GLYPH_HEIGHT = 16
+  const MIN_GLYPH_SCORE = 0.4 // echte Ziffern liegen deutlich darüber, Papierknicke und Flecken deutlich darunter
 
   const assertImage = ({ data, width, height } = {}) => {
     if (!data || !Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0 || data.length !== width * height * 4) {
@@ -317,7 +318,7 @@
   // Schritt 3a: Schneidet aus dem entzerrten Raster die Ziffern aus. Leere Zellen ergeben null.
   const extractGlyphs = (board) => {
     const ink = adaptiveThreshold(board, BOARD, BOARD, CELL >> 1, 0.18)
-    const margin = round(CELL * 0.12)
+    const margin = round(CELL * 0.04)
     const inner = CELL - 2 * margin
     return Array.from({ length: 81 }, (_, index) => {
       const left = (index % 9) * CELL + margin
@@ -325,30 +326,46 @@
       const cell = new Uint8Array(inner * inner)
       for (let y = 0; y < inner; y += 1) for (let x = 0; x < inner; x += 1) cell[y * inner + x] = ink[(top + y) * BOARD + left + x]
 
-      // Gitterlinienreste berühren den Zellrand; eine Ziffer ist hoch genug und liegt ungefähr in der Mitte.
-      const parts = components(cell, inner, inner).filter(
+      // Gitterlinien berühren den Zellrand und laufen fast durch die ganze Zelle oder liegen überwiegend direkt am Rand.
+      // Eine Ziffer ist hoch genug und liegt ungefähr in der Mitte; sie darf den Rand berühren, weil große oder
+      // verschobene Zeitungsziffern bis dorthin reichen.
+      const atEdge = (pixel) => {
+        const x = pixel % inner
+        const y = (pixel - x) / inner
+        return x <= 1 || y <= 1 || x >= inner - 2 || y >= inner - 2
+      }
+      const pieces = components(cell, inner, inner).filter((part) => {
+        const width = part.maxX - part.minX + 1
+        const height = part.maxY - part.minY + 1
+        const touchesEdge = part.minX === 0 || part.minY === 0 || part.maxX === inner - 1 || part.maxY === inner - 1
+        return !(touchesEdge && (width > inner * 0.8 || height > inner * 0.8 || part.pixels.filter(atEdge).length > part.count * 0.4))
+      })
+      const candidates = pieces.filter(
         (part) =>
-          part.minX > 0 &&
-          part.minY > 0 &&
-          part.maxX < inner - 1 &&
-          part.maxY < inner - 1 &&
-          part.maxY - part.minY + 1 >= inner * 0.35 &&
+          part.maxY - part.minY + 1 >= inner * 0.3 &&
           abs((part.minX + part.maxX) / 2 - inner / 2) < inner * 0.3 &&
           abs((part.minY + part.maxY) / 2 - inner / 2) < inner * 0.3
       )
-      if (!parts.length) return null
-      const main = parts.reduce((best, part) => (part.count > best.count ? part : best))
+      if (!candidates.length) return null
+      const main = candidates.reduce((best, part) => (part.count > best.count ? part : best))
       const box = { minX: main.minX, minY: main.minY, maxX: main.maxX, maxY: main.maxY }
-      // Kleinere Teile derselben Ziffer (z. B. bei dünner, unterbrochener Schrift) mit aufnehmen.
-      for (const part of parts) {
-        if (part === main || part.maxX < box.minX - 2 || part.minX > box.maxX + 2) continue
+      // Bruchstücke derselben Ziffer (z. B. ein unterbrochener Querbalken) mit aufnehmen, auch wenn sie klein sind – aber nur,
+      // wenn sie direkt angrenzen und innerhalb des leicht erweiterten Ziffernrahmens liegen. So kommen weder Flecken
+      // noch angrenzende Linienreste dazu.
+      const slack = round(inner * 0.15)
+      const glyphParts = [main]
+      for (const part of pieces) {
+        if (part === main) continue
+        if (part.minX < main.minX - slack || part.maxX > main.maxX + slack || part.minY < main.minY - slack || part.maxY > main.maxY + slack) continue
+        if (part.maxX < main.minX - 2 || part.minX > main.maxX + 2 || part.maxY < main.minY - 2 || part.minY > main.maxY + 2) continue
+        glyphParts.push(part)
         box.minX = min(box.minX, part.minX)
         box.minY = min(box.minY, part.minY)
         box.maxX = max(box.maxX, part.maxX)
         box.maxY = max(box.maxY, part.maxY)
       }
       const mask = new Uint8Array(cell.length)
-      for (const part of parts) for (const pixel of part.pixels) mask[pixel] = 1
+      for (const part of glyphParts) for (const pixel of part.pixels) mask[pixel] = 1
       return normalizeGlyph(mask, inner, box)
     })
   }
@@ -407,10 +424,11 @@
     extractGlyphs(board).forEach((glyph, index) => {
       if (!glyph) return
       const [best, second] = classifyGlyph(glyph, templates)
-      grid[index] = best.digit
-      confidence[index] = max(0, min(1, best.score - (second?.score ?? 0)))
       fit += best.score
       count += 1
+      if (best.score < MIN_GLYPH_SCORE) return
+      grid[index] = best.digit
+      confidence[index] = max(0, min(1, best.score - (second?.score ?? 0)))
     })
     return { grid, confidence, fit: count ? fit / count : 0 }
   }

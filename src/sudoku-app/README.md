@@ -51,7 +51,7 @@ Die Vorlagen werden mit `node src/sudoku-app/tools/build-digit-templates.js` aus
 
 ## Tests und Fixtures
 
-Die Tests unter `test/sudoku-app/` lesen jedes Foto aus `fixtures/` ein und prüfen die gesamte Kette: Bild einlesen, Raster erkennen, Ziffern erkennen, Sudoku als String ausgeben und lösen. Außerdem prüfen sie das Einrasten ungenau gesetzter Ecken.
+Die Tests unter `test/sudoku-app/` lesen jedes Foto aus `fixtures/` ein und prüfen die gesamte Kette: Bild einlesen, Raster erkennen, Ziffern erkennen, Sudoku als String ausgeben und lösen. Außerdem prüfen sie das Einrasten ungenau gesetzter Ecken. Die Fotos sind auf 1600 Pixel Kantenlänge verkleinert und ohne Metadaten gespeichert; auf den Zeitungsfotos sind Kontaktdaten von Privatpersonen unkenntlich gemacht, der übrige Bildinhalt bleibt als Störfaktor für die Rastersuche erhalten.
 
 Ein Fixture kann ohne Dateidialog über den Query-Parameter `fixture` in die App geladen werden:
 

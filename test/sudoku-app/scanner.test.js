@@ -10,13 +10,19 @@ const EXPERTE = {
   puzzle: rows('5.26.....', '9..3.....', '......63.', '..3....28', '....46...', '..8.....9', '....249..', '.7...3...', '....6.142'),
   solution: rows('532671894', '946385217', '817492635', '463159728', '729846351', '158237469', '681524973', '274913586', '395768142')
 }
+const ZEITUNG = {
+  puzzle: rows('6.2..83..', '9..64....', '.71.3....', '.48....2.', '.1..6..3.', '.9....18.', '....8.26.', '....23..9', '..71..4.3'),
+  solution: rows('652918347', '983647512', '471235698', '748351926', '215869734', '396472185', '539784261', '164523879', '827196453')
+}
 const LEICHT = {
   puzzle: rows('1.62.7.9.', '.3....25.', '..43....6', '.8..7.96.', '61....4..', '54.681.3.', '....69.23', '8.3.15.4.', '9...3...7'),
   solution: rows('156247398', '738196254', '294358176', '382574961', '617923485', '549681732', '471869523', '823715649', '965432817')
 }
 
 // Ecken des äußeren Gitters (oben links, oben rechts, unten rechts, unten links) in Pixeln des Originalfotos,
-// einmalig visuell geprüft. Die Toleranz liegt deutlich unter einer Zellbreite.
+// einmalig visuell geprüft. Die Toleranz liegt deutlich unter einer Zellbreite. rotation: Vierteldrehungen im
+// Uhrzeigersinn, um die das Raster gedreht werden muss (quer gespeicherte Handyfotos). Auf den Zeitungsfotos sind
+// Kontaktdaten von Privatpersonen unkenntlich gemacht; Anzeige, Text und Lösungsraster bleiben als Störfaktoren.
 const FIXTURES = [
   {
     file: 'PXL_20261013_125325969.MP.jpg',
@@ -72,6 +78,54 @@ const FIXTURES = [
       [827, 1245],
       [69, 1236]
     ]
+  },
+  {
+    file: 'PXL_20261013_161402316.MP.jpg',
+    scene: 'Zeitung quer, graue Blöcke, gewelltes Papier, Lösungsraster daneben',
+    ...ZEITUNG,
+    rotation: 1,
+    corners: [
+      [369, 188],
+      [1043, 151],
+      [1069, 816],
+      [390, 849]
+    ]
+  },
+  {
+    file: 'PXL_20261013_163128286.MP.jpg',
+    scene: 'Zeitung quer, klein im Bild, Comic und Anzeige daneben',
+    ...ZEITUNG,
+    rotation: 1,
+    corners: [
+      [753, 237],
+      [1265, 210],
+      [1267, 710],
+      [767, 711]
+    ]
+  },
+  {
+    file: 'PXL_20261013_163135274.MP.jpg',
+    scene: 'Zeitung quer, perspektivisch',
+    ...ZEITUNG,
+    rotation: 1,
+    corners: [
+      [605, 196],
+      [1216, 156],
+      [1223, 763],
+      [624, 765]
+    ]
+  },
+  {
+    file: 'PXL_20261013_163138704.MP.jpg',
+    scene: 'Zeitung quer und schräg gedreht',
+    ...ZEITUNG,
+    rotation: 1,
+    corners: [
+      [593, 125],
+      [1223, 155],
+      [1159, 773],
+      [549, 710]
+    ]
   }
 ]
 const CORNER_TOLERANCE = 16
@@ -86,7 +140,7 @@ const loadImage = async (file, angle = 0) => {
   return { data: new Uint8ClampedArray(data.buffer, data.byteOffset, data.length), width: info.width, height: info.height }
 }
 
-describe.each(FIXTURES)('Sudoku-Foto $file ($scene)', ({ file, puzzle, solution, corners }) => {
+describe.each(FIXTURES)('Sudoku-Foto $file ($scene)', ({ file, puzzle, solution, corners, rotation = 0 }) => {
   let image
   let found
   let recognized
@@ -114,7 +168,7 @@ describe.each(FIXTURES)('Sudoku-Foto $file ($scene)', ({ file, puzzle, solution,
     recognized = recognizeDigits(found.board)
 
     expect(recognized.grid).toEqual(toGrid(puzzle))
-    expect(recognized.rotation).toBe(0)
+    expect(recognized.rotation).toBe(rotation)
   })
 
   test('4. Sudoku im String-Format ausgeben und lösen', () => {
@@ -152,12 +206,12 @@ describe.each(FIXTURES)('Sudoku-Foto $file ($scene)', ({ file, puzzle, solution,
 })
 
 // Flach über dem Papier fotografiert, speichern Handys das Bild oft quer oder auf dem Kopf.
-describe.each(FIXTURES)('gedrehtes Sudoku-Foto $file', ({ file, puzzle }) => {
+describe.each(FIXTURES)('gedrehtes Sudoku-Foto $file', ({ file, puzzle, rotation = 0 }) => {
   test.each([90, 180, 270])('wird auch um %i° gedreht erkannt', async (angle) => {
     const result = scanSudoku(await loadImage(file, angle))
 
     expect(gridToString(result.grid)).toBe(puzzle)
-    expect(result.rotation).toBe((4 - angle / 90) % 4)
+    expect(result.rotation).toBe((rotation - angle / 90 + 4) % 4)
   })
 })
 
