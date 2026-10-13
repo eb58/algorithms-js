@@ -126,6 +126,54 @@ const FIXTURES = [
       [1159, 773],
       [549, 710]
     ]
+  },
+  {
+    file: 'PXL_20261013_170916279.MP.jpg',
+    scene: 'Ausdruck quer, Streiflicht, Tastatur daneben',
+    ...EXPERTE,
+    rotation: 1,
+    corners: [
+      [512, 57],
+      [1360, 16],
+      [1345, 857],
+      [548, 851]
+    ]
+  },
+  {
+    file: 'PXL_20261013_170922870.MP.jpg',
+    scene: 'Ausdruck quer, Streiflicht, schräg',
+    ...EXPERTE,
+    rotation: 1,
+    corners: [
+      [616, 25],
+      [1469, 41],
+      [1384, 883],
+      [591, 811]
+    ]
+  },
+  {
+    file: 'PXL_20261013_170925953.MP.jpg',
+    scene: 'Ausdruck quer, Gitter am Bildrand',
+    ...EXPERTE,
+    rotation: 1,
+    corners: [
+      [588, 63],
+      [1417, 0],
+      [1415, 827],
+      [636, 816]
+    ]
+  },
+  {
+    file: 'PXL_20261013_170926674.jpg',
+    scene: 'Ausdruck quer, Schatten',
+    ...EXPERTE,
+    rotation: 1,
+    corners: [
+      [583, 93],
+      [1419, 13],
+      [1427, 849],
+      [645, 851]
+    ]
   }
 ]
 const CORNER_TOLERANCE = 16

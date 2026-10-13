@@ -47,7 +47,7 @@ Akzeptiert werden Bilddateien bis 20 MB und ab einer Auflösung von 300 × 300 P
 
 `scanSudoku(image)` fasst Rastersuche und Ziffernerkennung zusammen. Im Browser muss `digit-templates.js` vor `scanner.js` geladen werden.
 
-Die Vorlagen werden mit `node src/sudoku-app/tools/build-digit-templates.js` aus Systemschriften (Arial, Verdana, Segoe UI, Calibri, Tahoma, Times New Roman) erzeugt; dafür werden `sharp` und diese Schriften benötigt.
+Die Vorlagen werden mit `node src/sudoku-app/tools/build-digit-templates.js` aus 18 Systemschriften mit Normalziffern erzeugt (u. a. Arial, Verdana, Segoe UI, Franklin Gothic, Bahnschrift, Roboto, Cambria, Palatino, Impact, teils auch fett); dafür werden `sharp` und diese Schriften benötigt. Fehlt eine Schrift, bricht das Skript ab, statt stillschweigend eine Ersatzschrift zu verwenden.
 
 ## Tests und Fixtures
 
