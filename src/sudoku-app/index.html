@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Sudoku aus einem Zeitungsfoto erkennen, prüfen und lösen." />
+    <title>Sudoku Lens</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="sudoku.js"></script>
+    <script defer src="digit-templates.js"></script>
+    <script defer src="scanner.js"></script>
+    <script defer src="app.js"></script>
+  </head>
+  <body>
+    <header class="topbar">
+      <a class="brand" href="#">SUDOKU <span>LENS</span></a>
+      <p>Lokal im Browser · Kein Foto-Upload</p>
+    </header>
+
+    <main>
+      <section class="intro">
+        <p class="eyebrow">FOTO → ZAHLEN → LÖSUNG</p>
+        <h1>Das Rätsel ist auf Papier.<br /><em>Die Lösung nicht mehr lange.</em></h1>
+        <p class="lede">
+          Fotografiere ein gedrucktes Sudoku möglichst gerade und ohne Schatten. Prüfe die erkannten Zahlen – den Rest erledigt der Solver.
+        </p>
+      </section>
+
+      <ol class="steps" aria-label="Arbeitsschritte">
+        <li class="active" data-step="1"><span>01</span> Foto</li>
+        <li data-step="2"><span>02</span> Ausschnitt</li>
+        <li data-step="3"><span>03</span> Prüfen</li>
+        <li data-step="4"><span>04</span> Lösung</li>
+      </ol>
+
+      <section class="workspace">
+        <article class="panel photo-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="kicker">EINGABE</span>
+              <h2>Zeitungsfoto</h2>
+            </div>
+            <button id="reset-button" class="text-button" type="button" hidden>Neu starten</button>
+          </div>
+
+          <label id="drop-zone" class="drop-zone">
+            <input id="file-input" type="file" accept="image/*" capture="environment" />
+            <span class="camera-icon" aria-hidden="true">⌁</span>
+            <strong>Foto aufnehmen oder auswählen</strong>
+            <small>JPG, PNG oder WebP · bleibt auf diesem Gerät</small>
+          </label>
+
+          <div id="crop-stage" class="crop-stage" hidden>
+            <div id="photo-frame" class="photo-frame">
+              <canvas id="photo-canvas"></canvas>
+              <svg id="selection" class="selection" preserveAspectRatio="none" aria-label="Erkannter Sudoku-Ausschnitt">
+                <path class="shade"></path>
+                <path class="guides"></path>
+                <polygon class="frame"></polygon>
+              </svg>
+              <i class="handle" data-corner="0" title="Ecke oben links"></i>
+              <i class="handle" data-corner="1" title="Ecke oben rechts"></i>
+              <i class="handle" data-corner="2" title="Ecke unten rechts"></i>
+              <i class="handle" data-corner="3" title="Ecke unten links"></i>
+            </div>
+          </div>
+
+          <div id="photo-actions" class="actions" hidden>
+            <p id="crop-hint">Der Rahmen wurde automatisch gesetzt. Ziehe die vier Ecken bei Bedarf auf die Ecken des äußeren Gitters.</p>
+            <button id="recognize-button" class="primary-button" type="button">Zahlen erkennen <span>→</span></button>
+          </div>
+        </article>
+
+        <article class="panel grid-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="kicker">KONTROLLE</span>
+              <h2>Erkanntes Sudoku</h2>
+            </div>
+            <span id="grid-status" class="status neutral">Noch kein Foto</span>
+          </div>
+
+          <div id="empty-state" class="empty-state">
+            <div class="mini-grid" aria-hidden="true"></div>
+            <p>Hier erscheinen die erkannten Zahlen.</p>
+          </div>
+          <div id="sudoku-wrap" hidden>
+            <div id="sudoku-grid" class="sudoku-grid" aria-label="Sudoku-Eingabefeld"></div>
+            <div class="legend">
+              <span><i class="dot recognized"></i> erkannt</span><span><i class="dot uncertain"></i> unsicher</span
+              ><span><i class="dot solved"></i> ergänzt</span>
+            </div>
+            <div class="actions grid-actions">
+              <button id="clear-button" class="secondary-button" type="button">Leeren</button>
+              <button id="solve-button" class="primary-button" type="button">Sudoku lösen <span>→</span></button>
+            </div>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer><span>ALGORITHMS-JS / SUDOKU APP</span><span>MIT LICENSE</span></footer>
+  </body>
+</html>
