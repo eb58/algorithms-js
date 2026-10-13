@@ -342,7 +342,7 @@
       })
       const candidates = pieces.filter(
         (part) =>
-          part.maxY - part.minY + 1 >= inner * 0.3 &&
+          part.maxY - part.minY + 1 >= inner * 0.22 &&
           abs((part.minX + part.maxX) / 2 - inner / 2) < inner * 0.3 &&
           abs((part.minY + part.maxY) / 2 - inner / 2) < inner * 0.3
       )
