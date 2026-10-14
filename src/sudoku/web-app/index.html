@@ -47,12 +47,16 @@
             <button id="reset-button" class="text-button" type="button" hidden>Neu starten</button>
           </div>
 
-          <label id="drop-zone" class="drop-zone">
-            <input id="file-input" type="file" accept="image/*" capture="environment" />
+          <div id="drop-zone" class="drop-zone">
+            <input id="camera-input" type="file" accept="image/*" capture="environment" hidden />
+            <input id="file-input" type="file" accept="image/*" hidden />
             <span class="camera-icon" aria-hidden="true">⌁</span>
-            <strong>Foto aufnehmen oder auswählen</strong>
+            <div class="photo-input-actions">
+              <button id="camera-button" class="primary-button" type="button">Foto aufnehmen</button>
+              <button id="file-button" class="secondary-button" type="button">Bild auswählen</button>
+            </div>
             <small>JPG, PNG oder WebP · bleibt auf diesem Gerät</small>
-          </label>
+          </div>
 
           <div id="crop-stage" class="crop-stage" hidden>
             <div id="photo-frame" class="photo-frame">

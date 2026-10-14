@@ -316,8 +316,8 @@
   }
 
   // Schritt 3a: Schneidet aus dem entzerrten Raster die Ziffern aus. Leere Zellen ergeben null.
-  const extractGlyphs = (board) => {
-    const ink = adaptiveThreshold(board, BOARD, BOARD, CELL >> 1, 0.18)
+  const extractGlyphs = (board, thresholdOffset = 0.18) => {
+    const ink = adaptiveThreshold(board, BOARD, BOARD, CELL >> 1, thresholdOffset)
     const margin = round(CELL * 0.04)
     const inner = CELL - 2 * margin
     return Array.from({ length: 81 }, (_, index) => {
@@ -429,6 +429,16 @@
       if (best.score < MIN_GLYPH_SCORE) return
       grid[index] = best.digit
       confidence[index] = max(0, min(1, best.score - (second?.score ?? 0)))
+    })
+    // Blasse, dünne Ziffern können beim ersten Schwellwert verschwinden. Nur sehr eindeutige
+    // Vorlagentreffer nachtragen, damit Bleistiftreste und Papierflecken keine Zahlen erzeugen.
+    extractGlyphs(board, 0.1).forEach((glyph, index) => {
+      if (grid[index] || !glyph) return
+      const [best, second] = classifyGlyph(glyph, templates)
+      const margin = best.score - (second?.score ?? 0)
+      if (best.score < 0.7 || margin < 0.3) return
+      grid[index] = best.digit
+      confidence[index] = min(1, margin)
     })
     return { grid, confidence, fit: count ? fit / count : 0 }
   }

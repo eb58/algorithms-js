@@ -172,7 +172,6 @@ h2 {
   gap: 9px;
   border: 1.5px dashed #aaa99f;
   background: repeating-linear-gradient(-45deg, transparent, transparent 7px, rgb(0 0 0 / 1.5%) 7px, rgb(0 0 0 / 1.5%) 8px);
-  cursor: pointer;
   transition: 0.2s;
 }
 .drop-zone:hover,
@@ -180,14 +179,20 @@ h2 {
   border-color: var(--orange);
   background-color: #fff9ed;
 }
-.drop-zone input {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
+.photo-input-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  padding: 0 12px;
 }
-.drop-zone strong {
-  font-size: 16px;
+#camera-button {
+  display: none;
+}
+@media (any-pointer: coarse) {
+  #camera-button {
+    display: inline-block;
+  }
 }
 .drop-zone small {
   color: var(--muted);

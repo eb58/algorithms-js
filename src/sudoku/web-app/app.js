@@ -10,6 +10,9 @@
   const $ = (selector) => document.querySelector(selector)
   const elements = {
     file: $('#file-input'),
+    camera: $('#camera-input'),
+    cameraButton: $('#camera-button'),
+    fileButton: $('#file-button'),
     drop: $('#drop-zone'),
     cropStage: $('#crop-stage'),
     frame: $('#photo-frame'),
@@ -31,7 +34,8 @@
     pixels: null, // RGBA-Daten des Fotos, auf denen der Scanner arbeitet
     corners: null, // Ecken des Gitters (oben links, oben rechts, unten rechts, unten links) in Pixeln von state.pixels
     original: Array(81).fill(0),
-    drag: null
+    drag: null,
+    revision: 0 // nur der aktuelle Vorgang darf nach einer Wartephase noch die Oberfläche ändern
   }
 
   const clamp = (value, lower, upper) => Math.max(lower, Math.min(upper, value))
@@ -46,9 +50,14 @@
       return
     }
 
+    reset()
+    const revision = state.revision
+    elements.reset.hidden = false
+    setStatus('Foto wird geladen …', 'neutral')
     const url = URL.createObjectURL(file)
     try {
       const image = await loadImage(url)
+      if (revision !== state.revision) return
       if (image.naturalWidth < MIN_SIDE || image.naturalHeight < MIN_SIDE) {
         setStatus('Bildauflösung ist zu klein', 'bad')
         return
@@ -61,6 +70,7 @@
       elements.reset.hidden = false
       setStatus('Raster wird gesucht …', 'neutral')
       await nextFrame()
+      if (revision !== state.revision) return
 
       // Wird ein Raster gefunden, stehen die Zahlen sofort im erkannten Sudoku; sonst setzt der Nutzer die Ecken.
       const found = SudokuScanner.findGrid(state.pixels)
@@ -69,6 +79,7 @@
       if (found) await recognizeGrid({ reveal: true })
       else setStatus('Kein Raster gefunden – Ecken setzen', 'warn')
     } catch (error) {
+      if (revision !== state.revision) return
       console.error(error)
       setStatus('Bild konnte nicht gelesen werden', 'bad')
     } finally {
@@ -140,6 +151,7 @@
   // Ein Griff verschiebt seine Ecke, ein Zug im Rahmen verschiebt alle vier Ecken.
   const startDrag = (event) => {
     if (!state.corners) return
+    state.revision += 1
     event.preventDefault()
     const corner = event.target.dataset.corner
     state.drag = {
@@ -180,10 +192,14 @@
 
   const recognizeGrid = async ({ reveal = false } = {}) => {
     if (!state.pixels || !state.corners) return
+    const revision = ++state.revision
+    const pixels = state.pixels
+    const corners = state.corners.map((point) => ({ ...point }))
     setStatus('Ziffern werden erkannt …', 'neutral')
     await nextFrame()
+    if (revision !== state.revision) return
     try {
-      const { grid, confidence } = SudokuScanner.recognizeDigits(SudokuScanner.warpCorners(state.pixels, state.corners))
+      const { grid, confidence } = SudokuScanner.recognizeDigits(SudokuScanner.warpCorners(pixels, corners))
       const sanitized = Sudoku.sanitizeRecognition(grid, confidence)
       for (const index of sanitized.removed) confidence[index] = 0
       state.original = sanitized.grid.slice()
@@ -204,6 +220,7 @@
       input.maxLength = 1
       input.setAttribute('aria-label', `Zeile ${Math.floor(index / 9) + 1}, Spalte ${(index % 9) + 1}`)
       input.addEventListener('input', () => {
+        state.revision += 1
         input.value = input.value.replace(/[^1-9]/g, '').slice(-1)
         input.className = input.value ? 'cell recognized' : 'cell'
         validateInputs()
@@ -241,6 +258,7 @@
   }
 
   const solveGrid = () => {
+    state.revision += 1
     const input = readGrid()
     const solutions = Sudoku.countSolutions(input)
     if (solutions === 0) {
@@ -285,6 +303,7 @@
   }
 
   const reset = () => {
+    state.revision += 1
     state.pixels = null
     state.corners = null
     state.drag = null
@@ -322,12 +341,15 @@
       return
     }
 
+    const revision = state.revision
     try {
       const response = await fetch(`./fixtures/${encodeURIComponent(filename)}`)
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const blob = await response.blob()
+      if (revision !== state.revision) return
       await loadFile(new File([blob], filename, { type: blob.type }))
     } catch (error) {
+      if (revision !== state.revision) return
       console.error(error)
       setStatus('Fixture konnte nicht geladen werden', 'bad')
     }
@@ -335,7 +357,15 @@
 
   buildGrid()
 
-  elements.file.addEventListener('change', () => loadFile(elements.file.files[0]))
+  elements.cameraButton.addEventListener('click', () => elements.camera.click())
+  elements.fileButton.addEventListener('click', () => elements.file.click())
+  ;[elements.file, elements.camera].forEach((input) => {
+    input.addEventListener('change', () => {
+      const file = input.files[0]
+      input.value = '' // dieselbe Datei darf nach einem Fehlversuch erneut gewählt werden
+      if (file) return loadFile(file)
+    })
+  })
   elements.drop.addEventListener('dragover', (event) => {
     event.preventDefault()
     elements.drop.classList.add('dragging')
@@ -347,7 +377,10 @@
     loadFile(event.dataTransfer.files[0])
   })
   elements.solve.addEventListener('click', solveGrid)
-  elements.clear.addEventListener('click', () => showGrid(Array(81).fill(0)))
+  elements.clear.addEventListener('click', () => {
+    state.revision += 1
+    showGrid(Array(81).fill(0))
+  })
   elements.reset.addEventListener('click', reset)
   elements.selection.querySelector('.frame').addEventListener('pointerdown', startDrag)
   elements.handles.forEach((handle) => handle.addEventListener('pointerdown', startDrag))

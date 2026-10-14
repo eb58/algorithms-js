@@ -1,7 +1,7 @@
 const { join } = require('node:path')
 const sharp = require('sharp')
 const { findGrid, gridToString, recognizeDigits, scanSudoku, snapCorners, warpCorners } = require('../../../src/sudoku/web-app/scanner')
-const { solve } = require('../../../src/sudoku/web-app/sudoku')
+const { countSolutions, sanitizeRecognition, solve } = require('../../../src/sudoku/web-app/sudoku')
 
 const rows = (...lines) => lines.join('')
 const toGrid = (value) => [...value].map((digit) => (digit === '.' ? 0 : Number(digit)))
@@ -305,6 +305,43 @@ describe.each(FIXTURES)('gedrehtes Sudoku-Foto $file', ({ file, puzzle, rotation
 
     expect(gridToString(result.grid)).toBe(puzzle)
     expect(result.rotation).toBe((rotation - angle / 90 + 4) % 4)
+  })
+})
+
+// Originale Kameradateien (4032 Pixel, inklusive Metadaten), nicht vorab verkleinerte Fotos.
+// Beim ausgefüllten Zeitungsrätsel können zusätzlich korrekt gelesene Bleistiftzahlen erhalten bleiben.
+describe.each([
+  {
+    file: 'PXL_20261014_162615343.jpg',
+    puzzle: rows('...7.91..', '.16...4..', '79...2..8', '87..9....', '..3...8..', '....5..72', '3..1...89', '..2...75.', '..98.5...'),
+    solution: rows('538749126', '216583497', '794612538', '875291364', '923467815', '641358972', '357124689', '482936751', '169875243'),
+    rotation: 0
+  },
+  { file: 'PXL_20261014_162625239.jpg', ...ZEITUNG, handwritten: true, rotation: 0 },
+  {
+    file: 'PXL_20261014_162656609.jpg',
+    puzzle: rows('..749.3..', '...5...4.', '....13857', '3...5.7.6', '...2.6...', '5.6.8...4', '41837....', '.7...5...', '..5.421..'),
+    solution: rows('157498362', '863527941', '924613857', '382954716', '741236598', '596781234', '418379625', '279165483', '635842179'),
+    rotation: 1
+  }
+])('Smartphone-Kamerafoto $file', ({ file, puzzle, solution, handwritten = false, rotation }) => {
+  test.each([0, 90, 180, 270])('erkennt und löst das Foto bei %i° wie die App', async (angle) => {
+    const recognized = scanSudoku(await loadImage(file, angle))
+
+    expect(recognized).not.toBeNull()
+    expect(recognized.rotation).toBe((rotation - angle / 90 + 4) % 4)
+    const sanitized = sanitizeRecognition(recognized.grid, recognized.confidence)
+    const expected = toGrid(puzzle)
+    if (handwritten) {
+      expected.forEach((value, index) => {
+        if (value) expect(sanitized.grid[index]).toBe(value)
+      })
+    } else {
+      expect(recognized.grid).toEqual(expected)
+      expect(sanitized.removed).toEqual([])
+    }
+    expect(countSolutions(sanitized.grid)).toBe(1)
+    expect(gridToString(solve(sanitized.grid))).toBe(solution)
   })
 })
 
