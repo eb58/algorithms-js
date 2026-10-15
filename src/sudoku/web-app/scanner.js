@@ -7,6 +7,7 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, (browserTemplates) => {
   // Lokal gebunden: In vm-Kontexten (z. B. Jest) ist jeder Zugriff auf das globale Math in Pixelschleifen um ein Vielfaches langsamer.
   const { abs, ceil, floor, hypot, log, max, min, round, sqrt } = Math
+  const GRID_THRESHOLD_OFFSETS = [0.12, 0.24]
   const WORK_SIZE = 1200 // längere Bildseite für die Rastersuche
   const CELL = 48 // Kantenlänge einer Zelle im entzerrten Raster
   const BOARD = CELL * 9
@@ -224,8 +225,8 @@
 
   // Zusammenhängende, ungefähr quadratische und nur dünn gefüllte Tintenbereiche – mögliche Gitter, größte zuerst.
   // Ihre Ecken liegen in Koordinaten des verkleinerten Arbeitsbilds.
-  const gridCandidates = ({ gray, width, height }) => {
-    const ink = adaptiveThreshold(gray, width, height, max(4, round(max(width, height) / 150)))
+  const gridCandidates = ({ gray, width, height }, thresholdOffset = 0.12) => {
+    const ink = adaptiveThreshold(gray, width, height, max(4, round(max(width, height) / 150)), thresholdOffset)
     const minSide = min(width, height) * 0.2
     return components(ink, width, height)
       .filter((component) => {
@@ -252,11 +253,16 @@
   const findGrid = (image) => {
     const work = toGray(image)
     let best = null
-    for (const candidate of gridCandidates(work).slice(0, 8)) {
-      const result = verifyGrid(work, candidate)
-      if (!result) continue
-      if (!best || result.score > best.score) best = result
-      if (result.score > 0.85) break // das größte plausible Raster gewinnt, nicht etwa ein kleines Lösungsraster
+    // Farbige Flächen können am Gitter hängen und dessen Eckpunkte verfälschen.
+    // Erst bei erfolgloser Suche trennt ein strengerer Schwellwert solche Flächen ab.
+    for (const thresholdOffset of GRID_THRESHOLD_OFFSETS) {
+      for (const candidate of gridCandidates(work, thresholdOffset).slice(0, 8)) {
+        const result = verifyGrid(work, candidate)
+        if (!result) continue
+        if (!best || result.score > best.score) best = result
+        if (result.score > 0.85) break // das größte plausible Raster gewinnt, nicht etwa ein kleines Lösungsraster
+      }
+      if (best && best.score >= MIN_GRID_SCORE) break
     }
     if (!best || best.score < MIN_GRID_SCORE) return null
     return { corners: toImage(best.candidate.corners, work.scale), board: best.board, score: best.score }
@@ -270,12 +276,15 @@
     const scaled = corners.map(({ x, y }) => ({ x: x * work.scale, y: y * work.scale }))
     const cell = scaled.reduce((sum, point, index) => sum + hypot(scaled[(index + 1) % 4].x - point.x, scaled[(index + 1) % 4].y - point.y), 0) / 36
     const distance = (candidate) => max(...candidate.corners.map((point, index) => hypot(point.x - scaled[index].x, point.y - scaled[index].y)))
-    const nearest = gridCandidates(work)
-      .filter((candidate) => distance(candidate) <= cell * 0.75)
-      .map((candidate) => verifyGrid(work, candidate))
-      .filter((result) => result && result.score >= MIN_GRID_SCORE)
-      .sort((left, right) => right.score - left.score)[0]
-    return nearest ? toImage(nearest.candidate.corners, work.scale) : corners.map(({ x, y }) => ({ x, y }))
+    for (const thresholdOffset of GRID_THRESHOLD_OFFSETS) {
+      const nearest = gridCandidates(work, thresholdOffset)
+        .filter((candidate) => distance(candidate) <= cell * 0.75)
+        .map((candidate) => verifyGrid(work, candidate))
+        .filter((result) => result && result.score >= MIN_GRID_SCORE)
+        .sort((left, right) => right.score - left.score)[0]
+      if (nearest) return toImage(nearest.candidate.corners, work.scale)
+    }
+    return corners.map(({ x, y }) => ({ x, y }))
   }
 
   // Entzerrt ein Raster mit vorgegebenen Ecken (z. B. von Hand korrigiert) in Koordinaten des Originalbilds.
