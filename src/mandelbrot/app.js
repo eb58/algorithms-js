@@ -167,8 +167,9 @@ const prepare = () => {
   renderer.setView({ ls, rot, off, refLen: ref.len, maxIter: N })
 }
 
-// Zeitliche Glättung der Vorschau: Anteil des neuen Bildes pro Frame; shown = Ansicht und Farben des zuletzt gezeigten Bildes
-const HIST_BLEND = 0.3
+// Zeitliche Glättung der Vorschau: Anteil des neuen Bildes pro Frame; shown = Ansicht und Farben des zuletzt gezeigten Bildes.
+// Gemessen bei grober Vorschau: 0,3 flimmert noch etwa dreimal so stark wie 0,1; sichtbares Nachziehen gibt es bei 0,1 nicht.
+const HIST_BLEND = 0.1
 let shown = null,
   fresh = false
 const insideRgb = (() => {
