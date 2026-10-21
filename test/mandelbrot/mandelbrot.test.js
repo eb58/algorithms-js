@@ -1,5 +1,18 @@
 const { rescale, toNum, toFE, cFE, toDec, fromDec, referenceOrbit } = require('../../src/mandelbrot/fixed-point')
-const { HOME_LS, fitLs, precFor, autoIter, zoom10, fromZoom10, ease, wrapAngle, reprojection } = require('../../src/mandelbrot/view')
+const {
+  HOME_LS,
+  fitLs,
+  precFor,
+  autoIter,
+  zoom10,
+  fromZoom10,
+  ease,
+  wrapAngle,
+  reprojection,
+  ITER_BUDGET,
+  maxPreviewScale,
+  maxStripRows
+} = require('../../src/mandelbrot/view')
 const { PALETTES, randomPal, paletteRamp } = require('../../src/mandelbrot/palettes')
 const PLACES = require('../../src/mandelbrot/places')
 
@@ -71,6 +84,33 @@ describe('Ansicht', () => {
     ;[0, 0.5, 1].forEach((u) => expect(ease(u)).toBeCloseTo(u, 12))
     expect(wrapAngle(3 * Math.PI)).toBeCloseTo(Math.PI, 12)
     expect(wrapAngle(-0.5)).toBeCloseTo(-0.5, 12)
+  })
+})
+
+describe('GPU-Budget', () => {
+  test('flache Ansichten rechnen die Vorschau in voller Auflösung', () => {
+    expect(maxPreviewScale(1920, 1080, autoIter(0))).toBe(1)
+  })
+
+  test('die Vorschau bleibt auch voller Innenpunkte im Budget', () => {
+    for (const [w, h, iter] of [
+      [1200, 800, 3660],
+      [3840, 2160, 18738],
+      [1920, 1080, 2e6]
+    ]) {
+      const s = maxPreviewScale(w, h, iter)
+      // Aufrunden auf ganze Pixel überschreitet das Budget bei winzigen Vorschaubildern um wenige Prozent
+      expect(Math.ceil(w * s) * Math.ceil(h * s) * iter).toBeLessThanOrEqual(ITER_BUDGET * 1.05)
+    }
+  })
+
+  test('zwei Streifen pro Frame bleiben im Budget', () => {
+    expect(maxStripRows(1200, 3660)).toBe(113)
+    expect(2 * maxStripRows(1920, 18738) * 1920 * 18738).toBeLessThanOrEqual(ITER_BUDGET)
+  })
+
+  test('mindestens eine Zeile, damit die Verfeinerung immer fertig wird', () => {
+    expect(maxStripRows(1920, 2e6)).toBe(1)
   })
 })
 

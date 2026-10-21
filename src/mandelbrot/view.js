@@ -4,9 +4,12 @@
   if (typeof module !== 'undefined' && module.exports) module.exports = api
   else root.MandelbrotView = api
 })(typeof globalThis !== 'undefined' ? globalThis : this, () => {
-  const { atan2, ceil, cos, log2, log10, max, PI, sin } = Math
+  const { atan2, ceil, cos, floor, log2, log10, max, min, PI, sin, sqrt } = Math
   const HOME_LS = 1.25
   const LOG10_2 = log10(2)
+  // Iterationen pro Frame im ungünstigsten Fall (jedes Pixel läuft bis maxIter). Eine integrierte AMD-GPU schafft etwa
+  // 5·10⁹ pro Sekunde; Windows setzt den Treiber zurück, wenn ein Frame länger als 2 s braucht.
+  const ITER_BUDGET = 1e9
 
   // Übersicht so, dass die ganze Menge auch im Hochformat (aspect = Höhe / Breite) in die Breite passt
   const fitLs = (aspect) => max(HOME_LS, log2(1.45 * aspect))
@@ -29,5 +32,10 @@
     return { rot: [s * cos(a), s * sin(a)], off: [x * c + y * sn, y * c - x * sn] }
   }
 
-  return { HOME_LS, fitLs, precFor, autoIter, zoom10, fromZoom10, ease, wrapAngle, reprojection }
+  // Obergrenzen, damit auch ein Bild voller Innenpunkte im Budget bleibt: Maßstab der Vorschau für ein w×h-Bild und
+  // Zeilen je Streifen der Verfeinerung, die pro Frame zwei Streifen der Breite w rechnet
+  const maxPreviewScale = (w, h, iter) => min(1, sqrt(ITER_BUDGET / (w * h * iter)))
+  const maxStripRows = (w, iter) => max(1, floor(ITER_BUDGET / (2 * w * iter)))
+
+  return { HOME_LS, ITER_BUDGET, fitLs, precFor, autoIter, zoom10, fromZoom10, ease, wrapAngle, reprojection, maxPreviewScale, maxStripRows }
 })

@@ -1,6 +1,6 @@
 // Mandelbrot Deep Zoom: Zustand, Render-Schleife, Flüge & Tour sowie die Bedienung über Panel, Maus, Touch und Tastatur.
 const { rescale, toNum, cFE, toDec, fromDec, referenceOrbit } = MandelbrotFixedPoint
-const { fitLs, precFor, autoIter, zoom10: zoomOf, fromZoom10, ease, wrapAngle, reprojection } = MandelbrotView
+const { fitLs, precFor, autoIter, zoom10: zoomOf, fromZoom10, ease, wrapAngle, reprojection, maxPreviewScale, maxStripRows } = MandelbrotView
 const { PALETTES, randomPal, paletteRamp } = MandelbrotPalettes
 const PLACES = MandelbrotPlaces
 
@@ -227,6 +227,8 @@ const frame = (t) => {
       const tg = TARGET_MS[S.quality]
       ps = Math.min(1, Math.max(0.08, ps * (avgDt < tg * 0.75 ? 1.025 : avgDt > tg * 1.3 ? 0.96 : 1)))
     }
+    // Die Framezeit hinkt hinterher: nach einem Sprung in die Tiefe darf schon das erste Bild die GPU nicht überlasten
+    ps = Math.min(ps, maxPreviewScale(w, h, maxIter()))
     refStall = Math.max(0, refStall - 1)
     dirty = false
     prepare()
@@ -236,8 +238,10 @@ const frame = (t) => {
     needShow = fresh = true
     syncUI()
   } else if (lo > 0 || hi < h) {
-    // Streifenweise von der Mitte nach außen, damit tiefe Frames den GPU-Watchdog nicht auslösen
+    // Streifenweise von der Mitte nach außen, damit tiefe Frames den GPU-Watchdog nicht auslösen. Die Framezeit allein
+    // reicht als Maß nicht: nach billigen Zeilen kann der nächste Streifen voller Innenpunkte vielfach teurer sein.
     if (mode === 'full') rows = dt < 30 ? Math.min(h, Math.ceil(rows * 1.5)) : dt > 70 ? Math.max(2, rows >> 1) : rows
+    rows = Math.min(rows, maxStripRows(w, maxIter()))
     mode = 'full'
     renderer.compute('full', w, h, hi, hi + rows)
     renderer.compute('full', w, h, lo - rows, lo)
