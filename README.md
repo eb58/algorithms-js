@@ -78,6 +78,25 @@ Die folgenden HTML-Dateien können direkt im Browser geöffnet werden:
 
 Alternativ können sie über einen beliebigen lokalen Webserver ausgeliefert werden. Das 3D-Puzzle lädt Three.js von einem CDN; einige Demos laden außerdem Webfonts und benötigen dafür eine Internetverbindung.
 
+### Mandelbrot-Tour als Video
+
+Live kann die Mandelbrot-Demo während einer Tour nur eine grobe Vorschau zeigen. Für ein Video rechnet `render-video.js` die Tour Bild für Bild in voller Auflösung: Es steuert die Browser-App in einem unsichtbaren Chrome auf der Grafikkarte, speichert jedes Bild als PNG und fügt die Folge mit [FFmpeg](https://ffmpeg.org/) zu einem MP4 zusammen.
+
+Zusätzlich nötig sind Chrome oder Edge, FFmpeg (unter Windows z. B. `winget install --id Gyan.FFmpeg -e`) und Node.js ab Version 22. Abweichende Programmpfade lassen sich über `CHROME_PATH` und `FFMPEG_PATH` angeben.
+
+```bash
+# alle Orte, 1920×1080, 30 Bilder/s
+npm run mandelbrot:video
+
+# Auswahl, eigene Länge und Farben, doppelt überabgetastet gegen Treppenstufen
+npm run mandelbrot:video -- --places "Seepferdchental,Nadel" --fly 15 --hold 2 --ss 2 --settings '{"pal":"Feuer"}'
+
+# alle Optionen und Orte
+npm run mandelbrot:video -- --help
+```
+
+Bilder und Video landen in `out/mandelbrot-video/<Größe>_<Bildrate>_<Kennung>/`; die Kennung ändert sich mit allen Optionen, die das Bild beeinflussen. Vorhandene Bilder werden übersprungen, sodass ein abgebrochener Lauf (Strg+C) beim nächsten Aufruf fortgesetzt wird. Die Rechenzeit hängt stark von Grafikkarte, Größe und Tiefe der Orte ab; tiefe Orte mit großen Innenflächen brauchen pro Bild ein Vielfaches.
+
 ## Beispiel: Sudoku lösen
 
 Die Solver erwarten ein Array mit genau 81 Ganzzahlen. `0` steht für ein leeres Feld. Das Ergebnis ist ein neues, gelöstes Array oder `null`, wenn die Eingabe ungültig beziehungsweise nicht lösbar ist.

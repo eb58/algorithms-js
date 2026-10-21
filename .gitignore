@@ -3,4 +3,5 @@ node_modules
 ts-built
 test/fixtures
 coverage
+out
 .claude

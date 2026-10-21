@@ -1,7 +1,8 @@
 // Mandelbrot Deep Zoom: Zustand, Render-Schleife, Flüge & Tour sowie die Bedienung über Panel, Maus, Touch und Tastatur.
 const { rescale, toNum, cFE, toDec, fromDec, referenceOrbit } = MandelbrotFixedPoint
-const { fitLs, precFor, autoIter, zoom10: zoomOf, fromZoom10, ease, wrapAngle, reprojection, maxPreviewScale, maxStripRows } = MandelbrotView
+const { fitLs, precFor, autoIter, zoom10: zoomOf, fromZoom10, reprojection, maxPreviewScale, maxStripRows } = MandelbrotView
 const { PALETTES, randomPal, paletteRamp } = MandelbrotPalettes
+const { planFlight } = MandelbrotTour
 const PLACES = MandelbrotPlaces
 
 const $ = (s) => document.querySelector(s)
@@ -249,7 +250,7 @@ const frame = (t) => {
     ;[hi, lo] = [hi + rows, lo - rows]
     needShow = true
   } else mode = ''
-  if (S.cycle) {
+  if (S.cycle && !rendering) {
     cycT = (cycT + (S.cycle * dt) / 8000) % 1
     needShow = true
   }
@@ -356,53 +357,26 @@ const fly = (dest, dur = S.fly * 1000) =>
   new Promise((resolve) => {
     flightDone?.(false)
     flightDone = resolve
-    const L = Math.max(fitZ(), ls),
-      tp = precFor(dest.z),
-      tx = fromDec(dest.re, tp),
-      ty = fromDec(dest.im, tp)
-    const destRot = S.align ? (dest.r ?? 0) : 0,
-      need = dest.p ? Math.max(1, (6 * dest.p) / autoIter(dest.z)) : (dest.m ?? 1)
-    const [sx, sy, sl, sr, ex, ey] = [toNum(cx, P), toNum(cy, P), ls, rot, toNum(tx, tp), toNum(ty, tp)]
-    const panD = Math.hypot(ex - sx, ey - sy),
-      tPan = panD > 1e-3 ? Math.min(2500, 700 + 1500 * panD) : 0
-    const wOut = (L - sl) * 0.35,
-      wIn = L - dest.z,
-      rest = Math.max(1000, dur - tPan)
-    const tOut = (rest * wOut) / (wOut + wIn || 1),
+    const plan = planFlight({ cx, cy, P, ls, rot, m: placeMul }, dest, { dur, align: S.align, homeLs: fitZ() }),
       t0 = performance.now()
     let entered = false
     $('#flight').style.display = 'block'
     $('#flight').textContent = `✈ ${dest.name ?? 'Flug'}`
     anim = (t) => {
-      const e = Math.max(0, t - t0)
-      if (e < tOut) {
-        ls = sl + (L - sl) * ease(e / tOut)
-        rot = sr * (1 - ease(e / tOut))
-        updPrec()
-      } else if (e < tOut + tPan) {
-        const u = ease((e - tOut) / tPan)
-        ;[ls, rot, P] = [L, 0, 64]
-        cx = BigInt(Math.round((sx + (ex - sx) * u) * 2 ** 64))
-        cy = BigInt(Math.round((sy + (ey - sy) * u) * 2 ** 64))
-      } else {
-        if (!entered) {
-          // Referenz einmalig am Ziel in voller Tiefe, dann bleibt sie für den ganzen Anflug gültig
-          entered = true
-          placeMul = need
-          ;[ls, P, cx, cy] = [dest.z, tp, tx, ty]
-          computeRef(Math.round(maxIter(dest.z) * 1.1))
-        }
-        const u = Math.min(1, (e - tOut - tPan) / (rest - tOut))
-        ls = L + (dest.z - L) * ease(u)
-        rot = wrapAngle(destRot) * ease(u)
-        const p = precFor(ls)
-        ;[cx, cy, P] = [rescale(tx, tp, p), rescale(ty, tp, p), p]
-        if (u >= 1) {
-          anim = null
-          flightDone = null
-          $('#flight').style.display = touring ? 'block' : 'none'
-          resolve(true)
-        }
+      const v = plan.at(Math.max(0, t - t0))
+      placeMul = v.m
+      if (v.phase === 'in' && !entered) {
+        // Referenz einmalig am Ziel in voller Tiefe, dann bleibt sie für den ganzen Anflug gültig
+        entered = true
+        ;({ ls, P, cx, cy } = plan.target)
+        computeRef(Math.round(maxIter(ls) * 1.1))
+      }
+      ;({ ls, rot, P, cx, cy } = v)
+      if (v.done) {
+        anim = null
+        flightDone = null
+        $('#flight').style.display = touring ? 'block' : 'none'
+        resolve(true)
       }
       dirty = true
     }
@@ -698,6 +672,23 @@ addEventListener('keydown', (e) => {
   bound.forEach((f) => f())
   save()
 })
+
+// --- Videoausgabe (render-video.js) ---
+// Setzt eine Ansicht und meldet, sobald das Bild vollständig in voller Auflösung gerechnet und angezeigt ist.
+// t (ms) bestimmt den Farbzyklus, damit er im Video mit der Filmzeit läuft statt mit der Rechenzeit.
+let rendering = false
+globalThis.MandelbrotRender = {
+  show: ({ re, im, z, r, m }, t = 0) =>
+    new Promise((resolve) => {
+      rendering = true
+      stopTour()
+      placeMul = m
+      setView({ re, im, z, r })
+      cycT = ((S.cycle * t) / 8000) % 1
+      const wait = () => (!dirty && cw > 0 && lo <= 0 && hi >= ch ? resolve() : requestAnimationFrame(wait))
+      requestAnimationFrame(wait)
+    })
+}
 
 // --- Start ---
 const params = new URLSearchParams(location.hash.slice(1))

@@ -14,6 +14,7 @@
 - Interaktive, buildfreie Browser-Demos liegen unter `src/`.
 - Jest-Tests liegen unter `test/`, Benchmarks unter `bench/`.
 - `src/sudoku/web-app/` erkennt Sudokus aus Fotos, lässt die Erkennung korrigieren und löst das Raster lokal im Browser. Die Bilderkennung (`scanner.js`) kommt ohne OCR-Bibliothek und Netzwerkzugriff aus; ihre Tests liegen unter `test/sudoku/web-app/` und verwenden die Fotos aus `src/sudoku/web-app/fixtures/`.
+- `src/mandelbrot/` ist eine WebGL2-Demo (Perturbation mit BigInt-Referenzbahn). Rechenteile ohne DOM (`fixed-point.js`, `view.js`, `tour.js`, …) sind UMD-Module mit Jest-Tests; `render-video.js` steuert die App per DevTools-Protokoll in Headless-Chrome und rendert Touren als Video. Ein Draw-Call darf die GPU nicht länger als etwa 2 s belegen, sonst setzt Windows den Treiber zurück und der Browser sperrt danach WebGL: Neue Rechenpfade müssen das Iterationsbudget `ITER_BUDGET` in `view.js` einhalten. Schwere GPU-Messungen nur einzeln und nach Rückfrage ausführen.
 - Voraussetzungen, Bedienung und verfügbare Befehle stehen in `README.md`; Details zur Foto-App stehen in `src/sudoku/web-app/README.md`.
 
 ## Implementierung
