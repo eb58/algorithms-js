@@ -3,6 +3,7 @@ const { rescale, toNum, cFE, toDec, fromDec, referenceOrbit } = MandelbrotFixedP
 const { fitLs, precFor, autoIter, zoom10: zoomOf, fromZoom10, reprojection, maxPreviewScale, maxStripRows } = MandelbrotView
 const { PALETTES, randomPal, paletteRamp } = MandelbrotPalettes
 const { planFlight } = MandelbrotTour
+const { buildBla } = MandelbrotBla
 const PLACES = MandelbrotPlaces
 
 const $ = (s) => document.querySelector(s)
@@ -135,8 +136,20 @@ const offset = () => cFE(cx - rescale(ref.x, ref.p, P), cy - rescale(ref.y, ref.
 const computeRef = (N) => {
   const { data, len } = referenceOrbit(cx, cy, P, N)
   renderer.setOrbit(data, len)
-  ref = { x: cx, y: cy, p: P, len, N }
+  ref = { x: cx, y: cy, p: P, len, N, data, bla: null }
   refStall = 2
+}
+// BLA-Tabelle zur Referenz für das größte |δc| im Bild (Abstand Bildmitte–Referenz plus halbe Bilddiagonale). Neu bauen, wenn
+// das Bild größer geworden ist als vorgesehen oder viel kleiner, sonst sind die Radien unnötig klein. #nobla schaltet ab.
+const updateBla = (off) => {
+  if (params.has('nobla')) {
+    if (ref.bla !== false) renderer.setBla((ref.bla = false))
+    return
+  }
+  const need = ls + Math.log2(2 ** (off[2] - ls) * Math.hypot(off[0], off[1]) + Math.hypot(1, cw / ch))
+  if (ref.bla && need <= ref.bla.log2c && need > ref.bla.log2c - 8) return
+  ref.bla = buildBla(ref.data, ref.len, need + 1)
+  renderer.setBla(ref.bla)
 }
 
 // --- Render-Steuerung ---
@@ -165,7 +178,9 @@ const prepare = () => {
     computeRef(Math.round(N * 1.3))
     off = offset()
   }
-  renderer.setView({ ls, rot, off, refLen: ref.len, maxIter: N })
+  updateBla(off)
+  // BLA in Phase 2 (Float) erst, wenn das Bild so tief liegt, dass es auch eine Phase 1 gibt: gemessen lohnt es sich vorher nicht
+  renderer.setView({ ls, rot, off, refLen: ref.len, maxIter: N, bla2: !!ref.bla && ls < -50 })
 }
 
 // Zeitliche Glättung der Vorschau: Anteil des neuen Bildes pro Frame; shown = Ansicht und Farben des zuletzt gezeigten Bildes.

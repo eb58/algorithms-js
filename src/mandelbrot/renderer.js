@@ -48,13 +48,20 @@ const createMandelbrotRenderer = (canvas, shaders, onRestore) => {
     gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, tg.t, 0)
   }
 
-  // Textureinheiten: 0 Orbit, 1 Vollbild, 2 Vorschau, 3 Palette, 4 und 5 abwechselnd aktuelles und voriges Bild
-  let calc, show, full, prev, hist
+  // Textureinheiten: 0 Orbit, 1 Vollbild, 2 Vorschau, 3 Palette, 4 und 5 abwechselnd aktuelles und voriges Bild, 6 BLA-Tabelle
+  // Zwei Varianten des Rechen-Shaders, mit und ohne BLA in Phase 2; calc ist die von setView gewählte
+  let calcs, calc, show, full, prev, hist
   const init = () => {
     gl.getExtension('EXT_color_buffer_float')
-    ;[calc, show] = [program(shaders.calc), program(shaders.show)]
+    calcs = [shaders.calc, shaders.calc.replace('#version 300 es', '#version 300 es\n#define BLA2')].map(program)
+    ;[calc, show] = [calcs[0], program(shaders.show)]
     texture(0)
     texture(3, gl.LINEAR, gl.REPEAT)
+    texture(6)
+    calcs.forEach((c) => {
+      gl.useProgram(c.p)
+      gl.uniform1i(c.bla, 6)
+    })
     ;[full, prev] = [target(1), target(2)]
     hist = [target(4, gl.LINEAR), target(5, gl.LINEAR)]
     gl.useProgram(show.p)
@@ -80,15 +87,34 @@ const createMandelbrotRenderer = (canvas, shaders, onRestore) => {
     gl.activeTexture(gl.TEXTURE3)
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, rgba.length / 4, 1, 0, gl.RGBA, gl.UNSIGNED_BYTE, rgba)
   }
-  const setOrbit = (data, len) => {
-    const h = Math.ceil(len / ORBIT_WIDTH),
+  // Werte zeilenweise in eine RGBA32F-Textur der Breite ORBIT_WIDTH legen (texels Einträge zu je 4 Werten)
+  const upload = (unit, data, texels) => {
+    const h = Math.max(1, Math.ceil(texels / ORBIT_WIDTH)),
       rows = new Float32Array(ORBIT_WIDTH * h * 4)
     rows.set(data)
-    gl.activeTexture(gl.TEXTURE0)
+    gl.activeTexture(gl.TEXTURE0 + unit)
     gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, ORBIT_WIDTH, h, 0, gl.RGBA, gl.FLOAT, rows)
   }
+  const setOrbit = (data, len) => upload(0, data, len)
+  // Tabelle aus MandelbrotBla.buildBla, null schaltet BLA ab; je Knoten zwei Texel, Stufen 1 bis 23
+  const setBla = (bla) => {
+    const n = bla ? Math.min(bla.levels, 23) : 0,
+      off = new Int32Array(24),
+      cnt = new Int32Array(24)
+    for (let k = 1; k <= n; k++) [off[k], cnt[k]] = [bla.offset[k], bla.count[k]]
+    upload(6, bla ? bla.data : [], bla ? 2 * bla.nodes : 0)
+    calcs.forEach((c) => {
+      gl.useProgram(c.p)
+      gl.uniform1i(c.blaLevels, n)
+      gl.uniform1f(c.blaMaxR, n ? bla.maxR : -1e30)
+      gl.uniform1iv(c['blaOff[0]'], off)
+      gl.uniform1iv(c['blaCnt[0]'], cnt)
+    })
+  }
   // off: Bildmitte minus Referenzpunkt als (Mantisse.xy, Exponent)
-  const setView = ({ ls, rot, off, refLen, maxIter }) => {
+  // bla2 wählt die Shader-Variante mit BLA auch in Phase 2
+  const setView = ({ ls, rot, off, refLen, maxIter, bla2 = false }) => {
+    calc = calcs[bla2 ? 1 : 0]
     gl.useProgram(calc.p)
     gl.uniform2f(calc.scale, 2 ** (ls - Math.floor(ls)), Math.floor(ls))
     gl.uniform2f(calc.rot, Math.cos(rot), Math.sin(rot))
@@ -131,5 +157,5 @@ const createMandelbrotRenderer = (canvas, shaders, onRestore) => {
     gl.blitFramebuffer(0, 0, w, h, 0, 0, w, h, gl.COLOR_BUFFER_BIT, gl.NEAREST)
   }
 
-  return { isLost: () => gl.isContextLost(), resize, setPalette, setOrbit, setView, compute, display }
+  return { isLost: () => gl.isContextLost(), resize, setPalette, setOrbit, setBla, setView, compute, display }
 }

@@ -9,6 +9,13 @@ uniform highp sampler2D u_ref;   // Referenz-Orbit Z_n als (Mantisse.xy, Exponen
 uniform int u_refLen, u_maxIter;
 uniform vec2 u_res, u_scale, u_rot; // u_scale: halbe Bildhöhe als (Mantisse, Exponent)
 uniform vec3 u_off;                 // Bildmitte minus Referenzpunkt
+uniform highp sampler2D u_bla;      // BLA-Sprünge (bla.js), je Knoten (A.xy, A.e, log2 r) und (B.xy, B.e, 0)
+uniform int u_blaLevels, u_blaOff[24], u_blaCnt[24];
+uniform float u_blaMaxR;            // größter Radius (log2): darüber gar nicht erst suchen
+#ifndef BLA2_MIN
+#define BLA2_MIN 3                  // Phase 2: nur Sprünge ab 2^BLA2_MIN Schritten, also nur jede 2^BLA2_MIN-te Iteration prüfen
+#endif
+#define BLA2_MASK ((1 << BLA2_MIN) - 1)
 out vec4 o;
 
 // Exakte Zweierpotenz über die Bits, exp2() ist auf manchen GPUs ungenau
@@ -24,6 +31,31 @@ vec3 norm(vec2 m, float e) {
 vec3 add(vec3 a, vec3 b) { float E = max(a.z, b.z); return norm(a.xy * p2(a.z - E) + b.xy * p2(b.z - E), E); }
 vec2 cmul(vec2 a, vec2 b) { return vec2(a.x * b.x - a.y * b.y, a.x * b.y + a.y * b.x); }
 vec3 Z(int n) { return texelFetch(u_ref, ivec2(n & 4095, n >> 12), 0).xyz; }
+vec4 BL(int k) { return texelFetch(u_bla, ivec2(k & 4095, k >> 12), 0); }
+vec3 mulE(vec3 a, vec3 b) { return norm(cmul(a.xy, b.xy), a.z + b.z); }
+// Anzahl der Null-Bits am Ende von x > 0 (findLSB gibt es erst ab GLSL ES 3.10): x & -x ist eine Zweierpotenz, ihr Exponent
+// steht exakt in den Float-Bits
+int tz(int x) { return ((floatBitsToInt(float(x & -x)) >> 23) & 255) - 127; }
+
+// Größten gültigen BLA-Sprung ab Referenzindex n anwenden (δ = d mit log2|δ| = ld, höchstens left Iterationen): δ ← A δ + B δc.
+// Liefert (neues δ, Sprunglänge), Länge 0 wenn keiner gilt. Sprünge der Länge 2^k beginnen bei n = 1 + j·2^k. Die Radien
+// werden mit der Stufe nie größer, daher von unten suchen: Ist Stufe 1 ungültig, kostet das nur einen Texturzugriff.
+// Kein inout-Parameter, das Ergebnis kommt als Rückgabewert.
+vec4 bla(vec3 d, vec3 dc, int n, int left, float ld, int kmin) {
+  int kmax = n == 1 ? u_blaLevels : min(u_blaLevels, tz(n - 1)), best = 0, at = 0;
+  vec3 A;
+  for (int k = kmin; k <= kmax; k++) {
+    int j = (n - 1) >> k, idx = 2 * (u_blaOff[k] + j);
+    if (j >= u_blaCnt[k] || (1 << k) > left) break;
+    vec4 a = BL(idx);
+    if (ld >= a.w || a.w < -1e29) break;  // -1e30: Knoten nie gültig, auch nicht für δ = 0
+    best = k;
+    at = idx;
+    A = a.xyz;
+  }
+  if (best == 0) return vec4(d, 0.);
+  return vec4(add(mulE(A, d), mulE(BL(at + 1).xyz, dc)), float(1 << best));
+}
 
 void main() {
   vec2 uv = cmul(u_rot, (2. * gl_FragCoord.xy - u_res) / u_res.y);
@@ -36,6 +68,11 @@ void main() {
   for (; i < u_maxIter && d.z < -50. && n < u_refLen - 1; i++) {
     vec3 z = Z(n);
     if (z.z < d.z + 2. && z.z + log2(length(z.xy)) < d.z + log2(length(d.xy))) { d = add(z, d); z = vec3(0., 0., -1e20); n = 0; }
+    float ld = d.z + log2(length(d.xy));
+    if (n >= 1 && (n & 1) == 1 && ld < u_blaMaxR) {
+      vec4 j = bla(d, dc, n, u_maxIter - i, ld, 1);
+      if (j.w > 0.) { int l = int(j.w); d = j.xyz; n += l; i += l - 1; continue; }
+    }
     float ea = z.z + d.z, eq = 2. * d.z, E = max(max(ea, eq), dc.z);
     d = norm(2. * cmul(z.xy, d.xy) * p2(ea - E) + cmul(d.xy, d.xy) * p2(eq - E) + dc.xy * p2(dc.z - E), E);
     n++;
@@ -51,6 +88,16 @@ void main() {
     r2 = dot(z, z);
     if (r2 > 1e4) break;
     if (r2 < dot(df, df) || n >= u_refLen - 1) { df = z; Zn = vec2(0.); n = 0; }
+#ifdef BLA2
+    // Nur in der Variante mit BLA2 (renderer.js): Flach lohnt BLA in Phase 2 nicht, und schon der vorhandene Code verlangsamt
+    // die Schleife um etwa 20 %. Sprünge beginnen nur bei ungeradem n. log2|δ| nach oben abgeschätzt, ohne δ zu quadrieren:
+    // |δ|² unterläuft in Float schon ab |δ| < 2^-63
+    float ld = (n & BLA2_MASK) == 1 ? log2(max(abs(df.x), abs(df.y))) + .5 : 0.;
+    if ((n & BLA2_MASK) == 1 && ld < u_blaMaxR) {
+      vec4 j = bla(norm(df, 0.), dc, n, u_maxIter - i, ld, BLA2_MIN);
+      if (j.w > 0.) { int l = int(j.w); df = j.xy * p2(j.z); n += l; i += l - 1; continue; }
+    }
+#endif
     df = 2. * cmul(Zn, df) + cmul(df, df) + dcf;
     n++;
   }
