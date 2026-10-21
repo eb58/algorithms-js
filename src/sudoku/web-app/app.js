@@ -27,6 +27,8 @@
     status: $('#grid-status'),
     solve: $('#solve-button'),
     clear: $('#clear-button'),
+    alternatives: $('#solution-alternatives'),
+    solutionList: $('#solution-list'),
     gridPanel: $('#grid-panel')
   }
 
@@ -221,6 +223,7 @@
       input.setAttribute('aria-label', `Zeile ${Math.floor(index / 9) + 1}, Spalte ${(index % 9) + 1}`)
       input.addEventListener('input', () => {
         state.revision += 1
+        hideAlternatives()
         input.value = input.value.replace(/[^1-9]/g, '').slice(-1)
         input.className = input.value ? 'cell recognized' : 'cell'
         validateInputs()
@@ -231,6 +234,7 @@
   }
 
   const showGrid = (values, confidence = Array(81).fill(1), solved = false) => {
+    hideAlternatives()
     const inputs = [...elements.grid.children]
     inputs.forEach((input, index) => {
       const value = values[index]
@@ -241,6 +245,34 @@
     elements.empty.hidden = true
     elements.sudokuWrap.hidden = false
     validateInputs()
+  }
+
+  const hideAlternatives = () => {
+    elements.alternatives.hidden = true
+    elements.solutionList.replaceChildren()
+  }
+
+  const showAlternatives = (solutions) => {
+    const options = solutions.map((solution, optionIndex) => {
+      const option = document.createElement('section')
+      option.className = 'solution-option'
+      const heading = document.createElement('h4')
+      heading.textContent = `Lösung ${optionIndex + 1}`
+      const grid = document.createElement('div')
+      grid.className = 'sudoku-grid'
+      grid.setAttribute('aria-label', heading.textContent)
+      solution.forEach((value, index) => {
+        const cell = document.createElement('span')
+        cell.className = state.original[index] ? 'cell solution-cell recognized' : 'cell solution-cell solved'
+        cell.textContent = value
+        grid.appendChild(cell)
+      })
+      option.appendChild(heading)
+      option.appendChild(grid)
+      return option
+    })
+    elements.solutionList.replaceChildren(...options)
+    elements.alternatives.hidden = false
   }
 
   const readGrid = () => {
@@ -260,18 +292,20 @@
   const solveGrid = () => {
     state.revision += 1
     const input = readGrid()
-    const solutions = Sudoku.countSolutions(input)
-    if (solutions === 0) {
+    const solutions = Sudoku.findSolutions(input)
+    if (solutions.length === 0) {
       setStatus('Keine Lösung – Zahlen prüfen', 'bad')
       return
     }
-    if (solutions > 1) {
-      setStatus('Mehrere Lösungen – fehlen Zahlen?', 'warn')
+    state.original = input.slice()
+    if (solutions.length > 1) {
+      showAlternatives(solutions)
+      setStatus('Mehrere Lösungen – zwei Möglichkeiten angezeigt', 'warn')
+      setStep(3)
+      revealResult()
       return
     }
-    const solution = Sudoku.solve(input)
-    state.original = input.slice()
-    showGrid(solution, Array(81).fill(1), true)
+    showGrid(solutions[0], Array(81).fill(1), true)
     setStatus('Gelöst', 'good')
     setStep(3)
     revealResult()

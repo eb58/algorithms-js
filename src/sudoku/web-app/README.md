@@ -19,7 +19,7 @@ Rufe anschließend den angezeigten Pfad `/src/sudoku/web-app/` auf.
 1. Mit „Bild auswählen“ ein vorhandenes Bild wählen. Auf Geräten mit Touch-Bedienung wird zusätzlich „Foto aufnehmen“ angezeigt, um die Kamera zu öffnen (abhängig vom Browser). Alternativ ein Bild in den Eingabebereich ziehen. Das Sudokuraster wird automatisch gesucht, mit einem Rahmen markiert, und die erkannten Zahlen erscheinen sofort im Sudoku.
 2. Liegt der Rahmen daneben, die vier Ecken auf die Ecken des äußeren Gitters ziehen. In der Nähe eines erkannten Gitters rastet der Rahmen beim Loslassen ein, und die Zahlen werden neu erkannt.
 3. Orange markierte beziehungsweise falsch erkannte Zahlen korrigieren.
-4. Das Sudoku lösen. Hat das Raster mehrere Lösungen, fehlen meist erkannte Zahlen; die App löst es dann nicht.
+4. Das Sudoku lösen. Hat das Raster mehrere Lösungen, fehlen meist erkannte Zahlen; die App zeigt dann die ersten beiden Möglichkeiten zum Vergleichen an.
 
 Eine neue Aufnahme leert das bisherige Ergebnis. „Neu starten“ verwirft auch noch laufende Ladevorgänge. Wird während der Erkennung ein neues Foto gewählt, der Rahmen bewegt oder eine Zahl bearbeitet, darf der überholte Vorgang das aktuelle Ergebnis nicht überschreiben.
 
@@ -55,7 +55,7 @@ Die Vorlagen werden mit `node src/sudoku/web-app/tools/build-digit-templates.js`
 
 ## Tests und Fixtures
 
-Die Tests unter `test/sudoku/web-app/` lesen jedes Foto aus `fixtures/` ein und prüfen die gesamte Kette: Bild einlesen, Raster erkennen, Ziffern erkennen, Sudoku als String ausgeben und lösen. Außerdem prüfen sie das Einrasten ungenau gesetzter Ecken. Die bisherigen Fotos sind auf 1600 Pixel Kantenlänge verkleinert und ohne Metadaten gespeichert; auf diesen Zeitungsfotos sind Kontaktdaten von Privatpersonen unkenntlich gemacht, der übrige Bildinhalt bleibt als Störfaktor für die Rastersuche erhalten. Die vier Kamerafotos vom 14. und 15.10.2026 werden zusätzlich in Originalauflösung (4032 Pixel Kantenlänge) mit Metadaten und in allen vier Ausrichtungen geprüft. Beim Foto mit Bleistifteinträgen prüfen die Tests auch die Konfliktbereinigung wie in der App und die eindeutige Lösung.
+Die Tests unter `test/sudoku/web-app/` lesen jedes Foto aus `fixtures/` ein und prüfen die gesamte Kette: Bild einlesen, Raster erkennen, Ziffern erkennen, Sudoku als String ausgeben und lösen. Das Fixture mit zusätzlichen Diagonalregeln wird nur bis zur erkannten Eingabe geprüft, da der Solver diese Variante nicht unterstützt. Außerdem prüfen die Tests das Einrasten ungenau gesetzter Ecken. Die bisherigen Fotos sind auf 1600 Pixel Kantenlänge verkleinert und ohne Metadaten gespeichert; auf diesen Zeitungsfotos sind Kontaktdaten von Privatpersonen unkenntlich gemacht, der übrige Bildinhalt bleibt als Störfaktor für die Rastersuche erhalten. Die vier Kamerafotos vom 14. und 15.10.2026 werden zusätzlich in Originalauflösung (4032 Pixel Kantenlänge) mit Metadaten und in allen vier Ausrichtungen geprüft. Beim Foto mit Bleistifteinträgen prüfen die Tests auch die Konfliktbereinigung wie in der App und die eindeutige Lösung.
 
 Ein Fixture kann ohne Dateidialog über den Query-Parameter `fixture` in die App geladen werden:
 

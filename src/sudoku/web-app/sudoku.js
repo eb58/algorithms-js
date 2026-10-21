@@ -13,10 +13,11 @@
   // Backtracking mit der Zelle der wenigsten Kandidaten zuerst. Bricht nach limit Lösungen ab und liefert ihre Anzahl
   // sowie die erste gefundene Lösung.
   const searchSolutions = (input, limit) => {
-    if (!validate(input)) return { count: 0, solution: null }
+    if (!validate(input)) return { count: 0, solution: null, solutions: [] }
     const grid = input.slice()
     let count = 0
     let solution = null
+    const solutions = []
     const rows = new Uint16Array(SIZE)
     const columns = new Uint16Array(SIZE)
     const boxes = new Uint16Array(SIZE)
@@ -55,7 +56,9 @@
 
       if (bestIndex < 0) {
         count += 1
-        solution ??= grid.slice()
+        const found = grid.slice()
+        solution ??= found
+        solutions.push(found)
         return count >= limit
       }
       const row = Math.floor(bestIndex / SIZE)
@@ -79,11 +82,12 @@
     }
 
     search()
-    return { count, solution }
+    return { count, solution, solutions }
   }
 
   // Anzahl der Lösungen, höchstens limit – mit dem Standardwert 2 genügt das für die Prüfung auf Eindeutigkeit.
   const countSolutions = (input, limit = 2) => searchSolutions(input, limit).count
+  const findSolutions = (input, limit = 2) => searchSolutions(input, limit).solutions
 
   const countBits = (value) => {
     let count = 0
@@ -139,5 +143,5 @@
     return { grid, removed }
   }
 
-  return { countSolutions, sanitizeRecognition, solve, validate }
+  return { countSolutions, findSolutions, sanitizeRecognition, solve, validate }
 })

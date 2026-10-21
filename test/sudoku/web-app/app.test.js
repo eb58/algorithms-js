@@ -6,7 +6,7 @@ const source = readFileSync(join(__dirname, '../../../src/sudoku/web-app/app.js'
 
 // Die echten Ereignishandler laufen mit kontrolliertem Bildladen und Animationstakt.
 // So sind seltene Überschneidungen reproduzierbar; die Fotoerkennung prüfen die separaten Fixture-Tests.
-const setup = () => {
+const setup = (sudoku = {}) => {
   const element = () => ({
     hidden: false,
     value: '',
@@ -20,6 +20,9 @@ const setup = () => {
     },
     appendChild(child) {
       this.children.push(child)
+    },
+    replaceChildren(...children) {
+      this.children = children
     },
     setAttribute: jest.fn(),
     click: jest.fn(),
@@ -45,6 +48,8 @@ const setup = () => {
     'grid-status',
     'solve-button',
     'clear-button',
+    'solution-alternatives',
+    'solution-list',
     'grid-panel'
   ]
   const elements = Object.fromEntries(ids.map((id) => [id, element()]))
@@ -90,7 +95,7 @@ const setup = () => {
       events[name] = callback
     },
     SudokuScanner: scanner,
-    Sudoku: { sanitizeRecognition: (value) => ({ grid: value, removed: [] }), validate: () => true },
+    Sudoku: { sanitizeRecognition: (value) => ({ grid: value, removed: [] }), validate: () => true, ...sudoku },
     console: { error: jest.fn() }
   })
   const flush = async () => {
@@ -143,6 +148,29 @@ describe('Sudoku-App: Fotoauswahl', () => {
     app.elements[id].listeners.change()
     expect(app.elements['grid-status'].textContent).toBe('Noch kein Foto')
     expect(app.images).toHaveLength(0)
+  })
+})
+
+describe('Sudoku-App: Lösungen', () => {
+  test('zeigt bei Mehrdeutigkeit die ersten beiden Lösungen', () => {
+    const first = Array.from({ length: 81 }, (_, index) => (index % 9) + 1)
+    const second = first.slice().reverse()
+    const app = setup({ findSolutions: () => [first, second] })
+    app.elements['sudoku-grid'].children.forEach((input, index) => {
+      input.value = index < 17 ? (index % 9) + 1 : ''
+    })
+
+    app.elements['solve-button'].listeners.click()
+
+    expect(app.elements['solution-alternatives'].hidden).toBe(false)
+    expect(app.elements['solution-list'].children).toHaveLength(2)
+    expect(app.elements['solution-list'].children[0].children[1].children).toHaveLength(81)
+    expect(app.elements['grid-status'].textContent).toBe('Mehrere Lösungen – zwei Möglichkeiten angezeigt')
+
+    const input = app.elements['sudoku-grid'].children[20]
+    input.value = '3'
+    input.listeners.input()
+    expect(app.elements['solution-alternatives'].hidden).toBe(true)
   })
 })
 

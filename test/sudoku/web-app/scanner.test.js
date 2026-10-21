@@ -30,6 +30,9 @@ const LEICHT = {
   puzzle: rows('1.62.7.9.', '.3....25.', '..43....6', '.8..7.96.', '61....4..', '54.681.3.', '....69.23', '8.3.15.4.', '9...3...7'),
   solution: rows('156247398', '738196254', '294358176', '382574961', '617923485', '549681732', '471869523', '823715649', '965432817')
 }
+const DIAGONALEN = {
+  puzzle: rows('...5.....', '......697', '126.....4', '.3....2..', '..81.39..', '7.9....6.', '...8.1..6', '.........', '4.3..5...')
+}
 
 // Ecken des äußeren Gitters (oben links, oben rechts, unten rechts, unten links) in Pixeln des Originalfotos,
 // einmalig visuell geprüft. Die Toleranz liegt deutlich unter einer Zellbreite. rotation: Vierteldrehungen im
@@ -188,6 +191,18 @@ const FIXTURES = [
     ]
   },
   {
+    file: 'PXL_20261020_170757703.MP.jpg',
+    scene: 'Zeitung quer, Sudoku mit Diagonalregeln und Lösungsraster daneben',
+    ...DIAGONALEN,
+    rotation: 1,
+    corners: [
+      [504, 114],
+      [1135, 92],
+      [1112, 749],
+      [518, 702]
+    ]
+  },
+  {
     file: 'web-klein-markiert.png',
     scene: 'Webseite, nur 320 × 320 Pixel, kleine Ziffern, farbig markierte Zellen',
     ...WEB,
@@ -264,11 +279,16 @@ describe.each(FIXTURES)('Sudoku-Foto $file ($scene)', ({ file, puzzle, solution,
     expect(recognized.rotation).toBe(rotation)
   })
 
-  test('4. Sudoku im String-Format ausgeben und lösen', () => {
+  test('4. Sudoku im String-Format ausgeben und, falls unterstützt, lösen', () => {
     const text = gridToString(recognized.grid)
 
     expect(text).toBe(puzzle)
-    expect(gridToString(solve(toGrid(text)))).toBe(solution)
+    if (solution) {
+      expect(gridToString(solve(toGrid(text)))).toBe(solution)
+    } else {
+      // Dieses Fixture verwendet zusätzliche Diagonalregeln, die der Standardsolver nicht abbildet.
+      expect(countSolutions(toGrid(text))).toBeGreaterThan(0)
+    }
   })
 
   test('entzerrt mit vorgegebenen Ecken dasselbe Raster', () => {

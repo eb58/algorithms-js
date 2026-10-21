@@ -1,7 +1,7 @@
 const { readFileSync } = require('node:fs')
 const { join } = require('node:path')
 const vm = require('node:vm')
-const { countSolutions, sanitizeRecognition, solve, validate } = require('../../../src/sudoku/web-app/sudoku')
+const { countSolutions, findSolutions, sanitizeRecognition, solve, validate } = require('../../../src/sudoku/web-app/sudoku')
 const solve5 = require('../../../src/sudoku/sudoku5')
 
 const toGrid = (value) => [...value].map((digit) => (digit === '.' ? 0 : Number(digit)))
@@ -51,11 +51,22 @@ describe('Sudoku Web-App solver', () => {
     expect(countSolutions([5, 5, ...Array(79).fill(0)])).toBe(0)
   })
 
+  test('liefert die ersten beiden Lösungen eines mehrdeutigen Rätsels', () => {
+    const ambiguous = toGrid('...5...........697126.....4.3....2....81.39..7.9....6....8.1..6.........4.3..5...')
+    const solutions = findSolutions(ambiguous)
+
+    expect(solutions).toHaveLength(2)
+    expect(solutions.every((solution) => validate(solution))).toBe(true)
+    expect(solutions[0]).not.toEqual(solutions[1])
+    expect(ambiguous.filter(Boolean)).toHaveLength(23)
+  })
+
   test('returns null for an invalid puzzle', () => {
     const invalid = puzzle.slice()
     invalid[1] = 5
 
     expect(solve(invalid)).toBeNull()
+    expect(findSolutions(invalid)).toEqual([])
   })
 
   test('solves the photographed reference puzzle', () => {

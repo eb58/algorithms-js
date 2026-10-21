@@ -406,6 +406,31 @@ h2 {
   color: var(--blue);
   background: #f5f8ff;
 }
+.solution-alternatives {
+  margin-top: 28px;
+  border-top: 1px solid var(--line);
+  padding-top: 22px;
+}
+.solution-alternatives h3 {
+  margin: 0 0 16px;
+  text-align: center;
+}
+.solution-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+.solution-option h4 {
+  margin: 0;
+  text-align: center;
+}
+.solution-option .sudoku-grid {
+  margin-bottom: 0;
+}
+.solution-cell {
+  display: grid;
+  place-items: center;
+}
 .legend {
   display: flex;
   justify-content: center;
@@ -492,6 +517,9 @@ footer {
   }
 }
 @media (max-width: 520px) {
+  .solution-list {
+    grid-template-columns: 1fr;
+  }
   .actions {
     align-items: stretch;
     flex-direction: column;
