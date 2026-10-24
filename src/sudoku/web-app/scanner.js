@@ -248,6 +248,85 @@
   }
   const MIN_GRID_SCORE = 0.6
 
+  // Sucht im entzerrten Raster die gerade Gitterlinie nahe index·CELL: a und b sind ihre Lagen am Anfang und Ende des Rasters.
+  const fitGridLine = (ink, index, horizontal) => {
+    const radius = CELL >> 1
+    const expected = index * CELL
+    let best = { a: expected, b: expected, hits: -1 }
+    for (let a = expected - radius; a <= expected + radius; a += 2) {
+      for (let b = expected - radius; b <= expected + radius; b += 2) {
+        let hits = 0
+        for (let along = 0; along < BOARD; along += 3) {
+          const across = round(a + ((b - a) * along) / BOARD)
+          hits += horizontal ? ink[across * BOARD + along] : ink[along * BOARD + across]
+        }
+        if (hits > best.hits) best = { a, b, hits }
+      }
+    }
+    return best
+  }
+
+  // Lineare Ausgleichsgerade durch die Lagen der inneren Linien, ausgewertet an den Außenlinien 0 und 9.
+  const extrapolate = (values) => {
+    const n = values.length
+    const meanIndex = (n + 1) / 2
+    const mean = values.reduce((sum, value) => sum + value, 0) / n
+    let numerator = 0
+    let denominator = 0
+    values.forEach((value, offset) => {
+      numerator += (offset + 1 - meanIndex) * (value - mean)
+      denominator += (offset + 1 - meanIndex) ** 2
+    })
+    const slope = numerator / denominator
+    return [mean - slope * meanIndex, mean + slope * (9 - meanIndex)]
+  }
+
+  // Hängt eine dunkle Fläche (z. B. ein Schlagschatten) am Außenrahmen, liegen die Eckpunkte der Tintenkomponente
+  // auf der Fläche statt auf dem Gitter. Die inneren Linien 1–8 bleiben davon unberührt: Aus ihnen werden die
+  // Außenlinien hochgerechnet. Nur deutlich abweichende Ecken werden ersetzt, sonst bleibt die Ausgangslage.
+  const refineCorners = (work, corners, board) => {
+    const ink = adaptiveThreshold(board, BOARD, BOARD, CELL >> 1)
+    const minHits = (BOARD / 3) * 0.6
+    const fit = (horizontal) => {
+      const lines = Array.from({ length: 8 }, (_, offset) => fitGridLine(ink, offset + 1, horizontal))
+      if (lines.some(({ hits }) => hits < minHits)) return null
+      const [a0, a9] = extrapolate(lines.map(({ a }) => a))
+      const [b0, b9] = extrapolate(lines.map(({ b }) => b))
+      return [
+        { a: a0, b: b0 },
+        { a: a9, b: b9 }
+      ]
+    }
+    const rows = fit(true)
+    const columns = rows && fit(false)
+    if (!columns) return corners
+    // Schnittpunkt der Zeile y = a + (b - a)·x / BOARD mit der Spalte x = c + (d - c)·y / BOARD
+    const intersect = (row, column) => {
+      const slopeRow = (row.b - row.a) / BOARD
+      const slopeColumn = (column.b - column.a) / BOARD
+      const y = (row.a + slopeRow * column.a) / (1 - slopeRow * slopeColumn)
+      return { x: column.a + slopeColumn * y, y }
+    }
+    const map = homography(
+      [
+        { x: 0, y: 0 },
+        { x: BOARD, y: 0 },
+        { x: BOARD, y: BOARD },
+        { x: 0, y: BOARD }
+      ],
+      corners
+    )
+    const refined = [
+      intersect(rows[0], columns[0]),
+      intersect(rows[0], columns[1]),
+      intersect(rows[1], columns[1]),
+      intersect(rows[1], columns[0])
+    ].map(({ x, y }) => map(x, y))
+    const cell = sqrt(area(corners)) / 9
+    const shift = max(...refined.map((point, index) => hypot(point.x - corners[index].x, point.y - corners[index].y)))
+    return shift > cell * 0.25 ? refined : corners
+  }
+
   // Schritt 2: Sucht das Sudokuraster. Liefert die vier Ecken (oben links, oben rechts, unten rechts, unten links)
   // in Koordinaten des Originalbilds sowie das entzerrte Graustufenraster.
   const findGrid = (image) => {
@@ -265,7 +344,9 @@
       if (best && best.score >= MIN_GRID_SCORE) break
     }
     if (!best || best.score < MIN_GRID_SCORE) return null
-    return { corners: toImage(best.candidate.corners, work.scale), board: best.board, score: best.score }
+    const corners = refineCorners(work, best.candidate.corners, best.board)
+    const board = corners === best.candidate.corners ? best.board : warpBoard(work, corners)
+    return { corners: toImage(corners, work.scale), board, score: best.score }
   }
 
   // Lässt von Hand gesetzte Ecken auf das am besten bestätigte Gitter einrasten, dessen Ecken höchstens drei Viertel
@@ -282,7 +363,7 @@
         .map((candidate) => verifyGrid(work, candidate))
         .filter((result) => result && result.score >= MIN_GRID_SCORE)
         .sort((left, right) => right.score - left.score)[0]
-      if (nearest) return toImage(nearest.candidate.corners, work.scale)
+      if (nearest) return toImage(refineCorners(work, nearest.candidate.corners, nearest.board), work.scale)
     }
     return corners.map(({ x, y }) => ({ x, y }))
   }
