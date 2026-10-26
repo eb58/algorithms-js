@@ -43,7 +43,7 @@ Akzeptiert werden Bilddateien bis 20 MB und ab einer Auflösung von 300 × 300 P
 
 `scanner.js` arbeitet nur mit RGBA-Pixeldaten (`{ data, width, height }`) und läuft deshalb unverändert im Browser und in Node.js:
 
-1. `findGrid(image)` sucht das größte regelmäßige 9×9-Gitter und liefert seine vier Ecken sowie ein perspektivisch entzerrtes Graustufenraster. Hängt eine dunkle Fläche wie ein Schlagschatten am Außenrahmen, werden die Ecken aus den inneren Gitterlinien nachjustiert.
+1. `findGrid(image)` sucht das größte regelmäßige 9×9-Gitter und liefert seine vier Ecken sowie ein perspektivisch entzerrtes Graustufenraster. Hängt etwas am Außenrahmen, werden die Ecken nachjustiert: Ein Etikett an einer Ecke fällt beim robusten Anpassen gerader Rahmenseiten heraus, ein Schlagschatten entlang des Rahmens wird über die inneren Gitterlinien korrigiert.
 2. `snapCorners(image, corners)` lässt von Hand gesetzte Ecken auf ein erkanntes Gitter einrasten, das höchstens drei Viertel einer Zellbreite entfernt liegt.
 3. `warpCorners(image, corners)` entzerrt das Raster zu beliebigen Ecken.
 4. `recognizeDigits(board)` schneidet die 81 Zellen aus und vergleicht jede Ziffer mit den Vorlagen. Ein zweiter, empfindlicherer Durchgang ergänzt blasse Ziffern nur bei eindeutigen Vorlagentreffern. Dabei werden alle vier Ausrichtungen probiert; es gewinnt die, deren Ziffern am besten passen.
@@ -55,7 +55,7 @@ Die Vorlagen werden mit `node src/sudoku/web-app/tools/build-digit-templates.js`
 
 ## Tests und Fixtures
 
-Die Tests unter `test/sudoku/web-app/` lesen jedes Foto aus `fixtures/` ein und prüfen die gesamte Kette: Bild einlesen, Raster erkennen, Ziffern erkennen, Sudoku als String ausgeben und lösen. Das Fixture mit zusätzlichen Diagonalregeln wird nur bis zur erkannten Eingabe geprüft, da der Solver diese Variante nicht unterstützt. Außerdem prüfen die Tests das Einrasten ungenau gesetzter Ecken. Die bisherigen Fotos sind auf 1600 Pixel Kantenlänge verkleinert und ohne Metadaten gespeichert; auf diesen Zeitungsfotos sind Kontaktdaten von Privatpersonen unkenntlich gemacht, der übrige Bildinhalt bleibt als Störfaktor für die Rastersuche erhalten. Die vier Kamerafotos vom 14. und 15.10.2026 werden zusätzlich in Originalauflösung (4032 Pixel Kantenlänge) mit Metadaten und in allen vier Ausrichtungen geprüft. Beim Foto mit Bleistifteinträgen prüfen die Tests auch die Konfliktbereinigung wie in der App und die eindeutige Lösung.
+Die Tests unter `test/sudoku/web-app/` lesen jedes Foto aus `fixtures/` ein und prüfen die gesamte Kette: Bild einlesen, Raster erkennen, Ziffern erkennen, Sudoku als String ausgeben und lösen. Das Fixture mit zusätzlichen Diagonalregeln wird nur bis zur erkannten Eingabe geprüft, da der Solver diese Variante nicht unterstützt. Außerdem prüfen die Tests das Einrasten ungenau gesetzter Ecken. Die bisherigen Fotos sind auf 1600 Pixel Kantenlänge verkleinert und ohne Metadaten gespeichert; auf diesen Zeitungsfotos sind Kontaktdaten von Privatpersonen unkenntlich gemacht, der übrige Bildinhalt bleibt als Störfaktor für die Rastersuche erhalten. Die vier Kamerafotos vom 14. und 15.10.2026 sowie das Rätselheft-Foto vom 26.10.2026 werden zusätzlich in Originalauflösung (4032 Pixel Kantenlänge) mit Metadaten und in allen vier Ausrichtungen geprüft. Beim Foto mit Bleistifteinträgen prüfen die Tests auch die Konfliktbereinigung wie in der App und die eindeutige Lösung.
 
 Ein Fixture kann ohne Dateidialog über den Query-Parameter `fixture` in die App geladen werden:
 

@@ -364,6 +364,13 @@ describe.each([
     puzzle: rows('..749.3..', '...5...4.', '....13857', '3...5.7.6', '...2.6...', '5.6.8...4', '41837....', '.7...5...', '..5.421..'),
     solution: rows('157498362', '863527941', '924613857', '382954716', '741236598', '596781234', '418379625', '279165483', '635842179'),
     rotation: 1
+  },
+  {
+    // Rätselheft kopfüber, gewölbtes Papier, roter Rahmen mit angehängtem Etikett „Schwer 1“ an einer Ecke
+    file: 'PXL_20261026_104220893.jpg',
+    puzzle: rows('..7..5.8.', '.12876...', '68.4.....', '1..2...9.', '..4.5.1..', '.7...8..5', '.....1.62', '...68735.', '.6.9..8..'),
+    solution: rows('497125683', '312876549', '685493217', '153264798', '824759136', '976318425', '738541962', '249687351', '561932874'),
+    rotation: 2
   }
 ])('Smartphone-Kamerafoto $file', ({ file, puzzle, solution, handwritten = false, rotation }) => {
   test.each([0, 90, 180, 270])('erkennt und löst das Foto bei %i° wie die App', async (angle) => {

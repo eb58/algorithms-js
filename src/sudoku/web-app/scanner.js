@@ -327,6 +327,86 @@
     return shift > cell * 0.25 ? refined : corners
   }
 
+  // Gerade v = a + b·u durch die meisten Punkte [u, v]: Kandidaten verbinden je zwei von 24 gleichmäßig gewählten Punkten,
+  // der Kandidat mit den meisten Punkten im Abstand von höchstens 2 Pixeln wird über diese Punkte ausgeglichen.
+  // Ein Abschnitt neben der Seite (etwa ein Etikett) verkippt die Gerade so nicht.
+  const fitRobustLine = (points) => {
+    if (points.length < 2) return null
+    const samples = Array.from({ length: 24 }, (_, index) => points[floor((index * (points.length - 1)) / 23)])
+    const inliersOf = (a, b) => points.filter(([u, v]) => abs(v - a - b * u) <= 2)
+    let inliers = []
+    samples.forEach(([u0, v0], first) => {
+      for (const [u1, v1] of samples.slice(first + 1)) {
+        if (u1 === u0) continue
+        const b = (v1 - v0) / (u1 - u0)
+        const found = inliersOf(v0 - b * u0, b)
+        if (found.length > inliers.length) inliers = found
+      }
+    })
+    if (inliers.length < 2) return null
+    const n = inliers.length
+    const meanU = inliers.reduce((sum, [u]) => sum + u, 0) / n
+    const meanV = inliers.reduce((sum, [, v]) => sum + v, 0) / n
+    let numerator = 0
+    let denominator = 0
+    for (const [u, v] of inliers) {
+      numerator += (u - meanU) * (v - meanV)
+      denominator += (u - meanU) ** 2
+    }
+    const b = denominator ? numerator / denominator : 0
+    return { a: meanV - b * meanU, b }
+  }
+
+  // Ecken als Schnittpunkte der vier Rahmenseiten. Jede Seite ist eine robuste Gerade durch die äußersten Tintenpixel,
+  // sodass ein am Rahmen hängendes Etikett die Ecke nicht wie beim Extrempunkt nach außen zieht.
+  const straightCorners = ({ pixels, corners, minX, minY, maxX, maxY }, width) => {
+    const top = new Float64Array(maxX - minX + 1).fill(Infinity)
+    const bottom = new Float64Array(maxX - minX + 1).fill(-Infinity)
+    const left = new Float64Array(maxY - minY + 1).fill(Infinity)
+    const right = new Float64Array(maxY - minY + 1).fill(-Infinity)
+    for (const index of pixels) {
+      const x = index % width
+      const y = (index - x) / width
+      top[x - minX] = min(top[x - minX], y)
+      bottom[x - minX] = max(bottom[x - minX], y)
+      left[y - minY] = min(left[y - minY], x)
+      right[y - minY] = max(right[y - minY], x)
+    }
+    // äußerste Pixel zwischen zwei Ecken, ohne die Randbereiche um die Ecken selbst
+    const side = (extremes, offset, from, to) => {
+      const start = ceil(min(from, to) + abs(to - from) * 0.1)
+      const end = floor(max(from, to) - abs(to - from) * 0.1)
+      const points = []
+      for (let u = start; u <= end; u += 1) if (Number.isFinite(extremes[u - offset])) points.push([u, extremes[u - offset]])
+      return fitRobustLine(points)
+    }
+    const [tl, tr, br, bl] = corners
+    const lines = [side(top, minX, tl.x, tr.x), side(right, minY, tr.y, br.y), side(bottom, minX, bl.x, br.x), side(left, minY, tl.y, bl.y)]
+    if (lines.some((line) => !line)) return null
+    // Schnittpunkt der waagerechten Seite y = a + b·x mit der senkrechten Seite x = c + d·y
+    const intersect = (horizontal, vertical) => {
+      const x = (vertical.a + vertical.b * horizontal.a) / (1 - vertical.b * horizontal.b)
+      return { x, y: horizontal.a + horizontal.b * x }
+    }
+    const [topLine, rightLine, bottomLine, leftLine] = lines
+    return [intersect(topLine, leftLine), intersect(topLine, rightLine), intersect(bottomLine, rightLine), intersect(bottomLine, leftLine)]
+  }
+
+  // Bessere Ecken für das am besten bestätigte Gitter: erst gerade Rahmenseiten, falls sie das Gitter besser treffen,
+  // dann die Hochrechnung aus den inneren Linien.
+  const adjustCorners = (work, best) => {
+    let { corners } = best.candidate
+    let { board } = best
+    const straight = straightCorners(best.candidate, work.width)
+    const cell = sqrt(area(corners)) / 9
+    if (straight && max(...straight.map((point, index) => hypot(point.x - corners[index].x, point.y - corners[index].y))) > cell * 0.25) {
+      const result = verifyGrid(work, { corners: straight })
+      if (result && result.score > best.score) ({ corners, board } = { corners: straight, board: result.board })
+    }
+    const refined = refineCorners(work, corners, board)
+    return { corners: refined, board: refined === corners ? board : warpBoard(work, refined) }
+  }
+
   // Schritt 2: Sucht das Sudokuraster. Liefert die vier Ecken (oben links, oben rechts, unten rechts, unten links)
   // in Koordinaten des Originalbilds sowie das entzerrte Graustufenraster.
   const findGrid = (image) => {
@@ -344,8 +424,7 @@
       if (best && best.score >= MIN_GRID_SCORE) break
     }
     if (!best || best.score < MIN_GRID_SCORE) return null
-    const corners = refineCorners(work, best.candidate.corners, best.board)
-    const board = corners === best.candidate.corners ? best.board : warpBoard(work, corners)
+    const { corners, board } = adjustCorners(work, best)
     return { corners: toImage(corners, work.scale), board, score: best.score }
   }
 
@@ -363,7 +442,7 @@
         .map((candidate) => verifyGrid(work, candidate))
         .filter((result) => result && result.score >= MIN_GRID_SCORE)
         .sort((left, right) => right.score - left.score)[0]
-      if (nearest) return toImage(refineCorners(work, nearest.candidate.corners, nearest.board), work.scale)
+      if (nearest) return toImage(adjustCorners(work, nearest).corners, work.scale)
     }
     return corners.map(({ x, y }) => ({ x, y }))
   }
