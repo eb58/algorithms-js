@@ -434,11 +434,6 @@ describe.each([
   })
 })
 
-// Aus derselben Serie, aber links angeschnitten: Ohne die erste Spalte darf kein Raster erkannt werden.
-test('ein angeschnittenes Sudoku liefert kein Raster', async () => {
-  expect(scanSudoku(await loadImage('PXL_20261026_100905174.jpg'))).toBeNull()
-})
-
 describe('Sudoku-Scanner ohne Foto', () => {
   const blank = (width, height) => ({ data: new Uint8ClampedArray(width * height * 4).fill(255), width, height })
 

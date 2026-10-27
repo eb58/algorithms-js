@@ -59,6 +59,7 @@ npm run ct-puzzle:dlx
 npm run benchmark:magic-square
 npm run benchmark:magic-square-5x5
 npm run benchmark:sudoku
+npm run benchmark:sudoku-scanner
 ```
 
 Die Laufzeiten hängen von Node.js-Version, Hardware und Systemauslastung ab. Für aussagekräftige Vergleiche sollten Benchmarks deshalb mehrfach unter gleichen Bedingungen ausgeführt werden.
@@ -142,3 +143,5 @@ Vor Änderungen empfiehlt sich ein Blick in die zugehörigen Tests. Für neue Al
 ## Lizenz
 
 Dieses Projekt steht unter der [MIT-Lizenz](LICENSE).
+
+Für die externen Sudoku-Testbilder gelten die in [fixtures/SOURCES.md](src/sudoku/web-app/fixtures/SOURCES.md) aufgeführten Bildlizenzen.

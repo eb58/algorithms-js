@@ -26,6 +26,7 @@
     "benchmark:magic-square": "node bench/magic-square.js",
     "benchmark:magic-square-5x5": "node bench/magic-square-5x5.js",
     "benchmark:sudoku": "node bench/sudoku.js",
+    "benchmark:sudoku-scanner": "node bench/sudoku-scanner.js",
     "prepare": "git config core.hooksPath .githooks"
   },
   "jest": {
