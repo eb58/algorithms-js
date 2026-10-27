@@ -63,6 +63,18 @@ const SERIE = [
   'PXL_20261026_100909393.jpg',
   'PXL_20261026_100909552.jpg'
 ]
+// Problemfotos aus der App vom 27.10.2026: dasselbe Rätselheft, eine farbige Fläche hängt unten rechts am Gitter.
+const FARBFLAECHE = [
+  'sudoku-problem-17931024719601322579002421955066.jpg',
+  'sudoku-problem-17931024846337804055380912567688.jpg',
+  'sudoku-problem-17931024976032462769215135532606.jpg',
+  'sudoku-problem-17931025088989161039966412706571.jpg',
+  'sudoku-problem-17931025155336579757687048902026.jpg',
+  'sudoku-problem-17931025321345813714900032118059.jpg',
+  'sudoku-problem-17931025509941954986846925266807.jpg',
+  'sudoku-problem-17931025703278931545649004918147.jpg',
+  'sudoku-problem-17931056272875109213476290644207.jpg'
+]
 const DIAGONALEN = {
   puzzle: rows('...5.....', '......697', '126.....4', '.3....2..', '..81.39..', '7.9....6.', '...8.1..6', '.........', '4.3..5...')
 }
@@ -378,6 +390,9 @@ describe.each([
   { file: 'PXL_20261015_062735592.jpg', ...RAETSELHEFT, rotation: 0 },
   // Die Drehlagen prüfen schon die übrigen Kamerafotos; von der Serie genügt die Aufnahme, wie sie ist.
   ...SERIE.map((file) => ({ file, ...RAETSELHEFT, rotation: 0, angles: [0] })),
+  ...FARBFLAECHE.map((file) => ({ file, ...RAETSELHEFT, rotation: 1, angles: [0] })),
+  // Vom Bildschirm abfotografiert: Der helle Rand des angezeigten Bilds umschließt das Gitter und darf es nicht verdrängen.
+  { file: 'sudoku-problem-17931000817917669260673241107392.jpg', ...RAETSELHEFT, rotation: 1 },
   {
     file: 'PXL_20261014_162615343.jpg',
     puzzle: rows('...7.91..', '.16...4..', '79...2..8', '87..9....', '..3...8..', '....5..72', '3..1...89', '..2...75.', '..98.5...'),

@@ -7,7 +7,14 @@
 })(typeof globalThis !== 'undefined' ? globalThis : this, (browserTemplates) => {
   // Lokal gebunden: In vm-Kontexten (z. B. Jest) ist jeder Zugriff auf das globale Math in Pixelschleifen um ein Vielfaches langsamer.
   const { abs, ceil, floor, hypot, log, max, min, round, sqrt } = Math
-  const GRID_THRESHOLD_OFFSETS = [0.12, 0.24]
+  // Suchdurchgänge für das Raster, nacheinander bis zu einem überzeugenden Ergebnis. Ein strengerer Schwellwert trennt
+  // angehängte Flächen ab; reicht das nicht, sucht der letzte Durchgang im Bild, in dem farbige Flächen hell sind (toGray, light).
+  const GRID_PASSES = [
+    { thresholdOffset: 0.12, light: false },
+    { thresholdOffset: 0.24, light: false },
+    { thresholdOffset: 0.24, light: true }
+  ]
+  const STRONG_GRID_SCORE = 0.85
   const WORK_SIZE = 1200 // längere Bildseite für die Rastersuche
   const CELL = 48 // Kantenlänge einer Zelle im entzerrten Raster
   const BOARD = CELL * 9
@@ -22,7 +29,9 @@
   }
 
   // RGBA -> Graustufen, dabei per Flächenmittelung auf höchstens maxSize Pixel Kantenlänge verkleinert.
-  const toGray = (image, maxSize = WORK_SIZE) => {
+  // light: statt der Helligkeit den hellsten Farbkanal verwenden. Kräftige Farben erscheinen darin fast so hell wie Papier,
+  // schwarze und graue Linien bleiben dunkel.
+  const toGray = (image, maxSize = WORK_SIZE, light = false) => {
     assertImage(image)
     const { data, width, height } = image
     const scale = min(1, maxSize / max(width, height))
@@ -36,7 +45,10 @@
       const row = min(outHeight - 1, floor(y * scale)) * outWidth
       for (let x = 0; x < width; x += 1, offset += 4) {
         const target = row + targetColumns[x]
-        sums[target] += data[offset] * 0.299 + data[offset + 1] * 0.587 + data[offset + 2] * 0.114
+        const red = data[offset]
+        const green = data[offset + 1]
+        const blue = data[offset + 2]
+        sums[target] += light ? max(red, green, blue) : red * 0.299 + green * 0.587 + blue * 0.114
         counts[target] += 1
       }
     }
@@ -225,7 +237,7 @@
 
   // Zusammenhängende, ungefähr quadratische und nur dünn gefüllte Tintenbereiche – mögliche Gitter, größte zuerst.
   // Ihre Ecken liegen in Koordinaten des verkleinerten Arbeitsbilds.
-  const gridCandidates = ({ gray, width, height }, thresholdOffset = 0.12) => {
+  const gridCandidates = ({ width, height }, gray, thresholdOffset) => {
     const ink = adaptiveThreshold(gray, width, height, max(4, round(max(width, height) / 150)), thresholdOffset)
     const minSide = min(width, height) * 0.2
     return components(ink, width, height)
@@ -407,6 +419,9 @@
     return { corners: refined, board: refined === corners ? board : warpBoard(work, refined) }
   }
 
+  // Das Graubild für einen Suchdurchgang; die Variante ohne Farbflächen wird erst berechnet, wenn sie gebraucht wird.
+  const passGray = (image, work, { light }) => (light ? (work.light ??= toGray(image, WORK_SIZE, true).gray) : work.gray)
+
   // Schritt 2: Sucht das Sudokuraster. Liefert die vier Ecken (oben links, oben rechts, unten rechts, unten links)
   // in Koordinaten des Originalbilds sowie das entzerrte Graustufenraster.
   const findGrid = (image) => {
@@ -414,14 +429,16 @@
     let best = null
     // Farbige Flächen können am Gitter hängen und dessen Eckpunkte verfälschen.
     // Erst bei erfolgloser Suche trennt ein strengerer Schwellwert solche Flächen ab.
-    for (const thresholdOffset of GRID_THRESHOLD_OFFSETS) {
-      for (const candidate of gridCandidates(work, thresholdOffset).slice(0, 8)) {
+    for (const pass of GRID_PASSES) {
+      for (const candidate of gridCandidates(work, passGray(image, work, pass), pass.thresholdOffset).slice(0, 8)) {
         const result = verifyGrid(work, candidate)
         if (!result) continue
         if (!best || result.score > best.score) best = result
-        if (result.score > 0.85) break // das größte plausible Raster gewinnt, nicht etwa ein kleines Lösungsraster
+        if (result.score > STRONG_GRID_SCORE) break // das größte plausible Raster gewinnt, nicht etwa ein kleines Lösungsraster
       }
-      if (best && best.score >= MIN_GRID_SCORE) break
+      // Ein nur knapp bestätigtes Raster ist oft der Rand eines umgebenden Rechtecks, etwa eines abfotografierten Bildschirms;
+      // dann haben die weiteren Durchgänge noch eine Chance, das eigentliche Gitter von angehängten Farbflächen zu trennen.
+      if (best && best.score > STRONG_GRID_SCORE) break
     }
     if (!best || best.score < MIN_GRID_SCORE) return null
     const { corners, board } = adjustCorners(work, best)
@@ -436,14 +453,17 @@
     const scaled = corners.map(({ x, y }) => ({ x: x * work.scale, y: y * work.scale }))
     const cell = scaled.reduce((sum, point, index) => sum + hypot(scaled[(index + 1) % 4].x - point.x, scaled[(index + 1) % 4].y - point.y), 0) / 36
     const distance = (candidate) => max(...candidate.corners.map((point, index) => hypot(point.x - scaled[index].x, point.y - scaled[index].y)))
-    for (const thresholdOffset of GRID_THRESHOLD_OFFSETS) {
-      const nearest = gridCandidates(work, thresholdOffset)
-        .filter((candidate) => distance(candidate) <= cell * 0.75)
-        .map((candidate) => verifyGrid(work, candidate))
-        .filter((result) => result && result.score >= MIN_GRID_SCORE)
-        .sort((left, right) => right.score - left.score)[0]
-      if (nearest) return toImage(adjustCorners(work, nearest).corners, work.scale)
+    // wie findGrid: das am besten bestätigte Gitter aus allen Durchgängen, außer schon eines ist überzeugend
+    let nearest = null
+    for (const pass of GRID_PASSES) {
+      for (const candidate of gridCandidates(work, passGray(image, work, pass), pass.thresholdOffset)) {
+        if (distance(candidate) > cell * 0.75) continue
+        const result = verifyGrid(work, candidate)
+        if (result && result.score >= MIN_GRID_SCORE && (!nearest || result.score > nearest.score)) nearest = result
+      }
+      if (nearest && nearest.score > STRONG_GRID_SCORE) break
     }
+    if (nearest) return toImage(adjustCorners(work, nearest).corners, work.scale)
     return corners.map(({ x, y }) => ({ x, y }))
   }
 
