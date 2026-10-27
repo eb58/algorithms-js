@@ -4,7 +4,7 @@ const sharp = require('sharp')
 const { scanSudoku } = require('../../../src/sudoku/web-app/scanner')
 
 // Negativfälle: In keinem Bild dieses Ordners darf ein Raster erkannt werden, etwa weil das Sudoku angeschnitten ist.
-// Neue Negativfälle müssen nur dort abgelegt werden. Herkunft der Internet-Bilder: src/sudoku/web-app/fixtures/SOURCES.md.
+// Neue Negativfälle müssen nur dort abgelegt werden.
 const DIRECTORY = join(__dirname, '..', '..', '..', 'src', 'sudoku', 'web-app', 'fixtures', 'negative')
 const files = readdirSync(DIRECTORY).filter((file) => /\.(?:jpe?g|png|gif|webp)$/i.test(file))
 

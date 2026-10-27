@@ -143,5 +143,3 @@ Vor Änderungen empfiehlt sich ein Blick in die zugehörigen Tests. Für neue Al
 ## Lizenz
 
 Dieses Projekt steht unter der [MIT-Lizenz](LICENSE).
-
-Für die externen Sudoku-Testbilder gelten die in [fixtures/SOURCES.md](src/sudoku/web-app/fixtures/SOURCES.md) aufgeführten Bildlizenzen.

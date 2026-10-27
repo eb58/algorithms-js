@@ -419,6 +419,16 @@
     return { corners: refined, board: refined === corners ? board : warpBoard(work, refined) }
   }
 
+  // Letzter Versuch, wenn kein Kandidat bestätigt wurde: Verdeckt oder unterbricht etwas den Rahmen an einer Ecke, liegt deren
+  // Extrempunkt daneben, die geraden Rahmenseiten treffen sie trotzdem. Kandidaten am Bildrand bleiben außen vor,
+  // denn bei einem angeschnittenen Raster würden die verlängerten Seiten ein Gitter vortäuschen, das nicht im Bild ist.
+  const verifyStraight = (work, candidate) => {
+    const { minX, minY, maxX, maxY } = candidate
+    if (minX <= 0 || minY <= 0 || maxX >= work.width - 1 || maxY >= work.height - 1) return null
+    const straight = straightCorners(candidate, work.width)
+    return straight && verifyGrid(work, { ...candidate, corners: straight })
+  }
+
   // Das Graubild für einen Suchdurchgang; die Variante ohne Farbflächen wird erst berechnet, wenn sie gebraucht wird.
   const passGray = (image, work, { light }) => (light ? (work.light ??= toGray(image, WORK_SIZE, true).gray) : work.gray)
 
@@ -427,10 +437,12 @@
   const findGrid = (image) => {
     const work = toGray(image)
     let best = null
+    const tried = []
     // Farbige Flächen können am Gitter hängen und dessen Eckpunkte verfälschen.
     // Erst bei erfolgloser Suche trennt ein strengerer Schwellwert solche Flächen ab.
     for (const pass of GRID_PASSES) {
       for (const candidate of gridCandidates(work, passGray(image, work, pass), pass.thresholdOffset).slice(0, 8)) {
+        tried.push(candidate)
         const result = verifyGrid(work, candidate)
         if (!result) continue
         if (!best || result.score > best.score) best = result
@@ -439,6 +451,11 @@
       // Ein nur knapp bestätigtes Raster ist oft der Rand eines umgebenden Rechtecks, etwa eines abfotografierten Bildschirms;
       // dann haben die weiteren Durchgänge noch eine Chance, das eigentliche Gitter von angehängten Farbflächen zu trennen.
       if (best && best.score > STRONG_GRID_SCORE) break
+    }
+    if (!best || best.score < MIN_GRID_SCORE) {
+      for (const result of tried.map((candidate) => verifyStraight(work, candidate))) {
+        if (result && (!best || result.score > best.score)) best = result
+      }
     }
     if (!best || best.score < MIN_GRID_SCORE) return null
     const { corners, board } = adjustCorners(work, best)

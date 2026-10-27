@@ -75,6 +75,25 @@ const FARBFLAECHE = [
   'sudoku-problem-17931025703278931545649004918147.jpg',
   'sudoku-problem-17931056272875109213476290644207.jpg'
 ]
+// Zeitungsseite mit farbigen Rätseln, auch mit Bleistift ausgefüllt fotografiert
+const ZEITUNG_BUNT = {
+  puzzle: rows('...7.91..', '.16...4..', '79...2..8', '87..9....', '..3...8..', '....5..72', '3..1...89', '..2...75.', '..98.5...'),
+  solution: rows('538749126', '216583497', '794612538', '875291364', '923467815', '641358972', '357124689', '482936751', '169875243')
+}
+// grau hinterlegte Blöcke, weiße Bleistifteinträge
+const ZEITUNG_GRAU = {
+  puzzle: rows('...54....', '4...39.51', '...2..4..', '84....5.6', '..1.5.9..', '5.9....37', '..8..5...', '76.31...8', '....26...'),
+  solution: rows('986541372', '472639851', '153287469', '847193526', '631752984', '529468137', '218975643', '765314298', '394826715')
+}
+// Problemfotos aus der App vom 27.10.2026, abends bei Kunstlicht; je eine unsichere Ziffer, beim letzten verdeckt
+// eine Farbfläche den Rahmen an einer Ecke.
+const KUNSTLICHT = [
+  { file: 'sudoku-problem-17931231829814291361799469323041.jpg', ...RAETSELHEFT },
+  { file: 'sudoku-problem-17931232104475297667454536282979.jpg', ...RAETSELHEFT },
+  { file: 'sudoku-problem-17931233077311216166693526219380.jpg', ...ZEITUNG_GRAU },
+  { file: 'sudoku-problem-17931233376716513073926765861811.jpg', ...ZEITUNG_BUNT },
+  { file: 'sudoku-problem-17931234735736979298025360647713.jpg', ...RAETSELHEFT }
+]
 const DIAGONALEN = {
   puzzle: rows('...5.....', '......697', '126.....4', '.3....2..', '..81.39..', '7.9....6.', '...8.1..6', '.........', '4.3..5...')
 }
@@ -391,14 +410,10 @@ describe.each([
   // Die Drehlagen prüfen schon die übrigen Kamerafotos; von der Serie genügt die Aufnahme, wie sie ist.
   ...SERIE.map((file) => ({ file, ...RAETSELHEFT, rotation: 0, angles: [0] })),
   ...FARBFLAECHE.map((file) => ({ file, ...RAETSELHEFT, rotation: 1, angles: [0] })),
+  ...KUNSTLICHT.map((fixture) => ({ ...fixture, rotation: 1, angles: [0] })),
   // Vom Bildschirm abfotografiert: Der helle Rand des angezeigten Bilds umschließt das Gitter und darf es nicht verdrängen.
   { file: 'sudoku-problem-17931000817917669260673241107392.jpg', ...RAETSELHEFT, rotation: 1 },
-  {
-    file: 'PXL_20261014_162615343.jpg',
-    puzzle: rows('...7.91..', '.16...4..', '79...2..8', '87..9....', '..3...8..', '....5..72', '3..1...89', '..2...75.', '..98.5...'),
-    solution: rows('538749126', '216583497', '794612538', '875291364', '923467815', '641358972', '357124689', '482936751', '169875243'),
-    rotation: 0
-  },
+  { file: 'PXL_20261014_162615343.jpg', ...ZEITUNG_BUNT, rotation: 0 },
   { file: 'PXL_20261014_162625239.jpg', ...ZEITUNG, handwritten: true, rotation: 0 },
   {
     file: 'PXL_20261014_162656609.jpg',
