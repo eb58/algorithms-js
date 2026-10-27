@@ -169,6 +169,12 @@ main {
   text-anchor: middle;
   dominant-baseline: central;
 }
+.selection .photo-digits circle {
+  fill: none;
+  stroke: var(--orange);
+  stroke-width: 3;
+  vector-effect: non-scaling-stroke;
+}
 .actions {
   margin-top: 18px;
   display: flex;

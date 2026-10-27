@@ -211,13 +211,40 @@ describe('Sudoku-App: sofort lösen', () => {
     expect(app.elements.selection.setAttribute).toHaveBeenLastCalledWith('viewBox', '0 0 600 600')
   })
 
-  test('eine unsichere Ziffer verhindert das sofortige Lösen', async () => {
+  test('unsichere Ziffern werden mitgelöst, im Foto markiert und bleiben zur Kontrolle offen', async () => {
+    const app = setup({ findSolutions: () => [solution] }, recognized([0.05, 1, 0.02, ...Array(78).fill(1)]))
+    await app.scan()
+
+    expect(app.elements['grid-status'].textContent).toBe('Gelöst – 2 Ziffern unsicher')
+    expect(app.elements['grid-status'].className).toBe('status warn')
+    expect(app.elements['grid-panel'].hidden).toBe(false)
+    expect(photoDigits(app)).toHaveLength(65)
+    const rings = photoDigits(app).slice(63)
+    expect(rings.map((ring) => ring.setAttribute.mock.calls)).toEqual([
+      [
+        ['transform', 'matrix(0.01 0 0 0.01 0 0)'],
+        ['r', 42]
+      ],
+      [
+        ['transform', 'matrix(0.01 0 0 0.01 2 2)'],
+        ['r', 42]
+      ]
+    ])
+    const cells = app.elements['sudoku-grid'].children
+    expect([cells[0].className, cells[1].className, cells[2].className, cells[20].className]).toEqual([
+      'cell uncertain',
+      'cell recognized',
+      'cell uncertain',
+      'cell solved'
+    ])
+  })
+
+  test('eine Ziffer, die einer anderen widerspricht, verhindert das sofortige Lösen', async () => {
     const findSolutions = jest.fn(() => [solution])
-    const app = setup({ findSolutions }, recognized([0.05, ...Array(80).fill(1)]))
+    const app = setup({ findSolutions, sanitizeRecognition: (grid) => ({ grid: [0, ...grid.slice(1)], removed: [0] }) }, recognized())
     await app.scan()
 
     expect(findSolutions).not.toHaveBeenCalled()
-    expect(app.elements['grid-status'].textContent).toBe('18 Zahlen · bereit')
     expect(app.elements['grid-panel'].hidden).toBe(false)
     expect(photoDigits(app)).toHaveLength(0)
   })

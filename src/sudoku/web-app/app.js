@@ -190,9 +190,10 @@
       for (const index of sanitized.removed) confidence[index] = 0
       state.original = sanitized.grid.slice()
       showGrid(sanitized.grid, confidence)
-      // Nur eine zweifelsfreie Erkennung wird sofort gelöst; sonst prüft der Nutzer zuerst die Zahlen.
-      const certain = sanitized.removed.length === 0 && sanitized.grid.every((value, index) => !value || confidence[index] >= UNCERTAIN)
-      if (certain && !elements.solve.disabled) solveGrid({ auto: true })
+      // Auch mit unsicheren Ziffern wird sofort gelöst; sie werden im Foto markiert. Wurden widersprüchliche
+      // Ziffern entfernt, stünde die Lösung über gedruckten Zahlen, deshalb prüft der Nutzer dann zuerst.
+      const uncertain = sanitized.grid.flatMap((value, index) => (value && confidence[index] < UNCERTAIN ? [index] : []))
+      if (sanitized.removed.length === 0 && !elements.solve.disabled) solveGrid({ auto: true, uncertain })
       else {
         saveProblemPhoto()
         revealResult()
@@ -242,19 +243,28 @@
     elements.photoDigits.replaceChildren()
   }
 
-  // Trägt Ziffern perspektivisch passend in die Zellen des Fotos ein (0 = Zelle frei lassen).
+  // Trägt Ziffern perspektivisch passend in die Zellen des Fotos ein (0 = Zelle frei lassen) und kreist die Zellen in marked ein.
   // Die Zellmatrix bildet die Einheitszelle ab; Schrift und Lage sind deshalb in Hundertstel einer Zelle angegeben.
-  const showPhotoDigits = (values) => {
+  const showPhotoDigits = (values, marked = []) => {
     if (!state.cells) return
+    const svg = (name, index) => {
+      const [a, b, c, d, e, f] = state.cells[index]
+      const node = document.createElementNS('http://www.w3.org/2000/svg', name)
+      node.setAttribute('transform', `matrix(${a / 100} ${b / 100} ${c / 100} ${d / 100} ${e} ${f})`)
+      return node
+    }
     const digits = values.flatMap((value, index) => {
       if (!value) return []
-      const [a, b, c, d, e, f] = state.cells[index]
-      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
-      text.setAttribute('transform', `matrix(${a / 100} ${b / 100} ${c / 100} ${d / 100} ${e} ${f})`)
+      const text = svg('text', index)
       text.textContent = value
       return [text]
     })
-    elements.photoDigits.replaceChildren(...digits)
+    const rings = marked.map((index) => {
+      const ring = svg('circle', index)
+      ring.setAttribute('r', 42)
+      return ring
+    })
+    elements.photoDigits.replaceChildren(...digits, ...rings)
   }
 
   const showAlternatives = (solutions) => {
@@ -295,7 +305,8 @@
   }
 
   // auto: direkt nach der Erkennung; ohne eindeutige Lösung bleibt die App dann beim Prüfen der Zahlen.
-  const solveGrid = ({ auto = false } = {}) => {
+  // uncertain: Zellen mit unsicher erkannten Vorgaben, die auch nach dem Lösen markiert bleiben
+  const solveGrid = ({ auto = false, uncertain = [] } = {}) => {
     state.revision += 1
     const input = readGrid()
     const solutions = Sudoku.findSolutions(input)
@@ -316,11 +327,19 @@
       revealResult()
       return
     }
-    showGrid(solutions[0], Array(81).fill(1), true)
-    showPhotoDigits(solutions[0].map((value, index) => (input[index] ? 0 : value)))
-    setStatus('Gelöst', 'good')
-    // Sofort gelöst ist das Foto mit eingetragenen Zahlen das Ergebnis; die Kontrolle wird nicht gebraucht.
-    if (auto) elements.gridPanel.hidden = true
+    const confidence = Array(81).fill(1)
+    for (const index of uncertain) confidence[index] = 0
+    showGrid(solutions[0], confidence, true)
+    showPhotoDigits(
+      solutions[0].map((value, index) => (input[index] ? 0 : value)),
+      uncertain
+    )
+    if (uncertain.length) {
+      setStatus(`Gelöst – ${uncertain.length} ${uncertain.length === 1 ? 'Ziffer' : 'Ziffern'} unsicher`, 'warn')
+      saveProblemPhoto()
+    } else setStatus('Gelöst', 'good')
+    // Sicher gelöst ist das Foto mit eingetragenen Zahlen das Ergebnis; die Kontrolle wird nur bei Zweifeln gebraucht.
+    if (auto && !uncertain.length) elements.gridPanel.hidden = true
     else revealResult()
   }
 
