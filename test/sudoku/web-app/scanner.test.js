@@ -43,6 +43,26 @@ const SCHATTEN = {
   puzzle: rows('..85917..', '.........', '3...6...1', '5..2.4..8', '8.3...6.2', '9..6.7..5', '4...2...3', '.........', '..93158..'),
   solution: rows('248591736', '651473289', '397862451', '516234978', '873159642', '924687315', '485726193', '132948567', '769315824')
 }
+const RAETSELHEFT = {
+  puzzle: rows('.5.3.6.4.', '8...7...1', '...2.1...', '5.7...4.9', '.1.....6.', '4.6...1.5', '...4.5...', '3...9...7', '.9.7.2.5.'),
+  solution: rows('751386942', '824579631', '963241578', '587163429', '219854763', '436927185', '172435896', '345698217', '698712354')
+}
+// Serienaufnahme vom 26.10.2026 aus der Hand: dasselbe Rätselheft, teils verwackelt und schräg, mit einer Bleistift-„4“ in der Ecke.
+const SERIE = [
+  'PXL_20261026_100901380.jpg',
+  'PXL_20261026_100901838.jpg',
+  'PXL_20261026_100902400.jpg',
+  'PXL_20261026_100903312.jpg',
+  'PXL_20261026_100904179.jpg',
+  'PXL_20261026_100906298.jpg',
+  'PXL_20261026_100906907.jpg',
+  'PXL_20261026_100907861.jpg',
+  'PXL_20261026_100908145.jpg',
+  'PXL_20261026_100908339.jpg',
+  'PXL_20261026_100909232.jpg',
+  'PXL_20261026_100909393.jpg',
+  'PXL_20261026_100909552.jpg'
+]
 const DIAGONALEN = {
   puzzle: rows('...5.....', '......697', '126.....4', '.3....2..', '..81.39..', '7.9....6.', '...8.1..6', '.........', '4.3..5...')
 }
@@ -355,12 +375,9 @@ describe.each(FIXTURES)('gedrehtes Sudoku-Foto $file', ({ file, puzzle, rotation
 // Originale Kameradateien (4032 Pixel, inklusive Metadaten), nicht vorab verkleinerte Fotos.
 // Beim ausgefüllten Zeitungsrätsel können zusätzlich korrekt gelesene Bleistiftzahlen erhalten bleiben.
 describe.each([
-  {
-    file: 'PXL_20261015_062735592.jpg',
-    puzzle: rows('.5.3.6.4.', '8...7...1', '...2.1...', '5.7...4.9', '.1.....6.', '4.6...1.5', '...4.5...', '3...9...7', '.9.7.2.5.'),
-    solution: rows('751386942', '824579631', '963241578', '587163429', '219854763', '436927185', '172435896', '345698217', '698712354'),
-    rotation: 0
-  },
+  { file: 'PXL_20261015_062735592.jpg', ...RAETSELHEFT, rotation: 0 },
+  // Die Drehlagen prüfen schon die übrigen Kamerafotos; von der Serie genügt die Aufnahme, wie sie ist.
+  ...SERIE.map((file) => ({ file, ...RAETSELHEFT, rotation: 0, angles: [0] })),
   {
     file: 'PXL_20261014_162615343.jpg',
     puzzle: rows('...7.91..', '.16...4..', '79...2..8', '87..9....', '..3...8..', '....5..72', '3..1...89', '..2...75.', '..98.5...'),
@@ -381,8 +398,8 @@ describe.each([
     solution: rows('497125683', '312876549', '685493217', '153264798', '824759136', '976318425', '738541962', '249687351', '561932874'),
     rotation: 2
   }
-])('Smartphone-Kamerafoto $file', ({ file, puzzle, solution, handwritten = false, rotation }) => {
-  test.each([0, 90, 180, 270])('erkennt und löst das Foto bei %i° wie die App', async (angle) => {
+])('Smartphone-Kamerafoto $file', ({ file, puzzle, solution, handwritten = false, rotation, angles = [0, 90, 180, 270] }) => {
+  test.each(angles)('erkennt und löst das Foto bei %i° wie die App', async (angle) => {
     const recognized = scanSudoku(await loadImage(file, angle))
 
     expect(recognized).not.toBeNull()
@@ -400,6 +417,11 @@ describe.each([
     expect(countSolutions(sanitized.grid)).toBe(1)
     expect(gridToString(solve(sanitized.grid))).toBe(solution)
   })
+})
+
+// Aus derselben Serie, aber links angeschnitten: Ohne die erste Spalte darf kein Raster erkannt werden.
+test('ein angeschnittenes Sudoku liefert kein Raster', async () => {
+  expect(scanSudoku(await loadImage('PXL_20261026_100905174.jpg'))).toBeNull()
 })
 
 describe('Sudoku-Scanner ohne Foto', () => {

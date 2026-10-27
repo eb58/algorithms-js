@@ -54,6 +54,7 @@ const setup = (sudoku = {}, recognized = { grid: [5, ...Array(80).fill(0)], conf
   elements.selection.querySelector = (selector) => paths[selector]
   const images = []
   const frames = []
+  const links = []
   const corners = [
     { x: 0, y: 0 },
     { x: 600, y: 0 },
@@ -72,7 +73,11 @@ const setup = (sudoku = {}, recognized = { grid: [5, ...Array(80).fill(0)], conf
     document: {
       querySelector: (selector) => elements[selector.slice(1)],
       querySelectorAll: () => [],
-      createElement: element,
+      createElement: (name) => {
+        const created = element()
+        if (name === 'a') links.push(created)
+        return created
+      },
       createElementNS: (namespace, name) => element()
     },
     Image: class {
@@ -100,7 +105,7 @@ const setup = (sudoku = {}, recognized = { grid: [5, ...Array(80).fill(0)], conf
     await flush()
   }
   const load = (id = 'file-input') => {
-    elements[id].files = [{ type: 'image/jpeg', size: 100 }]
+    elements[id].files = [{ name: 'photo.jpg', type: 'image/jpeg', size: 100 }]
     elements[id].value = 'photo.jpg'
     return elements[id].listeners.change()
   }
@@ -116,7 +121,7 @@ const setup = (sudoku = {}, recognized = { grid: [5, ...Array(80).fill(0)], conf
     await tick()
     await pending
   }
-  return { elements, paths, images, scanner, url, load, decode, tick, scan, values }
+  return { elements, paths, images, links, scanner, url, load, decode, tick, scan, values }
 }
 
 describe('Sudoku-App: Fotoauswahl', () => {
@@ -227,6 +232,43 @@ describe('Sudoku-App: sofort lösen', () => {
   })
 })
 
+describe('Sudoku-App: Fotos mit Erkennungsproblemen', () => {
+  const givens = [1, 2, 3, 4, 5, 6, 7, 8, 9, 4, 5, 6, 7, 8, 9, 1, 2, 3]
+  const recognized = (confidence = Array(81).fill(1)) => ({ grid: [...givens, ...Array(63).fill(0)], confidence })
+  const solution = [...givens, ...Array(63).fill(9)]
+  const downloads = (app) => app.links.filter((link) => link.click.mock.calls.length).map((link) => link.download)
+
+  test('ein sofort gelöstes Foto wird nicht gespeichert', async () => {
+    const app = setup({ findSolutions: () => [solution] }, recognized())
+    await app.scan()
+    expect(downloads(app)).toEqual([])
+  })
+
+  test.each([
+    ['einer unsicheren Ziffer', { findSolutions: () => [solution] }, recognized([0.05, ...Array(80).fill(1)])],
+    ['mehreren Lösungen', { findSolutions: () => [solution, solution] }, recognized()],
+    ['zu wenigen Zahlen', { findSolutions: () => [] }, undefined]
+  ])('bei %s landet das Foto einmal im Download-Ordner', async (_, sudoku, digits) => {
+    const app = setup(sudoku, digits)
+    await app.scan()
+    expect(downloads(app)).toEqual(['sudoku-problem-photo.jpg'])
+    expect(app.url.revokeObjectURL).toHaveBeenCalledWith(app.links[0].href)
+
+    app.elements['solve-button'].listeners.click()
+    expect(downloads(app)).toHaveLength(1)
+  })
+
+  test('ein Foto ohne Raster wird gespeichert', async () => {
+    const app = setup()
+    app.scanner.findGrid.mockReturnValue(null)
+    const pending = app.load()
+    await app.decode()
+    await app.tick()
+    await pending
+    expect(downloads(app)).toEqual(['sudoku-problem-photo.jpg'])
+  })
+})
+
 describe('Sudoku-App: veraltete Vorgänge', () => {
   test('ein nach „Nächstes Foto“ fertig geladenes Foto bleibt verworfen', async () => {
     const app = setup()
@@ -256,7 +298,8 @@ describe('Sudoku-App: veraltete Vorgänge', () => {
 
     expect(app.scanner.findGrid).toHaveBeenCalledTimes(1)
     expect(app.values()).toBe('5')
-    expect(app.url.revokeObjectURL).toHaveBeenCalledTimes(2)
+    expect(app.url.revokeObjectURL).toHaveBeenCalledWith('blob:0')
+    expect(app.url.revokeObjectURL).toHaveBeenCalledWith('blob:1')
     expect(app.elements['file-input'].value).toBe('')
   })
 

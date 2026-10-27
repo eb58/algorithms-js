@@ -31,6 +31,7 @@
   }
 
   const state = {
+    file: null, // Originaldatei des Fotos, solange sie bei einem Erkennungsproblem noch gespeichert werden soll
     image: null, // geladenes Foto, aus dem der Ausschnitt um das Sudoku gezeichnet wird
     pixels: null, // RGBA-Daten des Fotos, auf denen der Scanner arbeitet
     cells: null, // Lage der 81 Zellen im Foto (SudokuScanner.cellTransforms), um ergänzte Zahlen einzutragen
@@ -38,7 +39,8 @@
     revision: 0 // nur der aktuelle Vorgang darf nach einer Wartephase noch die Oberfläche ändern
   }
 
-  const loadFile = async (file) => {
+  // save: bei Erkennungsproblemen das Foto herunterladen (nicht für Fixtures, die schon im Repository liegen)
+  const loadFile = async (file, { save = true } = {}) => {
     if (!file || !file.type.startsWith('image/')) {
       setStatus('Bitte eine Bilddatei wählen', 'bad')
       return
@@ -50,6 +52,7 @@
 
     reset()
     const revision = state.revision
+    if (save) state.file = file
     elements.reset.hidden = false
     setStatus('Foto wird geladen …', 'neutral')
     const url = URL.createObjectURL(file)
@@ -74,6 +77,7 @@
       const found = SudokuScanner.findGrid(state.pixels)
       if (!found) {
         setStatus('Kein Raster gefunden – neues Foto aufnehmen', 'warn')
+        saveProblemPhoto()
         return
       }
       renderSelection(found.corners)
@@ -189,10 +193,14 @@
       // Nur eine zweifelsfreie Erkennung wird sofort gelöst; sonst prüft der Nutzer zuerst die Zahlen.
       const certain = sanitized.removed.length === 0 && sanitized.grid.every((value, index) => !value || confidence[index] >= UNCERTAIN)
       if (certain && !elements.solve.disabled) solveGrid({ auto: true })
-      else revealResult()
+      else {
+        saveProblemPhoto()
+        revealResult()
+      }
     } catch (error) {
       console.error(error)
       setStatus('Erkennung fehlgeschlagen', 'bad')
+      saveProblemPhoto()
     }
   }
 
@@ -293,6 +301,7 @@
     const solutions = Sudoku.findSolutions(input)
     if (auto && solutions.length !== 1) {
       setStatus(solutions.length ? 'Mehrere Lösungen – Zahlen prüfen' : 'Keine Lösung – Zahlen prüfen', 'warn')
+      saveProblemPhoto()
       revealResult()
       return
     }
@@ -315,6 +324,20 @@
     else revealResult()
   }
 
+  // Legt das Originalfoto im Download-Ordner ab, damit sich Erkennungsprobleme später als Fixture nachstellen lassen.
+  const saveProblemPhoto = () => {
+    const file = state.file
+    if (!file) return
+    state.file = null // je Foto höchstens einmal
+    const url = URL.createObjectURL(file)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `sudoku-problem-${file.name || 'foto.jpg'}`
+    link.click()
+    // Manche Browser lesen die Datei erst nach dem Klick; zu frühes Freigeben bricht den Download ab.
+    setTimeout(() => URL.revokeObjectURL(url), 60000)
+  }
+
   // Bei einspaltigem Layout liegt das Ergebnis unter dem Foto und wäre sonst nicht zu sehen.
   const revealResult = () => {
     if (globalThis.matchMedia?.('(max-width: 850px)').matches) elements.gridPanel.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -335,6 +358,7 @@
 
   const reset = () => {
     state.revision += 1
+    state.file = null
     state.image = null
     state.pixels = null
     state.cells = null
@@ -375,7 +399,7 @@
       if (!response.ok) throw new Error(`HTTP ${response.status}`)
       const blob = await response.blob()
       if (revision !== state.revision) return
-      await loadFile(new File([blob], filename, { type: blob.type }))
+      await loadFile(new File([blob], filename, { type: blob.type }), { save: false })
     } catch (error) {
       if (revision !== state.revision) return
       console.error(error)
