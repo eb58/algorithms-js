@@ -6,7 +6,7 @@ const source = readFileSync(join(__dirname, '../../../src/sudoku/web-app/app.js'
 
 // Die echten Ereignishandler laufen mit kontrolliertem Bildladen und Animationstakt.
 // So sind seltene Überschneidungen reproduzierbar; die Fotoerkennung prüfen die separaten Fixture-Tests.
-const setup = (sudoku = {}) => {
+const setup = (sudoku = {}, recognized = { grid: [5, ...Array(80).fill(0)], confidence: Array(81).fill(1), rotation: 0 }) => {
   const element = () => ({
     hidden: false,
     value: '',
@@ -25,10 +25,11 @@ const setup = (sudoku = {}) => {
       this.children = children
     },
     setAttribute: jest.fn(),
+    removeAttribute: jest.fn(),
     click: jest.fn(),
     scrollIntoView: jest.fn(),
     getBoundingClientRect: () => ({ left: 0, top: 0, width: 600, height: 600 }),
-    getContext: () => ({ drawImage: jest.fn(), getImageData: () => ({ width: 600, height: 600, data: [] }) })
+    getContext: () => ({ drawImage: jest.fn(), translate: jest.fn(), rotate: jest.fn(), getImageData: () => ({ width: 600, height: 600, data: [] }) })
   })
   const ids = [
     'file-input',
@@ -37,13 +38,9 @@ const setup = (sudoku = {}) => {
     'file-button',
     'drop-zone',
     'crop-stage',
-    'photo-frame',
     'photo-canvas',
     'selection',
-    'photo-actions',
     'reset-button',
-    'empty-state',
-    'sudoku-wrap',
     'sudoku-grid',
     'grid-status',
     'solve-button',
@@ -53,13 +50,10 @@ const setup = (sudoku = {}) => {
     'grid-panel'
   ]
   const elements = Object.fromEntries(ids.map((id) => [id, element()]))
-  const frame = element()
-  const paths = Object.fromEntries(['.shade', '.guides', '.frame'].map((selector) => [selector, selector === '.frame' ? frame : element()]))
+  const paths = Object.fromEntries(['.oriented', '.shade', '.guides', '.frame', '.photo-digits'].map((selector) => [selector, element()]))
   elements.selection.querySelector = (selector) => paths[selector]
   const images = []
   const frames = []
-  const events = {}
-  const grid = [5, ...Array(80).fill(0)]
   const corners = [
     { x: 0, y: 0 },
     { x: 600, y: 0 },
@@ -69,15 +63,17 @@ const setup = (sudoku = {}) => {
   const scanner = {
     findGrid: jest.fn(() => ({ corners })),
     warpCorners: jest.fn(() => []),
-    snapCorners: jest.fn((pixels, points) => points),
-    recognizeDigits: jest.fn(() => ({ grid: grid.slice(), confidence: Array(81).fill(1) }))
+    gridToImage: jest.fn((corners, points) => points),
+    cellTransforms: jest.fn(() => Array.from({ length: 81 }, (_, index) => [1, 0, 0, 1, index, index])),
+    recognizeDigits: jest.fn(() => ({ grid: recognized.grid.slice(), confidence: recognized.confidence.slice(), rotation: recognized.rotation ?? 0 }))
   }
   const url = { createObjectURL: jest.fn(() => `blob:${images.length}`), revokeObjectURL: jest.fn() }
   vm.runInNewContext(source, {
     document: {
       querySelector: (selector) => elements[selector.slice(1)],
       querySelectorAll: () => [],
-      createElement: element
+      createElement: element,
+      createElementNS: (namespace, name) => element()
     },
     Image: class {
       constructor() {
@@ -91,9 +87,6 @@ const setup = (sudoku = {}) => {
     location: { search: '' },
     requestAnimationFrame: (callback) => frames.push(callback),
     setTimeout: (callback) => callback(),
-    addEventListener: (name, callback) => {
-      events[name] = callback
-    },
     SudokuScanner: scanner,
     Sudoku: { sanitizeRecognition: (value) => ({ grid: value, removed: [] }), validate: () => true, ...sudoku },
     console: { error: jest.fn() }
@@ -116,7 +109,14 @@ const setup = (sudoku = {}) => {
     await flush()
   }
   const values = () => elements['sudoku-grid'].children.map((input) => input.value || '').join('')
-  return { elements, images, scanner, url, load, decode, tick, values, events, frame }
+  const scan = async () => {
+    const pending = load()
+    await decode()
+    await tick()
+    await tick()
+    await pending
+  }
+  return { elements, paths, images, scanner, url, load, decode, tick, scan, values }
 }
 
 describe('Sudoku-App: Fotoauswahl', () => {
@@ -137,6 +137,7 @@ describe('Sudoku-App: Fotoauswahl', () => {
     await app.tick()
     await pending
     expect(app.values()).toBe('5')
+    expect(app.elements.selection.hidden).toBe(false)
     expect(app.elements['camera-input'].value).toBe('')
   })
 
@@ -174,16 +175,70 @@ describe('Sudoku-App: Lösungen', () => {
   })
 })
 
+describe('Sudoku-App: sofort lösen', () => {
+  const givens = [1, 2, 3, 4, 5, 6, 7, 8, 9, 4, 5, 6, 7, 8, 9, 1, 2, 3]
+  const recognized = (confidence = Array(81).fill(1)) => ({ grid: [...givens, ...Array(63).fill(0)], confidence })
+  const solution = [...givens, ...Array(63).fill(9)]
+  const photoDigits = (app) => app.paths['.photo-digits'].children
+
+  test('eine zweifelsfreie Erkennung wird gelöst und die ergänzten Zahlen stehen im Foto', async () => {
+    const app = setup({ findSolutions: () => [solution] }, recognized())
+    await app.scan()
+
+    expect(app.elements['grid-status'].textContent).toBe('Gelöst')
+    expect(app.elements['grid-panel'].hidden).toBe(true)
+    expect(photoDigits(app)).toHaveLength(63)
+    expect(photoDigits(app)[0].textContent).toBe(9)
+    expect(photoDigits(app)[0].setAttribute).toHaveBeenCalledWith('transform', 'matrix(0.01 0 0 0.01 18 18)')
+
+    const input = app.elements['sudoku-grid'].children[20]
+    input.value = '3'
+    input.listeners.input()
+    expect(photoDigits(app)).toHaveLength(0)
+  })
+
+  test('ein gedrehtes Foto wird mit seiner Markierung aufgerichtet', async () => {
+    const app = setup({ findSolutions: () => [solution] }, { ...recognized(), rotation: 1 })
+    await app.scan()
+
+    expect(app.scanner.cellTransforms).toHaveBeenCalledWith(expect.anything(), 1)
+    expect(app.paths['.oriented'].setAttribute).toHaveBeenCalledWith('transform', 'matrix(0 1 -1 0 600 0) translate(0 0)')
+    expect(app.elements.selection.setAttribute).toHaveBeenLastCalledWith('viewBox', '0 0 600 600')
+  })
+
+  test('eine unsichere Ziffer verhindert das sofortige Lösen', async () => {
+    const findSolutions = jest.fn(() => [solution])
+    const app = setup({ findSolutions }, recognized([0.05, ...Array(80).fill(1)]))
+    await app.scan()
+
+    expect(findSolutions).not.toHaveBeenCalled()
+    expect(app.elements['grid-status'].textContent).toBe('18 Zahlen · bereit')
+    expect(app.elements['grid-panel'].hidden).toBe(false)
+    expect(photoDigits(app)).toHaveLength(0)
+  })
+
+  test('ohne eindeutige Lösung bleibt die App beim Prüfen', async () => {
+    const app = setup({ findSolutions: () => [solution, solution] }, recognized())
+    await app.scan()
+
+    expect(app.elements['grid-status'].textContent).toBe('Mehrere Lösungen – Zahlen prüfen')
+    expect(app.elements['solution-alternatives'].hidden).toBe(true)
+    expect(photoDigits(app)).toHaveLength(0)
+  })
+})
+
 describe('Sudoku-App: veraltete Vorgänge', () => {
-  test('ein nach Neu starten fertig geladenes Foto bleibt verworfen', async () => {
+  test('ein nach „Nächstes Foto“ fertig geladenes Foto bleibt verworfen', async () => {
     const app = setup()
     const pending = app.load()
     app.elements['reset-button'].listeners.click()
+    expect(app.elements['file-input'].click).toHaveBeenCalledTimes(1)
     await app.decode()
     await pending
 
     expect(app.scanner.findGrid).not.toHaveBeenCalled()
-    expect(app.elements['grid-status'].textContent).toBe('Noch kein Foto')
+    expect(app.elements['grid-status'].textContent).toBe('')
+    expect(app.elements['grid-status'].hidden).toBe(true)
     expect(app.elements['crop-stage'].hidden).toBe(true)
     expect(app.url.revokeObjectURL).toHaveBeenCalledTimes(1)
   })
@@ -205,7 +260,7 @@ describe('Sudoku-App: veraltete Vorgänge', () => {
     expect(app.elements['file-input'].value).toBe('')
   })
 
-  test.each(['Raster', 'Ziffern'])('Neu starten während der Wartephase für %s verhindert spätere Ergebnisse', async (phase) => {
+  test.each(['Raster', 'Ziffern'])('„Nächstes Foto“ während der Wartephase für %s verhindert spätere Ergebnisse', async (phase) => {
     const app = setup()
     const pending = app.load()
     await app.decode()
@@ -216,7 +271,8 @@ describe('Sudoku-App: veraltete Vorgänge', () => {
 
     expect(app.scanner.recognizeDigits).not.toHaveBeenCalled()
     expect(app.values()).toBe('')
-    expect(app.elements['grid-status'].textContent).toBe('Noch kein Foto')
+    expect(app.elements['grid-status'].textContent).toBe('')
+    expect(app.elements['grid-status'].hidden).toBe(true)
   })
 
   test.each(['Leeren', 'Eingabe'])('%s wird nicht von einer wartenden Erkennung überschrieben', async (action) => {
@@ -253,25 +309,9 @@ describe('Sudoku-App: veraltete Vorgänge', () => {
     await second
 
     expect(app.values()).toBe('')
-    expect(app.elements['sudoku-wrap'].hidden).toBe(true)
-    expect(app.elements['grid-status'].textContent).toBe('Kein Raster gefunden – Ecken setzen')
-  })
-
-  test('eine Rahmenkorrektur verwirft die wartende Erkennung und erkennt erst nach dem Loslassen neu', async () => {
-    const app = setup()
-    const pending = app.load()
-    await app.decode()
-    await app.tick()
-    app.frame.listeners.pointerdown({ target: app.frame, clientX: 100, clientY: 100, preventDefault: jest.fn() })
-    await app.tick()
-    await pending
-    expect(app.scanner.recognizeDigits).not.toHaveBeenCalled()
-
-    app.events.pointermove({ clientX: 90, clientY: 90 })
-    app.events.pointerup()
-    await app.tick()
-    expect(app.scanner.recognizeDigits).toHaveBeenCalledTimes(1)
-    expect(app.values()).toBe('5')
+    expect(app.elements['grid-panel'].hidden).toBe(true)
+    expect(app.elements.selection.hidden).toBe(true)
+    expect(app.elements['grid-status'].textContent).toBe('Kein Raster gefunden – neues Foto aufnehmen')
   })
 
   test('der Fehler einer alten Aufnahme überschreibt den aktuellen Status nicht', async () => {
@@ -281,7 +321,8 @@ describe('Sudoku-App: veraltete Vorgänge', () => {
     app.images[0].onerror()
     await first
 
-    expect(app.elements['grid-status'].textContent).toBe('Noch kein Foto')
+    expect(app.elements['grid-status'].textContent).toBe('')
+    expect(app.elements['grid-status'].hidden).toBe(true)
     expect(app.url.revokeObjectURL).toHaveBeenCalledTimes(1)
   })
 })

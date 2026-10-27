@@ -457,6 +457,43 @@
     )
   }
 
+  // Perspektivische Abbildung von Rasterkoordinaten (0 bis 9 je Achse) auf die Ecken des Rasters im Bild.
+  const gridMap = (corners) => {
+    const square = [
+      { x: 0, y: 0 },
+      { x: 9, y: 0 },
+      { x: 9, y: 9 },
+      { x: 0, y: 9 }
+    ]
+    const map = homography(square, corners)
+    if (!map) throw new TypeError('Die Ecken spannen kein Viereck auf')
+    return map
+  }
+
+  // Bildlage von Punkten in Rasterkoordinaten, z. B. { x: 3, y: 0 } für den oberen Endpunkt der ersten Blocklinie.
+  // Anders als lineares Interpolieren zwischen den Ecken berücksichtigt das die Perspektive.
+  const gridToImage = (corners, points) => {
+    assertCorners(corners)
+    const map = gridMap(corners)
+    return points.map(({ x, y }) => map(x, y))
+  }
+
+  // Lage der 81 Zellen im Originalbild als affine Matrizen [a, b, c, d, e, f] (wie SVG matrix()): Sie bilden die
+  // Einheitszelle mit Mittelpunkt (0, 0) auf die perspektivisch verzerrte Zelle ab. rotation stammt aus
+  // recognizeDigits und dreht die Zuordnung so, dass Zeile und Spalte zum aufrecht gelesenen Sudoku passen.
+  const cellTransforms = (corners, rotation = 0) => {
+    assertCorners(corners)
+    if (!Number.isInteger(rotation) || rotation < 0 || rotation > 3) throw new TypeError('Ungültige Drehung')
+    const map = gridMap(corners.map((_, index) => corners[(index - rotation + 4) % 4]))
+    return Array.from({ length: 81 }, (_, index) => {
+      const u = (index % 9) + 0.5
+      const v = floor(index / 9) + 0.5
+      const center = map(u, v)
+      const [left, right, top, bottom] = [map(u - 0.5, v), map(u + 0.5, v), map(u, v - 0.5), map(u, v + 0.5)]
+      return [right.x - left.x, right.y - left.y, bottom.x - top.x, bottom.y - top.y, center.x, center.y]
+    })
+  }
+
   // Bringt einen Ziffernausschnitt (Tintenmaske, Rahmen inklusive) auf GLYPH_WIDTH×GLYPH_HEIGHT Werte zwischen 0 und 1.
   const normalizeGlyph = (ink, width, { minX, minY, maxX, maxY }) => {
     const glyphWidth = maxX - minX + 1
@@ -648,5 +685,18 @@
     return grid.map((value) => value || '.').join('')
   }
 
-  return { GLYPH_WIDTH, GLYPH_HEIGHT, extractGlyphs, findGrid, gridToString, normalizeGlyph, recognizeDigits, scanSudoku, snapCorners, warpCorners }
+  return {
+    GLYPH_WIDTH,
+    GLYPH_HEIGHT,
+    cellTransforms,
+    extractGlyphs,
+    findGrid,
+    gridToImage,
+    gridToString,
+    normalizeGlyph,
+    recognizeDigits,
+    scanSudoku,
+    snapCorners,
+    warpCorners
+  }
 })

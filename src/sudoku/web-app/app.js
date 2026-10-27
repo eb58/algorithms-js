@@ -5,6 +5,7 @@
   const MIN_SIDE = 300
   const MAX_PIXELS = 24e6 // größere Fotos werden vor der Erkennung verkleinert
   const DISPLAY_SIZE = 1100
+  const PHOTO_MARGIN = 0.04 // Rand um das Sudoku im angezeigten Ausschnitt, relativ zur Rastergröße
   const UNCERTAIN = 0.1 // Mindestabstand zur zweitbesten Ziffer, darunter gilt eine Erkennung als unsicher
 
   const $ = (selector) => document.querySelector(selector)
@@ -15,14 +16,11 @@
     fileButton: $('#file-button'),
     drop: $('#drop-zone'),
     cropStage: $('#crop-stage'),
-    frame: $('#photo-frame'),
     canvas: $('#photo-canvas'),
     selection: $('#selection'),
-    handles: [...document.querySelectorAll('.handle')],
-    photoActions: $('#photo-actions'),
+    oriented: $('#selection').querySelector('.oriented'),
+    photoDigits: $('#selection').querySelector('.photo-digits'),
     reset: $('#reset-button'),
-    empty: $('#empty-state'),
-    sudokuWrap: $('#sudoku-wrap'),
     grid: $('#sudoku-grid'),
     status: $('#grid-status'),
     solve: $('#solve-button'),
@@ -33,14 +31,12 @@
   }
 
   const state = {
+    image: null, // geladenes Foto, aus dem der Ausschnitt um das Sudoku gezeichnet wird
     pixels: null, // RGBA-Daten des Fotos, auf denen der Scanner arbeitet
-    corners: null, // Ecken des Gitters (oben links, oben rechts, unten rechts, unten links) in Pixeln von state.pixels
+    cells: null, // Lage der 81 Zellen im Foto (SudokuScanner.cellTransforms), um ergänzte Zahlen einzutragen
     original: Array(81).fill(0),
-    drag: null,
     revision: 0 // nur der aktuelle Vorgang darf nach einer Wartephase noch die Oberfläche ändern
   }
-
-  const clamp = (value, lower, upper) => Math.max(lower, Math.min(upper, value))
 
   const loadFile = async (file) => {
     if (!file || !file.type.startsWith('image/')) {
@@ -64,22 +60,24 @@
         setStatus('Bildauflösung ist zu klein', 'bad')
         return
       }
+      state.image = image
       state.pixels = readPixels(image)
       drawPhoto(image)
       elements.drop.hidden = true
       elements.cropStage.hidden = false
-      elements.photoActions.hidden = false
+      elements.selection.hidden = true
       elements.reset.hidden = false
       setStatus('Raster wird gesucht …', 'neutral')
       await nextFrame()
       if (revision !== state.revision) return
 
-      // Wird ein Raster gefunden, stehen die Zahlen sofort im erkannten Sudoku; sonst setzt der Nutzer die Ecken.
       const found = SudokuScanner.findGrid(state.pixels)
-      state.corners = found ? found.corners : defaultCorners()
-      renderSelection()
-      if (found) await recognizeGrid({ reveal: true })
-      else setStatus('Kein Raster gefunden – Ecken setzen', 'warn')
+      if (!found) {
+        setStatus('Kein Raster gefunden – neues Foto aufnehmen', 'warn')
+        return
+      }
+      renderSelection(found.corners)
+      await recognizeGrid(found.corners)
     } catch (error) {
       if (revision !== state.revision) return
       console.error(error)
@@ -106,108 +104,92 @@
     elements.canvas.getContext('2d').drawImage(image, 0, 0, elements.canvas.width, elements.canvas.height)
   }
 
-  const defaultCorners = () => {
-    const { width, height } = state.pixels
-    const size = Math.min(width, height) * 0.8
-    const left = (width - size) / 2
-    const top = (height - size) / 2
-    return [
-      { x: left, y: top },
-      { x: left + size, y: top },
-      { x: left + size, y: top + size },
-      { x: left, y: top + size }
-    ]
-  }
-
   // Das SVG verwendet die Pixelkoordinaten des Fotos als viewBox und skaliert dadurch mit der Anzeige.
-  const renderSelection = () => {
+  // corners: Ecken des Gitters (oben links, oben rechts, unten rechts, unten links) in Pixeln von state.pixels
+  const renderSelection = (corners) => {
     const { width, height } = state.pixels
-    const corners = state.corners
-    const lerp = (from, to, t) => `${from.x + (to.x - from.x) * t} ${from.y + (to.y - from.y) * t}`
     const outline = `M${corners.map(({ x, y }) => `${x} ${y}`).join('L')}Z`
-    const guides = [1 / 3, 2 / 3]
-      .map(
-        (t) =>
-          `M${lerp(corners[0], corners[1], t)}L${lerp(corners[3], corners[2], t)}M${lerp(corners[0], corners[3], t)}L${lerp(corners[1], corners[2], t)}`
-      )
-      .join('')
+    // Blocklinien perspektivisch korrekt: Die fernere Seite des Rasters erscheint im Foto gestaucht.
+    const ends = [3, 6].flatMap((line) => [
+      { x: line, y: 0 },
+      { x: line, y: 9 },
+      { x: 0, y: line },
+      { x: 9, y: line }
+    ])
+    const points = SudokuScanner.gridToImage(corners, ends)
+    const guides = points.map(({ x, y }, index) => `${index % 2 ? 'L' : 'M'}${x} ${y}`).join('')
 
     elements.selection.setAttribute('viewBox', `0 0 ${width} ${height}`)
+    elements.oriented.removeAttribute('transform')
     elements.selection.querySelector('.shade').setAttribute('d', `M0 0H${width}V${height}H0Z${outline}`)
     elements.selection.querySelector('.guides').setAttribute('d', guides)
     elements.selection.querySelector('.frame').setAttribute('points', corners.map(({ x, y }) => `${x},${y}`).join(' '))
-    elements.handles.forEach((handle, index) => {
-      handle.style.left = `${(corners[index].x / width) * 100}%`
-      handle.style.top = `${(corners[index].y / height) * 100}%`
-    })
+    elements.selection.hidden = false
   }
 
-  const pointerPosition = (event) => {
-    const rect = elements.frame.getBoundingClientRect()
-    return {
-      x: clamp(((event.clientX - rect.left) / rect.width) * state.pixels.width, 0, state.pixels.width),
-      y: clamp(((event.clientY - rect.top) / rect.height) * state.pixels.height, 0, state.pixels.height)
-    }
+  // Zeigt nur den Ausschnitt um das Sudoku, um rotation Vierteldrehungen im Uhrzeigersinn gedreht, damit es aufrecht steht.
+  // Die Markierung behält ihre Koordinaten in state.pixels; die Gruppe .oriented bildet sie auf den Ausschnitt ab.
+  const focusPhoto = (corners, rotation) => {
+    const { width, height } = state.pixels
+    const xs = corners.map(({ x }) => x)
+    const ys = corners.map(({ y }) => y)
+    const margin = PHOTO_MARGIN * Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys))
+    const left = Math.max(0, Math.min(...xs) - margin)
+    const top = Math.max(0, Math.min(...ys) - margin)
+    const cropWidth = Math.min(width, Math.max(...xs) + margin) - left
+    const cropHeight = Math.min(height, Math.max(...ys) + margin) - top
+    const quarter = rotation % 2 === 1
+    const [viewWidth, viewHeight] = quarter ? [cropHeight, cropWidth] : [cropWidth, cropHeight]
+    const matrix = [
+      [1, 0, 0, 1, 0, 0],
+      [0, 1, -1, 0, cropHeight, 0],
+      [-1, 0, 0, -1, cropWidth, cropHeight],
+      [0, -1, 1, 0, 0, cropWidth]
+    ][rotation]
+    elements.selection.setAttribute('viewBox', `0 0 ${viewWidth} ${viewHeight}`)
+    elements.oriented.setAttribute('transform', `matrix(${matrix.join(' ')}) translate(${-left} ${-top})`)
+
+    // state.pixels ist bei sehr großen Fotos verkleinert; der Ausschnitt wird aus dem Originalbild gezeichnet.
+    const source = state.image.naturalWidth / width
+    const scale = Math.min(1, DISPLAY_SIZE / (Math.max(cropWidth, cropHeight) * source))
+    const [drawWidth, drawHeight] = [cropWidth * source * scale, cropHeight * source * scale]
+    // Neue Maße setzen auch die Transformation des Kontexts zurück.
+    elements.canvas.width = Math.round(quarter ? drawHeight : drawWidth)
+    elements.canvas.height = Math.round(quarter ? drawWidth : drawHeight)
+    const context = elements.canvas.getContext('2d')
+    context.translate(elements.canvas.width / 2, elements.canvas.height / 2)
+    context.rotate((rotation * Math.PI) / 2)
+    context.drawImage(
+      state.image,
+      left * source,
+      top * source,
+      cropWidth * source,
+      cropHeight * source,
+      -drawWidth / 2,
+      -drawHeight / 2,
+      drawWidth,
+      drawHeight
+    )
   }
 
-  // Ein Griff verschiebt seine Ecke, ein Zug im Rahmen verschiebt alle vier Ecken.
-  const startDrag = (event) => {
-    if (!state.corners) return
-    state.revision += 1
-    event.preventDefault()
-    const corner = event.target.dataset.corner
-    state.drag = {
-      corner: corner === undefined ? null : Number(corner),
-      start: pointerPosition(event),
-      corners: state.corners.map((point) => ({ ...point }))
-    }
-    event.target.setPointerCapture?.(event.pointerId)
-  }
-
-  const moveDrag = (event) => {
-    if (!state.drag) return
-    const position = pointerPosition(event)
-    if (state.drag.corner !== null) {
-      state.corners[state.drag.corner] = position
-    } else {
-      const xs = state.drag.corners.map(({ x }) => x)
-      const ys = state.drag.corners.map(({ y }) => y)
-      const dx = clamp(position.x - state.drag.start.x, -Math.min(...xs), state.pixels.width - Math.max(...xs))
-      const dy = clamp(position.y - state.drag.start.y, -Math.min(...ys), state.pixels.height - Math.max(...ys))
-      state.corners = state.drag.corners.map(({ x, y }) => ({ x: x + dx, y: y + dy }))
-    }
-    renderSelection()
-  }
-
-  // Nach dem Loslassen rastet der Rahmen auf ein nahe gelegenes Gitter ein, und die Zahlen werden neu erkannt.
-  const endDrag = () => {
-    if (!state.drag) return
-    state.drag = null
-    try {
-      state.corners = SudokuScanner.snapCorners(state.pixels, state.corners)
-      renderSelection()
-      recognizeGrid()
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  const recognizeGrid = async ({ reveal = false } = {}) => {
-    if (!state.pixels || !state.corners) return
+  const recognizeGrid = async (corners) => {
     const revision = ++state.revision
     const pixels = state.pixels
-    const corners = state.corners.map((point) => ({ ...point }))
     setStatus('Ziffern werden erkannt …', 'neutral')
     await nextFrame()
     if (revision !== state.revision) return
     try {
-      const { grid, confidence } = SudokuScanner.recognizeDigits(SudokuScanner.warpCorners(pixels, corners))
+      const { grid, confidence, rotation } = SudokuScanner.recognizeDigits(SudokuScanner.warpCorners(pixels, corners))
+      state.cells = SudokuScanner.cellTransforms(corners, rotation)
+      focusPhoto(corners, rotation)
       const sanitized = Sudoku.sanitizeRecognition(grid, confidence)
       for (const index of sanitized.removed) confidence[index] = 0
       state.original = sanitized.grid.slice()
-      setStep(2)
       showGrid(sanitized.grid, confidence)
-      if (reveal) revealResult()
+      // Nur eine zweifelsfreie Erkennung wird sofort gelöst; sonst prüft der Nutzer zuerst die Zahlen.
+      const certain = sanitized.removed.length === 0 && sanitized.grid.every((value, index) => !value || confidence[index] >= UNCERTAIN)
+      if (certain && !elements.solve.disabled) solveGrid({ auto: true })
+      else revealResult()
     } catch (error) {
       console.error(error)
       setStatus('Erkennung fehlgeschlagen', 'bad')
@@ -223,7 +205,7 @@
       input.setAttribute('aria-label', `Zeile ${Math.floor(index / 9) + 1}, Spalte ${(index % 9) + 1}`)
       input.addEventListener('input', () => {
         state.revision += 1
-        hideAlternatives()
+        hideSolution()
         input.value = input.value.replace(/[^1-9]/g, '').slice(-1)
         input.className = input.value ? 'cell recognized' : 'cell'
         validateInputs()
@@ -234,7 +216,7 @@
   }
 
   const showGrid = (values, confidence = Array(81).fill(1), solved = false) => {
-    hideAlternatives()
+    hideSolution()
     const inputs = [...elements.grid.children]
     inputs.forEach((input, index) => {
       const value = values[index]
@@ -242,14 +224,29 @@
       const wasGiven = state.original[index] > 0
       input.className = !value ? 'cell' : solved && !wasGiven ? 'cell solved' : confidence[index] < UNCERTAIN ? 'cell uncertain' : 'cell recognized'
     })
-    elements.empty.hidden = true
-    elements.sudokuWrap.hidden = false
+    elements.gridPanel.hidden = false
     validateInputs()
   }
 
-  const hideAlternatives = () => {
+  const hideSolution = () => {
     elements.alternatives.hidden = true
     elements.solutionList.replaceChildren()
+    elements.photoDigits.replaceChildren()
+  }
+
+  // Trägt Ziffern perspektivisch passend in die Zellen des Fotos ein (0 = Zelle frei lassen).
+  // Die Zellmatrix bildet die Einheitszelle ab; Schrift und Lage sind deshalb in Hundertstel einer Zelle angegeben.
+  const showPhotoDigits = (values) => {
+    if (!state.cells) return
+    const digits = values.flatMap((value, index) => {
+      if (!value) return []
+      const [a, b, c, d, e, f] = state.cells[index]
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text')
+      text.setAttribute('transform', `matrix(${a / 100} ${b / 100} ${c / 100} ${d / 100} ${e} ${f})`)
+      text.textContent = value
+      return [text]
+    })
+    elements.photoDigits.replaceChildren(...digits)
   }
 
   const showAlternatives = (solutions) => {
@@ -289,10 +286,16 @@
     else setStatus(`${filled} Zahlen · bereit`, 'good')
   }
 
-  const solveGrid = () => {
+  // auto: direkt nach der Erkennung; ohne eindeutige Lösung bleibt die App dann beim Prüfen der Zahlen.
+  const solveGrid = ({ auto = false } = {}) => {
     state.revision += 1
     const input = readGrid()
     const solutions = Sudoku.findSolutions(input)
+    if (auto && solutions.length !== 1) {
+      setStatus(solutions.length ? 'Mehrere Lösungen – Zahlen prüfen' : 'Keine Lösung – Zahlen prüfen', 'warn')
+      revealResult()
+      return
+    }
     if (solutions.length === 0) {
       setStatus('Keine Lösung – Zahlen prüfen', 'bad')
       return
@@ -301,14 +304,15 @@
     if (solutions.length > 1) {
       showAlternatives(solutions)
       setStatus('Mehrere Lösungen – zwei Möglichkeiten angezeigt', 'warn')
-      setStep(3)
       revealResult()
       return
     }
     showGrid(solutions[0], Array(81).fill(1), true)
+    showPhotoDigits(solutions[0].map((value, index) => (input[index] ? 0 : value)))
     setStatus('Gelöst', 'good')
-    setStep(3)
-    revealResult()
+    // Sofort gelöst ist das Foto mit eingetragenen Zahlen das Ergebnis; die Kontrolle wird nicht gebraucht.
+    if (auto) elements.gridPanel.hidden = true
+    else revealResult()
   }
 
   // Bei einspaltigem Layout liegt das Ergebnis unter dem Foto und wäre sonst nicht zu sehen.
@@ -323,35 +327,25 @@
     elements.grid.children[Math.max(0, Math.min(80, index + moves[event.key]))].focus()
   }
 
-  const setStep = (current) => {
-    document.querySelectorAll('.steps li').forEach((step) => {
-      const number = Number(step.dataset.step)
-      step.classList.toggle('active', number === current)
-      step.classList.toggle('done', number < current)
-    })
-  }
-
   const setStatus = (text, kind) => {
     elements.status.textContent = text
+    elements.status.hidden = !text
     elements.status.className = `status ${kind}`
   }
 
   const reset = () => {
     state.revision += 1
+    state.image = null
     state.pixels = null
-    state.corners = null
-    state.drag = null
+    state.cells = null
     state.original.fill(0)
     elements.file.value = ''
     elements.drop.hidden = false
     elements.cropStage.hidden = true
-    elements.photoActions.hidden = true
     elements.reset.hidden = true
     showGrid(Array(81).fill(0))
-    elements.sudokuWrap.hidden = true
-    elements.empty.hidden = false
-    setStatus('Noch kein Foto', 'neutral')
-    setStep(1)
+    elements.gridPanel.hidden = true
+    setStatus('', 'neutral')
   }
 
   const loadImage = (url) => {
@@ -410,16 +404,16 @@
     elements.drop.classList.remove('dragging')
     loadFile(event.dataTransfer.files[0])
   })
-  elements.solve.addEventListener('click', solveGrid)
+  elements.solve.addEventListener('click', () => solveGrid())
   elements.clear.addEventListener('click', () => {
     state.revision += 1
     showGrid(Array(81).fill(0))
   })
-  elements.reset.addEventListener('click', reset)
-  elements.selection.querySelector('.frame').addEventListener('pointerdown', startDrag)
-  elements.handles.forEach((handle) => handle.addEventListener('pointerdown', startDrag))
-  globalThis.addEventListener('pointermove', moveDrag)
-  globalThis.addEventListener('pointerup', endDrag)
-  globalThis.addEventListener('pointercancel', endDrag)
+  // Verwirft das aktuelle Foto und öffnet gleich die Auswahl für das nächste, auf Touch-Geräten die Kamera.
+  elements.reset.addEventListener('click', () => {
+    reset()
+    const touch = globalThis.matchMedia?.('(any-pointer: coarse)').matches
+    ;(touch ? elements.camera : elements.file).click()
+  })
   loadFixture()
 })()

@@ -1,6 +1,15 @@
 const { join } = require('node:path')
 const sharp = require('sharp')
-const { findGrid, gridToString, recognizeDigits, scanSudoku, snapCorners, warpCorners } = require('../../../src/sudoku/web-app/scanner')
+const {
+  cellTransforms,
+  findGrid,
+  gridToImage,
+  gridToString,
+  recognizeDigits,
+  scanSudoku,
+  snapCorners,
+  warpCorners
+} = require('../../../src/sudoku/web-app/scanner')
 const { countSolutions, sanitizeRecognition, solve } = require('../../../src/sudoku/web-app/sudoku')
 
 const rows = (...lines) => lines.join('')
@@ -195,7 +204,7 @@ const FIXTURES = [
     ]
   },
   {
-    file: 'PXL_20261020_170757703.MP.jpg',
+    file: 'PXL_20261020_170757703.MP-2 Lösungen.jpg',
     scene: 'Zeitung quer, Sudoku mit Diagonalregeln und Lösungsraster daneben',
     ...DIAGONALEN,
     rotation: 1,
@@ -401,6 +410,43 @@ describe('Sudoku-Scanner ohne Foto', () => {
     expect(() => findGrid({})).toThrow(TypeError)
     expect(() => warpCorners(blank(10, 10), [{ x: 0, y: 0 }])).toThrow(TypeError)
     expect(() => snapCorners(blank(10, 10), null)).toThrow(TypeError)
+  })
+
+  test('liefert die Lage jeder Zelle passend zur erkannten Drehung', () => {
+    const corners = [
+      { x: 0, y: 0 },
+      { x: 900, y: 0 },
+      { x: 900, y: 900 },
+      { x: 0, y: 900 }
+    ]
+    const round = (matrix) => matrix.map((value) => Math.round(value * 1e6) / 1e6 + 0)
+    expect(round(cellTransforms(corners)[0])).toEqual([100, 0, 0, 100, 50, 50])
+    expect(round(cellTransforms(corners)[80])).toEqual([100, 0, 0, 100, 850, 850])
+    // Eine Vierteldrehung im Uhrzeigersinn macht das Sudoku lesbar: Seine erste Zeile liegt im Foto links, von unten nach oben.
+    expect(round(cellTransforms(corners, 1)[0])).toEqual([0, -100, 100, 0, 50, 850])
+    expect(round(cellTransforms(corners, 1)[8])).toEqual([0, -100, 100, 0, 50, 50])
+    expect(round(cellTransforms(corners, 2)[0])).toEqual([-100, 0, 0, -100, 850, 850])
+    expect(() => cellTransforms(corners, 4)).toThrow(TypeError)
+    expect(() => cellTransforms(corners.slice(1))).toThrow(TypeError)
+  })
+
+  test('bildet Rasterpunkte perspektivisch korrekt ab', () => {
+    // Trapez: Die obere Kante ist halb so breit wie die untere, liegt also weiter entfernt.
+    const corners = [
+      { x: 300, y: 0 },
+      { x: 600, y: 0 },
+      { x: 900, y: 900 },
+      { x: 0, y: 900 }
+    ]
+    const [corner, third] = gridToImage(corners, [
+      { x: 9, y: 9 },
+      { x: 0, y: 3 }
+    ])
+    expect(corner.x).toBeCloseTo(900)
+    expect(corner.y).toBeCloseTo(900)
+    // Linear interpoliert läge die Blocklinie bei y = 300; perspektivisch rückt sie zur ferneren Kante hin.
+    expect(third.y).toBeLessThan(300)
+    expect(() => gridToImage(corners.slice(1), [])).toThrow(TypeError)
   })
 
   test('findet in einem leeren Bild kein Raster', () => {

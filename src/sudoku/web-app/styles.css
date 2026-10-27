@@ -28,21 +28,12 @@ button {
   color: inherit;
 }
 .topbar {
-  height: 66px;
-  padding: 0 max(24px, calc((100vw - 1240px) / 2));
+  height: 56px;
+  padding: 0 max(16px, calc((100vw - 1100px) / 2));
   display: flex;
   align-items: center;
   justify-content: space-between;
   border-bottom: 1px solid var(--line);
-}
-.topbar p {
-  color: var(--muted);
-  font:
-    12px Consolas,
-    'Liberation Mono',
-    monospace;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
 }
 .brand {
   color: var(--ink);
@@ -57,103 +48,27 @@ button {
   color: var(--orange);
 }
 main {
-  width: min(1240px, calc(100% - 40px));
+  width: min(1100px, calc(100% - 32px));
   margin: 0 auto;
-  padding: 72px 0 70px;
-}
-.intro {
-  max-width: 850px;
-}
-.eyebrow,
-.kicker {
-  color: var(--orange);
-  font:
-    500 11px Consolas,
-    'Liberation Mono',
-    monospace;
-  letter-spacing: 0.14em;
-}
-h1 {
-  margin: 14px 0 18px;
-  font-size: clamp(40px, 6vw, 76px);
-  line-height: 0.98;
-  letter-spacing: -0.055em;
-}
-h1 em {
-  color: var(--blue);
-  font-style: normal;
-}
-.lede {
-  max-width: 690px;
-  color: var(--muted);
-  font-size: 17px;
-  line-height: 1.65;
-}
-.steps {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 0;
-  padding: 0;
-  margin: 54px 0 18px;
-  list-style: none;
-  border-bottom: 1px solid var(--line);
-}
-.steps li {
-  position: relative;
-  padding: 14px 0;
-  color: #969b98;
-  font-size: 13px;
-  font-weight: 600;
-}
-.steps li::after {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 3px;
-  background: transparent;
-}
-.steps span {
-  margin-right: 8px;
-  font:
-    11px Consolas,
-    'Liberation Mono',
-    monospace;
-}
-.steps li.active {
-  color: var(--ink);
-}
-.steps li.active::after,
-.steps li.done::after {
-  background: var(--orange);
-}
-.steps li.done {
-  color: var(--orange);
+  padding: 24px 0 40px;
 }
 .workspace {
   display: grid;
-  grid-template-columns: 1.12fr 0.88fr;
-  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 24px;
 }
-.panel {
-  min-height: 610px;
-  padding: 28px;
-  border: 1px solid var(--line);
-  background: var(--panel);
-  box-shadow: var(--shadow);
+/* Ohne Kontrolle steht das Foto allein in der Mitte. */
+.workspace:has(> #grid-panel[hidden]) {
+  grid-template-columns: minmax(0, 640px);
+  justify-content: center;
 }
-.panel-heading {
+.heading-actions {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 20px;
-  margin-bottom: 24px;
-}
-h2 {
-  margin: 5px 0 0;
-  font-size: 23px;
-  letter-spacing: -0.035em;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 12px;
 }
 .text-button {
   padding: 4px;
@@ -164,7 +79,7 @@ h2 {
   font-size: 12px;
 }
 .drop-zone {
-  min-height: 470px;
+  min-height: 420px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -211,9 +126,10 @@ h2 {
 }
 .crop-stage {
   position: relative;
+  overflow: hidden;
+  border-radius: 6px;
   background: #252a27;
-  user-select: none;
-  touch-action: none;
+  box-shadow: var(--shadow);
 }
 #photo-canvas {
   display: block;
@@ -228,11 +144,10 @@ h2 {
   inset: 0;
   width: 100%;
   height: 100%;
-  overflow: visible;
   pointer-events: none;
 }
 .selection .shade {
-  fill: rgb(4 10 7 / 58%);
+  fill: rgb(4 10 7 / 45%);
   fill-rule: evenodd;
 }
 .selection .guides {
@@ -246,24 +161,13 @@ h2 {
   stroke: var(--mint);
   stroke-width: 2;
   vector-effect: non-scaling-stroke;
-  pointer-events: all;
-  cursor: move;
 }
-.handle {
-  position: absolute;
-  width: 22px;
-  height: 22px;
-  margin: -11px 0 0 -11px;
-  border: 3px solid var(--panel);
-  border-radius: 50%;
-  background: var(--orange);
-  cursor: grab;
-}
-/* größere Trefferfläche für Touch-Bedienung */
-.handle::before {
-  content: '';
-  position: absolute;
-  inset: -12px;
+.selection .photo-digits {
+  fill: var(--blue);
+  font-size: 72px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
 }
 .actions {
   margin-top: 18px;
@@ -271,13 +175,6 @@ h2 {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-}
-.actions p {
-  max-width: 370px;
-  margin: 0;
-  color: var(--muted);
-  font-size: 12px;
-  line-height: 1.45;
 }
 .primary-button,
 .secondary-button {
@@ -338,30 +235,12 @@ h2 {
   color: #8f2828;
   background: #ffd8d5;
 }
-.empty-state {
-  min-height: 470px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: var(--muted);
-  text-align: center;
-}
-.mini-grid {
-  width: 110px;
-  height: 110px;
-  opacity: 0.26;
-  background:
-    linear-gradient(to right, var(--ink) 2px, transparent 2px) 0 0 / 33.33% 100%,
-    linear-gradient(to bottom, var(--ink) 2px, transparent 2px) 0 0 / 100% 33.33%;
-  border: 3px solid var(--ink);
-}
 .sudoku-grid {
   width: min(100%, 490px);
   aspect-ratio: 1;
   display: grid;
   grid-template-columns: repeat(9, 1fr);
-  margin: 8px auto 18px;
+  margin: 0 auto 14px;
   border: 3px solid var(--ink);
   background: var(--ink);
   gap: 1px;
@@ -458,35 +337,21 @@ h2 {
   justify-content: flex-end;
   margin-top: 23px;
 }
-footer {
-  width: min(1240px, calc(100% - 40px));
-  margin: 0 auto;
-  padding: 20px 0 28px;
-  display: flex;
-  justify-content: space-between;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  font:
-    10px Consolas,
-    'Liberation Mono',
-    monospace;
-  letter-spacing: 0.08em;
-}
 [hidden] {
   display: none !important;
 }
-/* Auf schmalen Bildschirmen nur das Nötige: Foto, Rahmen, erkanntes Raster und Aktionen. */
+/* nur für Screenreader sichtbar */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 @media (max-width: 850px) {
   .topbar {
     height: 48px;
-  }
-  .topbar p,
-  .intro,
-  .steps,
-  .kicker,
-  .empty-state,
-  footer {
-    display: none;
   }
   main {
     width: calc(100% - 16px);
@@ -494,23 +359,10 @@ footer {
   }
   .workspace {
     grid-template-columns: 1fr;
-    gap: 8px;
-  }
-  .panel {
-    min-height: auto;
-    padding: 14px;
-    box-shadow: none;
-  }
-  .panel-heading {
-    align-items: center;
-    margin-bottom: 12px;
-  }
-  h2 {
-    margin: 0;
-    font-size: 18px;
+    gap: 16px;
   }
   .drop-zone {
-    min-height: 220px;
+    min-height: 260px;
   }
   .actions {
     margin-top: 12px;

@@ -16,12 +16,11 @@ Rufe anschließend den angezeigten Pfad `/src/sudoku/web-app/` auf.
 
 ## Bedienung
 
-1. Mit „Bild auswählen“ ein vorhandenes Bild wählen. Auf Geräten mit Touch-Bedienung wird zusätzlich „Foto aufnehmen“ angezeigt, um die Kamera zu öffnen (abhängig vom Browser). Alternativ ein Bild in den Eingabebereich ziehen. Das Sudokuraster wird automatisch gesucht, mit einem Rahmen markiert, und die erkannten Zahlen erscheinen sofort im Sudoku.
-2. Liegt der Rahmen daneben, die vier Ecken auf die Ecken des äußeren Gitters ziehen. In der Nähe eines erkannten Gitters rastet der Rahmen beim Loslassen ein, und die Zahlen werden neu erkannt.
-3. Orange markierte beziehungsweise falsch erkannte Zahlen korrigieren.
-4. Das Sudoku lösen. Hat das Raster mehrere Lösungen, fehlen meist erkannte Zahlen; die App zeigt dann die ersten beiden Möglichkeiten zum Vergleichen an.
+1. Mit „Bild auswählen“ ein vorhandenes Bild wählen. Auf Geräten mit Touch-Bedienung wird zusätzlich „Foto aufnehmen“ angezeigt, um die Kamera zu öffnen (abhängig vom Browser). Alternativ ein Bild in den Eingabebereich ziehen. Das Sudokuraster wird automatisch gesucht und gelesen; danach zeigt die App nur noch den aufrecht gedrehten Bildausschnitt mit dem markierten Sudoku.
+2. Ist jede Ziffer sicher erkannt und das Rätsel eindeutig lösbar, löst die App es sofort: Die ergänzten Zahlen erscheinen blau und perspektivisch passend in den leeren Zellen des Fotos.
+3. Andernfalls erscheint neben dem Foto das erkannte Sudoku zur Kontrolle: orange markierte beziehungsweise falsch erkannte Zahlen korrigieren und mit „Sudoku lösen“ lösen. Wird danach eine Zahl korrigiert, verschwindet die Lösung wieder. Hat das Raster mehrere Lösungen, fehlen meist erkannte Zahlen; die App zeigt dann die ersten beiden Möglichkeiten zum Vergleichen an. Wird kein Raster gefunden oder liegt der Rahmen daneben, ein neues, geraderes Foto aufnehmen.
 
-Eine neue Aufnahme leert das bisherige Ergebnis. „Neu starten“ verwirft auch noch laufende Ladevorgänge. Wird während der Erkennung ein neues Foto gewählt, der Rahmen bewegt oder eine Zahl bearbeitet, darf der überholte Vorgang das aktuelle Ergebnis nicht überschreiben.
+Eine neue Aufnahme leert das bisherige Ergebnis. „Nächstes Foto“ verwirft das aktuelle Foto samt noch laufender Ladevorgänge und öffnet gleich die Kamera (Touch-Geräte) beziehungsweise die Dateiauswahl. Wird während der Erkennung ein neues Foto gewählt oder eine Zahl bearbeitet, darf der überholte Vorgang das aktuelle Ergebnis nicht überschreiben.
 
 Für gute Ergebnisse sollte das Rätsel scharf, gleichmäßig beleuchtet und ohne handschriftliche Einträge fotografiert werden. Perspektivische Verzerrung und Drehung werden ausgeglichen, auch wenn das Foto quer oder auf dem Kopf gespeichert wurde (typisch beim flachen Fotografieren eines liegenden Blatts).
 
@@ -29,23 +28,24 @@ Akzeptiert werden Bilddateien bis 20 MB und ab einer Auflösung von 300 × 300 P
 
 ## Aufbau
 
-| Datei                                 | Aufgabe                                                                     |
-| ------------------------------------- | --------------------------------------------------------------------------- |
-| `index.html`, `styles.css`            | Oberfläche                                                                  |
-| `app.js`                              | Bedienung: Foto laden, Rahmen ziehen, Ergebnis anzeigen (einziger DOM-Code) |
-| `scanner.js`                          | Bilderkennung ohne DOM und ohne OCR-Bibliothek                              |
-| `digit-templates.js`                  | Ziffernvorlagen für `scanner.js` (erzeugt)                                  |
-| `sudoku.js`                           | Lösungen zählen und OCR-Konflikte bereinigen                                |
-| `../sudoku5.js`, `../sudokuUtils.js`  | gemeinsamer Solver und Eingabevalidierung                                   |
-| `tools/build-digit-templates.js`      | erzeugt `digit-templates.js`                                                |
-| `favicon.svg`, `apple-touch-icon.png` | Icon für Browser-Tab und Home-Bildschirm                                    |
-| `tools/build-icons.js`                | erzeugt `apple-touch-icon.png` aus `favicon.svg`                            |
+| Datei                                 | Aufgabe                                                                       |
+| ------------------------------------- | ----------------------------------------------------------------------------- |
+| `index.html`, `styles.css`            | Oberfläche                                                                    |
+| `app.js`                              | Bedienung: Foto laden, Rahmen anzeigen, Ergebnis anzeigen (einziger DOM-Code) |
+| `scanner.js`                          | Bilderkennung ohne DOM und ohne OCR-Bibliothek                                |
+| `digit-templates.js`                  | Ziffernvorlagen für `scanner.js` (erzeugt)                                    |
+| `sudoku.js`                           | Lösungen zählen und OCR-Konflikte bereinigen                                  |
+| `../sudoku5.js`, `../sudokuUtils.js`  | gemeinsamer Solver und Eingabevalidierung                                     |
+| `tools/build-digit-templates.js`      | erzeugt `digit-templates.js`                                                  |
+| `favicon.svg`, `apple-touch-icon.png` | Icon für Browser-Tab und Home-Bildschirm                                      |
+| `tools/build-icons.js`                | erzeugt `apple-touch-icon.png` aus `favicon.svg`                              |
 
 `scanner.js` arbeitet nur mit RGBA-Pixeldaten (`{ data, width, height }`) und läuft deshalb unverändert im Browser und in Node.js:
 
 1. `findGrid(image)` sucht das größte regelmäßige 9×9-Gitter und liefert seine vier Ecken sowie ein perspektivisch entzerrtes Graustufenraster. Hängt etwas am Außenrahmen, werden die Ecken nachjustiert: Ein Etikett an einer Ecke fällt beim robusten Anpassen gerader Rahmenseiten heraus, ein Schlagschatten entlang des Rahmens wird über die inneren Gitterlinien korrigiert.
-2. `snapCorners(image, corners)` lässt von Hand gesetzte Ecken auf ein erkanntes Gitter einrasten, das höchstens drei Viertel einer Zellbreite entfernt liegt.
+2. `snapCorners(image, corners)` lässt ungenau gesetzte Ecken auf ein erkanntes Gitter einrasten, das höchstens drei Viertel einer Zellbreite entfernt liegt. Die App verwendet es derzeit nicht.
 3. `warpCorners(image, corners)` entzerrt das Raster zu beliebigen Ecken.
+   `cellTransforms(corners, rotation)` liefert umgekehrt die Lage jeder Zelle im Foto als affine Matrix (wie SVG `matrix()`), passend zur von `recognizeDigits` erkannten Drehung; damit trägt die App ergänzte Zahlen ins Foto ein. `gridToImage(corners, points)` bildet einzelne Rasterpunkte perspektivisch korrekt ins Foto ab, etwa für die Blocklinien der Markierung.
 4. `recognizeDigits(board)` schneidet die 81 Zellen aus und vergleicht jede Ziffer mit den Vorlagen. Ein zweiter, empfindlicherer Durchgang ergänzt blasse Ziffern nur bei eindeutigen Vorlagentreffern. Dabei werden alle vier Ausrichtungen probiert; es gewinnt die, deren Ziffern am besten passen.
 5. `gridToString(grid)` gibt das Raster als 81-stelligen String aus (`.` für leere Felder).
 
