@@ -62,7 +62,7 @@ const setup = (sudoku = {}, recognized = { grid: [5, ...Array(80).fill(0)], conf
     { x: 0, y: 600 }
   ]
   const scanner = {
-    findGrid: jest.fn(() => ({ corners })),
+    findGrid: jest.fn(() => ({ corners, board: 'entzerrtes Raster' })),
     warpCorners: jest.fn(() => []),
     gridToImage: jest.fn((corners, points) => points),
     cellTransforms: jest.fn(() => Array.from({ length: 81 }, (_, index) => [1, 0, 0, 1, index, index])),
@@ -144,6 +144,13 @@ describe('Sudoku-App: Fotoauswahl', () => {
     expect(app.values()).toBe('5')
     expect(app.elements.selection.hidden).toBe(false)
     expect(app.elements['camera-input'].value).toBe('')
+  })
+
+  test('die Ziffernerkennung verwendet das bei der Rastersuche entzerrte Raster', async () => {
+    const app = setup()
+    await app.scan()
+    expect(app.scanner.recognizeDigits).toHaveBeenCalledWith('entzerrtes Raster')
+    expect(app.scanner.warpCorners).not.toHaveBeenCalled()
   })
 
   test.each(['file-input', 'camera-input'])('Abbrechen von %s erhält den Status', (id) => {

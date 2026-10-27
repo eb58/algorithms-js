@@ -81,7 +81,7 @@
         return
       }
       renderSelection(found.corners)
-      await recognizeGrid(found.corners)
+      await recognizeGrid(found)
     } catch (error) {
       if (revision !== state.revision) return
       console.error(error)
@@ -176,14 +176,14 @@
     )
   }
 
-  const recognizeGrid = async (corners) => {
+  // found: Ergebnis von SudokuScanner.findGrid; dessen entzerrtes Raster wird direkt weiterverwendet.
+  const recognizeGrid = async ({ corners, board }) => {
     const revision = ++state.revision
-    const pixels = state.pixels
     setStatus('Ziffern werden erkannt …', 'neutral')
     await nextFrame()
     if (revision !== state.revision) return
     try {
-      const { grid, confidence, rotation } = SudokuScanner.recognizeDigits(SudokuScanner.warpCorners(pixels, corners))
+      const { grid, confidence, rotation } = SudokuScanner.recognizeDigits(board)
       state.cells = SudokuScanner.cellTransforms(corners, rotation)
       focusPhoto(corners, rotation)
       const sanitized = Sudoku.sanitizeRecognition(grid, confidence)

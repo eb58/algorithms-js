@@ -596,37 +596,47 @@
     })
   }
 
-  const decodeTemplates = (templates) =>
-    templates.map(({ digit, aspect, values }) => ({ digit, aspect, values: Float32Array.from(values, (char) => Number(char) / 9) }))
+  // Zieht den Mittelwert ab und liefert die Norm dazu. So muss die Korrelation je Vergleich nur noch ein Skalarprodukt bilden.
+  const centered = (values) => {
+    let mean = 0
+    for (let index = 0; index < values.length; index += 1) mean += values[index]
+    mean /= values.length
+    const result = new Float64Array(values.length)
+    let square = 0
+    for (let index = 0; index < values.length; index += 1) {
+      result[index] = values[index] - mean
+      square += result[index] * result[index]
+    }
+    return { values: result, square }
+  }
 
+  // Dekodierte Vorlagen je Vorlagensatz nur einmal berechnen; recognizeDigits wird für jedes Foto erneut aufgerufen.
+  const decodedTemplates = new WeakMap()
+  const decodeTemplates = (templates) => {
+    if (!decodedTemplates.has(templates)) {
+      const decoded = templates.map(({ digit, aspect, values }) => ({
+        digit,
+        aspect,
+        ...centered(Float32Array.from(values, (char) => Number(char) / 9))
+      }))
+      decodedTemplates.set(templates, decoded)
+    }
+    return decodedTemplates.get(templates)
+  }
+
+  // Korrelation zweier mit centered vorbereiteter Wertefolgen
   const correlation = (left, right) => {
-    const n = left.length
-    let meanLeft = 0
-    let meanRight = 0
-    for (let index = 0; index < n; index += 1) {
-      meanLeft += left[index]
-      meanRight += right[index]
-    }
-    meanLeft /= n
-    meanRight /= n
     let product = 0
-    let squareLeft = 0
-    let squareRight = 0
-    for (let index = 0; index < n; index += 1) {
-      const a = left[index] - meanLeft
-      const b = right[index] - meanRight
-      product += a * b
-      squareLeft += a * a
-      squareRight += b * b
-    }
-    return squareLeft && squareRight ? product / sqrt(squareLeft * squareRight) : 0
+    for (let index = 0; index < left.values.length; index += 1) product += left.values[index] * right.values[index]
+    return left.square && right.square ? product / sqrt(left.square * right.square) : 0
   }
 
   // Schritt 3b: Vergleicht eine Ziffer mit allen Vorlagen. Liefert die Ziffern absteigend nach Ähnlichkeit.
   const classifyGlyph = (glyph, templates) => {
     const scores = Array(10).fill(-Infinity)
+    const values = centered(glyph.values)
     for (const template of templates) {
-      const score = correlation(glyph.values, template.values) - 0.5 * abs(log(glyph.aspect / template.aspect))
+      const score = correlation(values, template) - 0.5 * abs(log(glyph.aspect / template.aspect))
       if (score > scores[template.digit]) scores[template.digit] = score
     }
     return scores
