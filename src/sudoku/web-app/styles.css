@@ -70,14 +70,6 @@ main {
   justify-content: flex-end;
   gap: 12px;
 }
-.text-button {
-  padding: 4px;
-  border: 0;
-  border-bottom: 1px solid currentColor;
-  background: transparent;
-  cursor: pointer;
-  font-size: 12px;
-}
 .drop-zone {
   min-height: 420px;
   display: flex;
@@ -174,6 +166,10 @@ main {
   stroke: var(--orange);
   stroke-width: 3;
   vector-effect: non-scaling-stroke;
+}
+.next-photo-button {
+  display: block;
+  margin: 18px auto 0;
 }
 .actions {
   margin-top: 18px;
