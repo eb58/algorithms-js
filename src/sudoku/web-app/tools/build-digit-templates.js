@@ -4,7 +4,7 @@ const { writeFileSync } = require('node:fs')
 const { join } = require('node:path')
 const prettier = require('prettier')
 const sharp = require('sharp')
-const { GLYPH_HEIGHT, GLYPH_WIDTH, normalizeGlyph } = require('../scanner')
+const { GLYPH_HEIGHT, GLYPH_WIDTH, normalizeGlyph } = require('../digits')
 
 // Schriften mit Normalziffern. Bewusst nicht dabei: Mediävalziffern (Georgia, Candara, Constantia, Corbel, Sitka),
 // Segoe-Ableger mit gleichen Ziffern (Gadugi, Ebrima, Leelawadee, Nirmala) und Schreibmaschinenschriften (Consolas, Courier).

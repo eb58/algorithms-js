@@ -34,15 +34,17 @@ Akzeptiert werden Bilddateien bis 20 MB und ab einer Auflösung von 300 × 300 P
 | ------------------------------------- | ----------------------------------------------------------------------------- |
 | `index.html`, `styles.css`            | Oberfläche                                                                    |
 | `app.js`                              | Bedienung: Foto laden, Rahmen anzeigen, Ergebnis anzeigen (einziger DOM-Code) |
-| `scanner.js`                          | Bilderkennung ohne DOM und ohne OCR-Bibliothek                                |
-| `digit-templates.js`                  | Ziffernvorlagen für `scanner.js` (erzeugt)                                    |
+| `scanner.js`                          | Bilderkennung ohne DOM und ohne OCR-Bibliothek: Rastersuche und Entzerrung    |
+| `digits.js`                           | Ziffernerkennung im entzerrten Raster per Vorlagenvergleich                   |
+| `image-ops.js`                        | gemeinsame Bildoperationen: adaptiver Schwellwert, Tintenbereiche             |
+| `digit-templates.js`                  | Ziffernvorlagen für `digits.js` (erzeugt)                                     |
 | `sudoku.js`                           | Lösungen zählen und OCR-Konflikte bereinigen                                  |
 | `../sudoku5.js`, `../sudokuUtils.js`  | gemeinsamer Solver und Eingabevalidierung                                     |
 | `tools/build-digit-templates.js`      | erzeugt `digit-templates.js`                                                  |
 | `favicon.svg`, `apple-touch-icon.png` | Icon für Browser-Tab und Home-Bildschirm                                      |
 | `tools/build-icons.js`                | erzeugt `apple-touch-icon.png` aus `favicon.svg`                              |
 
-`scanner.js` arbeitet nur mit RGBA-Pixeldaten (`{ data, width, height }`) und läuft deshalb unverändert im Browser und in Node.js:
+`scanner.js` arbeitet nur mit RGBA-Pixeldaten (`{ data, width, height }`) und läuft deshalb unverändert im Browser und in Node.js. Die Ziffernerkennung (Schritt 4) steckt in `digits.js`; `scanner.js` reicht ihre Funktionen weiter, sodass `SudokuScanner` die gesamte Schnittstelle bietet:
 
 1. `findGrid(image)` sucht das größte regelmäßige 9×9-Gitter und liefert seine vier Ecken sowie ein perspektivisch entzerrtes Graustufenraster. Ist kein Kandidat überzeugend, folgen weitere Suchdurchgänge: erst mit strengerem Schwellwert, dann in einem Graubild aus dem jeweils hellsten Farbkanal, in dem kräftige Farbflächen fast so hell wie Papier erscheinen. So lösen sich farbige Flächen, die am Gitter hängen, und ein umgebendes Rechteck, etwa ein abfotografierter Bildschirm, verdrängt das eigentliche Gitter nicht. Dunkle Farbflächen trennt das nicht ab. Bleibt die Suche ganz erfolglos, werden die Kandidaten noch einmal mit Ecken aus geraden Rahmenseiten geprüft; das hilft, wenn etwas den Rahmen an einer Ecke unterbricht. Kandidaten, die den Bildrand berühren, bleiben dabei außen vor, damit ein angeschnittenes Raster nicht zu einem vollständigen ergänzt wird. Hängt etwas am Außenrahmen, werden die Ecken nachjustiert: Ein Etikett an einer Ecke fällt beim robusten Anpassen gerader Rahmenseiten heraus, ein Schlagschatten entlang des Rahmens wird über die inneren Gitterlinien korrigiert.
 2. `snapCorners(image, corners)` lässt ungenau gesetzte Ecken auf ein erkanntes Gitter einrasten, das höchstens drei Viertel einer Zellbreite entfernt liegt. Die App verwendet es derzeit nicht.
@@ -51,7 +53,7 @@ Akzeptiert werden Bilddateien bis 20 MB und ab einer Auflösung von 300 × 300 P
 4. `recognizeDigits(board)` schneidet die 81 Zellen aus und vergleicht jede Ziffer mit den Vorlagen. Ein zweiter, empfindlicherer Durchgang ergänzt blasse Ziffern nur bei eindeutigen Vorlagentreffern. Dabei werden alle vier Ausrichtungen probiert; es gewinnt die, deren Ziffern am besten passen. Danach werden nur knapp unsichere Ziffern (Vorlagenabstand ab 0,075 und unter 0,1) zusätzlich geprüft: Bei den Schwellwert-Offsets 0,14, 0,18 und 0,22 muss stets dieselbe Ziffer gewinnen, jeweils mit Trefferwert mindestens 0,85 und Abstand mindestens 0,075. Dann steigt ihre Konfidenz bis zur unveränderten Warnschwelle 0,1. Das ist eine heuristische Bestätigung, keine Wahrscheinlichkeit; stärker mehrdeutige, schwache oder wechselnde Treffer bleiben unsicher. Vorgaben und Drehlage werden dadurch nicht geändert.
 5. `gridToString(grid)` gibt das Raster als 81-stelligen String aus (`.` für leere Felder).
 
-`scanSudoku(image)` fasst Rastersuche und Ziffernerkennung zusammen. Im Browser muss `digit-templates.js` vor `scanner.js` geladen werden.
+`scanSudoku(image)` fasst Rastersuche und Ziffernerkennung zusammen. Im Browser werden die Skripte in dieser Reihenfolge geladen: `digit-templates.js`, `image-ops.js`, `digits.js`, `scanner.js`. Es sind gewöhnliche Skripte ohne ES-Module, deshalb funktioniert auch der Start über `file://`.
 
 Der Vorlagenvergleich berücksichtigt neben Pixelähnlichkeit und Seitenverhältnis auch geschlossene Innenflächen der normalisierten 12 × 16-Ziffernmaske. So unterscheiden sich etwa die offenen Bögen einer 3 von den geschlossenen Bögen einer 8. Nur bei drei Maskenschwellwerten (0,35, 0,5 und 0,65) übereinstimmende Lochzahlen werden verwendet; Innenflächen unter drei Pixeln gelten als Rasterungsartefakte. Abweichende Lochzahlen kosten pro Loch 0,05 Trefferpunkte, höchstens 0,1. Bei instabilen Konturen bleibt der bisherige Pixelvergleich maßgeblich. Das Merkmal wird für alle Ziffern und Vorlagen gleich berechnet, ohne Sonderregel für eine bestimmte Ziffer oder ein bestimmtes Foto.
 

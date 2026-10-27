@@ -2,7 +2,6 @@ const { join } = require('node:path')
 const sharp = require('sharp')
 const {
   cellTransforms,
-  enclosedAreas,
   findGrid,
   gridToImage,
   gridToString,
@@ -11,6 +10,7 @@ const {
   snapCorners,
   warpCorners
 } = require('../../../src/sudoku/web-app/scanner')
+const { enclosedAreas } = require('../../../src/sudoku/web-app/digits')
 const { countSolutions, sanitizeRecognition, solve } = require('../../../src/sudoku/web-app/sudoku')
 
 const rows = (...lines) => lines.join('')
@@ -517,6 +517,14 @@ describe.each([
 
 describe('Sudoku-Scanner ohne Foto', () => {
   const blank = (width, height) => ({ data: new Uint8ClampedArray(width * height * 4).fill(255), width, height })
+
+  test('reicht die Ziffernerkennung aus digits.js für die bisherige Schnittstelle weiter', () => {
+    const scanner = require('../../../src/sudoku/web-app/scanner')
+    const digits = require('../../../src/sudoku/web-app/digits')
+    for (const name of ['GLYPH_WIDTH', 'GLYPH_HEIGHT', 'enclosedAreas', 'extractGlyphs', 'normalizeGlyph', 'recognizeDigits']) {
+      expect(scanner[name]).toBe(digits[name])
+    }
+  })
 
   test('lehnt ungültige Bilddaten ab', () => {
     expect(() => findGrid({ data: new Uint8ClampedArray(10), width: 2, height: 2 })).toThrow(TypeError)
