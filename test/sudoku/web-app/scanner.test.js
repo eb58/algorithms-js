@@ -2,6 +2,7 @@ const { join } = require('node:path')
 const sharp = require('sharp')
 const {
   cellTransforms,
+  enclosedAreas,
   findGrid,
   gridToImage,
   gridToString,
@@ -322,6 +323,71 @@ const loadImage = async (file, angle = 0) => {
     .toBuffer({ resolveWithObject: true })
   return { data: new Uint8ClampedArray(data.buffer, data.byteOffset, data.length), width: info.width, height: info.height }
 }
+
+describe('Zusätzliche Prüfung knapp unsicherer Ziffern', () => {
+  test.each([0, 90, 180, 270])('bestätigt die beiden gedruckten Dreien bei %i° ohne Änderung der Vorgaben', async (angle) => {
+    const result = scanSudoku(await loadImage('PXL_20261013_161402316.MP.jpg', angle))
+
+    expect(gridToString(result.grid)).toBe(ZEITUNG.puzzle)
+    expect(result.rotation).toBe((5 - angle / 90) % 4)
+    // Vor der Zusatzprüfung: Z8/S6 = 0.088 und Z9/S9 = 0.098, jeweils Konkurrenz zur 8.
+    for (const index of [68, 80]) expect(result.confidence[index]).toBeGreaterThanOrEqual(0.1)
+  })
+
+  test('wertet eine echte Mehrdeutigkeit auch bei wiederholt gleicher Form nicht auf', async () => {
+    const templates = require('../../../src/sudoku/web-app/digit-templates')
+    // Identische Vorlagen für 3 und 8: Wiederholung liefert keine zusätzliche Evidenz.
+    const ambiguous = [...templates, ...templates.filter(({ digit }) => digit === 3).map((template) => ({ ...template, digit: 8 }))]
+    const result = scanSudoku(await loadImage('PXL_20261013_161402316.MP.jpg'), ambiguous)
+
+    for (const index of [68, 80]) expect(result.confidence[index]).toBe(0)
+  })
+
+  test.each([0, 90, 180, 270])('unterscheidet die offene Drei von einer Acht auch im zweiten Foto bei %i°', async (angle) => {
+    const result = scanSudoku(await loadImage('PXL_20261013_163135274.MP.jpg', angle))
+
+    expect(gridToString(result.grid)).toBe(ZEITUNG.puzzle)
+    expect(result.confidence[68]).toBeGreaterThan(0.15)
+  })
+})
+
+describe('Geschlossene Innenflächen von Ziffern', () => {
+  const outline = (values, left, top, right, bottom) => {
+    for (let y = top; y <= bottom; y += 1) {
+      for (let x = left; x <= right; x += 1) {
+        if (x === left || x === right || y === top || y === bottom) values[y * 12 + x] = 1
+      }
+    }
+  }
+  const eight = () => {
+    const values = new Float32Array(12 * 16)
+    outline(values, 2, 1, 9, 7)
+    outline(values, 2, 7, 9, 14)
+    return values
+  }
+
+  test('unterscheidet zwei geschlossene Bögen von links offenen Bögen', () => {
+    const values = eight()
+    expect(enclosedAreas(values)).toBe(2)
+    values[4 * 12 + 2] = 0
+    expect(enclosedAreas(values)).toBe(1)
+    values[10 * 12 + 2] = 0
+    expect(enclosedAreas(values)).toBe(0)
+  })
+
+  test('liefert bei einer nur je nach Schwellwert geschlossenen Kontur keine Aussage', () => {
+    const values = eight()
+    values[4 * 12 + 2] = 0.5
+    expect(enclosedAreas(values)).toBeNull()
+  })
+
+  test('ignoriert winzige Innenflächen und zählt den äußeren Hintergrund nicht', () => {
+    const values = new Float32Array(12 * 16)
+    expect(enclosedAreas(values)).toBe(0)
+    outline(values, 2, 2, 4, 4)
+    expect(enclosedAreas(values)).toBe(0)
+  })
+})
 
 describe.each(FIXTURES)('Sudoku-Foto $file ($scene)', ({ file, puzzle, solution, corners, rotation = 0 }) => {
   let image

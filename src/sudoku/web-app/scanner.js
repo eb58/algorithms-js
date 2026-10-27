@@ -559,11 +559,11 @@
   }
 
   // Schritt 3a: Schneidet aus dem entzerrten Raster die Ziffern aus. Leere Zellen ergeben null.
-  const extractGlyphs = (board, thresholdOffset = 0.18) => {
+  const extractGlyphs = (board, thresholdOffset = 0.18, indices = Array.from({ length: 81 }, (_, index) => index)) => {
     const ink = adaptiveThreshold(board, BOARD, BOARD, CELL >> 1, thresholdOffset)
     const margin = round(CELL * 0.04)
     const inner = CELL - 2 * margin
-    return Array.from({ length: 81 }, (_, index) => {
+    return indices.map((index) => {
       const left = (index % 9) * CELL + margin
       const top = floor(index / 9) * CELL + margin
       const cell = new Uint8Array(inner * inner)
@@ -627,15 +627,47 @@
     return { values: result, square }
   }
 
+  // Geschlossene Innenflächen ergänzen den Pixelvergleich: Eine offene 3 darf nicht
+  // allein wegen ihrer rechten Bögen fast so gut zu einer 8 passen. Nur über mehrere
+  // Schwellwerte stabile Löcher zählen; winzige Rasterungsartefakte bleiben außen vor.
+  const enclosedAreas = (values) => {
+    const counts = [0.35, 0.5, 0.65].map((threshold) => {
+      const visited = new Uint8Array(values.length)
+      const stack = []
+      let holes = 0
+      for (let start = 0; start < values.length; start += 1) {
+        if (visited[start] || values[start] >= threshold) continue
+        visited[start] = 1
+        stack.push(start)
+        let size = 0
+        let border = false
+        while (stack.length) {
+          const index = stack.pop()
+          const x = index % GLYPH_WIDTH
+          const y = floor(index / GLYPH_WIDTH)
+          size += 1
+          border ||= x === 0 || y === 0 || x === GLYPH_WIDTH - 1 || y === GLYPH_HEIGHT - 1
+          for (const next of [x > 0 ? index - 1 : -1, x < GLYPH_WIDTH - 1 ? index + 1 : -1, index - GLYPH_WIDTH, index + GLYPH_WIDTH]) {
+            if (next < 0 || next >= values.length || visited[next] || values[next] >= threshold) continue
+            visited[next] = 1
+            stack.push(next)
+          }
+        }
+        if (!border && size >= 3) holes += 1
+      }
+      return holes
+    })
+    return counts.every((count) => count === counts[0]) ? counts[0] : null
+  }
+
   // Dekodierte Vorlagen je Vorlagensatz nur einmal berechnen; recognizeDigits wird für jedes Foto erneut aufgerufen.
   const decodedTemplates = new WeakMap()
   const decodeTemplates = (templates) => {
     if (!decodedTemplates.has(templates)) {
-      const decoded = templates.map(({ digit, aspect, values }) => ({
-        digit,
-        aspect,
-        ...centered(Float32Array.from(values, (char) => Number(char) / 9))
-      }))
+      const decoded = templates.map(({ digit, aspect, values }) => {
+        const pixels = Float32Array.from(values, (char) => Number(char) / 9)
+        return { digit, aspect, holes: enclosedAreas(pixels), ...centered(pixels) }
+      })
       decodedTemplates.set(templates, decoded)
     }
     return decodedTemplates.get(templates)
@@ -652,8 +684,10 @@
   const classifyGlyph = (glyph, templates) => {
     const scores = Array(10).fill(-Infinity)
     const values = centered(glyph.values)
+    const holes = enclosedAreas(glyph.values)
     for (const template of templates) {
-      const score = correlation(values, template) - 0.5 * abs(log(glyph.aspect / template.aspect))
+      const topologyPenalty = holes === null || template.holes === null ? 0 : 0.05 * min(2, abs(holes - template.holes))
+      const score = correlation(values, template) - 0.5 * abs(log(glyph.aspect / template.aspect)) - topologyPenalty
       if (score > scores[template.digit]) scores[template.digit] = score
     }
     return scores
@@ -696,8 +730,28 @@
     return { grid, confidence, fit: count ? fit / count : 0 }
   }
 
+  // Knapp unsichere Treffer erst nach Wahl der Drehlage prüfen. Die Durchgänge sind
+  // korreliert: Ihre Abstände nicht addieren und klare Mehrdeutigkeit nicht aufwerten.
+  const confirmUncertain = (board, templates, grid, confidence) => {
+    const minMargin = 0.075
+    const pending = grid.flatMap((digit, index) => (digit && confidence[index] >= minMargin && confidence[index] < 0.1 ? [index] : []))
+    if (!pending.length) return
+    const passes = [0.18, 0.14, 0.22].map((offset) => extractGlyphs(board, offset, pending))
+    pending.forEach((index, position) => {
+      const stable = passes.every((glyphs) => {
+        const glyph = glyphs[position]
+        if (!glyph) return false
+        const [best, second] = classifyGlyph(glyph, templates)
+        return best.digit === grid[index] && best.score >= 0.85 && best.score - (second?.score ?? 0) >= minMargin
+      })
+      // Nur bis an die bestehende Warnschwelle anheben; keine Wahrscheinlichkeit.
+      if (stable) confidence[index] = 0.1
+    })
+  }
+
   // Schritt 3: Entzerrtes Raster -> { grid, confidence, rotation }. 0 steht für eine leere Zelle; confidence ist der
-  // Abstand zur zweitbesten Ziffer (0 = unentschieden, leere Zellen 1). Liegt das Rätsel im Foto quer oder auf dem Kopf
+  // Abstand zur zweitbesten Ziffer (0 = unentschieden, leere Zellen 1), bei stabilen,
+  // hochwertigen Treffern über drei Schwellwerte mindestens 0.1. Liegt das Rätsel im Foto quer oder auf dem Kopf
   // (z. B. flach fotografiert), gewinnt die Ausrichtung, deren Ziffern am besten zu den Vorlagen passen;
   // rotation gibt an, um wie viele Vierteldrehungen im Uhrzeigersinn das Raster dafür gedreht wurde.
   const recognizeDigits = (board, templates = defaultTemplates()) => {
@@ -705,11 +759,12 @@
     let best = null
     let current = board
     for (let rotation = 0; rotation < 4; rotation += 1) {
-      const result = { ...readGlyphs(current, decoded), rotation }
+      const result = { ...readGlyphs(current, decoded), rotation, board: current }
       if (!best || result.fit > best.fit) best = result
       current = rotateBoard(current)
     }
     const { grid, confidence, rotation } = best
+    confirmUncertain(best.board, decoded, grid, confidence)
     return { grid, confidence, rotation }
   }
 
@@ -736,6 +791,7 @@
     GLYPH_WIDTH,
     GLYPH_HEIGHT,
     cellTransforms,
+    enclosedAreas,
     extractGlyphs,
     findGrid,
     gridToImage,
